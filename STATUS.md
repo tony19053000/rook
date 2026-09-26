@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 20:45 IST · **By:** Account 2 (027 committed; 023 fixing, 024 coding, 029 in review)
+**Last updated:** 2026-09-26 20:40 IST · **By:** Account 2 (029 PASS awaiting 023; 023 in review r2; 024 coding)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B2 (M5 Session → M6 CLI)
 
@@ -71,7 +71,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
 | ROOK-027 | Question prompts + cards | P0 | DONE | reviewer PASS round 1. Follow-up: 'e to edit one rule' not implemented (no Session answer shape; 04 §3.4). 024 wires prompts.register(app) + Backend.answer Any |
 | ROOK-028 | Background run + chat | P0 | TODO | |
-| ROOK-029 | FastAPI server | P0 | IN PROGRESS | coding (restart 26 Sep 20:15). Decision: web→API via Vercel rewrite proxy (guest cookie stays Lax) |
+| ROOK-029 | FastAPI server | P0 | IN REVIEW | reviewer PASS round 1; commit right AFTER 023 (imports core/session.py). Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify Vercel rewrite streams SSE |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | TODO | |
