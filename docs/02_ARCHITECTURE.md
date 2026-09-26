@@ -96,6 +96,9 @@ START_APP    agent mechanic     -> SandboxPlan; engine starts the sandbox + heal
 MAP          agent mapper       -> actions + state (rook.yaml part); engine dry-runs each action once (loop ≤3)
              (agents/understand.py runs SCOUT..MAP; engine/dryrun.py decides pass/fail; writes <workspace>/rook/rook.yaml)
 RULES        agent lawmaker     -> rules; engine sanity-checks (parse + holds on fresh app); agent rule_critic -> verdicts
+             (agents/rules.py; engine/sanity.py: parses + known names/fields, then holds on a fresh app = the rule's
+              entities just created, or its `when` action sent once, judged by the Judge on the rule's own check,
+              never on the HTTP status; engine-rejected rules skip the critic; critic revisions are re-checked)
 APPROVE      ASK approve_rules  (auto mode: accept critic-approved)
 DESIGN       agents test_designer + strategist (parallel) -> scenarios, weights
 SEARCH       engine runner+judge (background; chat allowed) until violation or budget
@@ -305,7 +308,7 @@ Envelope, one JSON object per event:
 | `sandbox.ready` | `{base_url_redacted, mode}` |
 | `model.actions` | `{actors[], actions[], state[]}` |
 | `rules.proposed` | `{rules[]}` |
-| `rules.reviewed` | `{verdicts[]}` |
+| `rules.reviewed` | `{verdicts[]}`, each `{rule_id, verdict: approve\|reject\|revise, reason, by: engine\|critic, revised?}` |
 | `rules.approved` | `{rule_ids[]}` |
 | `search.progress` | `{sequences, per_sec, rules:{rule_id: holding\|broken}}` (throttled to 5/s) |
 | `violation.found` | `{violation_id, rule_id, steps_count, observed}` |

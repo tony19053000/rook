@@ -249,16 +249,18 @@ def build_model(output: MapperOutput, plan: SandboxPlan) -> RookModel:
     return model
 
 
-def model_yaml(model: RookModel) -> str:
+MAPPER_NOTE = "Written by Rook (Mapper), checked by an engine dry-run. Review before approving."
+
+
+def model_yaml(model: RookModel, note: str = MAPPER_NOTE) -> str:
     data = model.model_dump(mode="json", by_alias=True, exclude_none=True)
-    return "# Written by Rook (Mapper), checked by an engine dry-run. Review before approving.\n" + (
-        yaml.safe_dump(data, sort_keys=False, allow_unicode=True, width=100))
+    return f"# {note}\n" + yaml.safe_dump(data, sort_keys=False, allow_unicode=True, width=100)
 
 
-def write_model(workspace: Path, model: RookModel) -> Path:
+def write_model(workspace: Path, model: RookModel, note: str = MAPPER_NOTE) -> Path:
     path = workspace / MODEL_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = model_yaml(model)
+    text = model_yaml(model, note)
     load_model_str(text, source=str(path))  # what we write must load back
     path.write_text(text, encoding="utf-8")
     return path

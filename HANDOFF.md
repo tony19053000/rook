@@ -16,7 +16,7 @@
    Everything else passed review (all ACs, AST-checked generated test, pytest isolation, env isolation). Send this to `coder` (round 2), then `reviewer`, commit as `ROOK-011`:
    - F1 (security): `counterexample.py` ~248-256 `safe_dir` calls `mkdir(parents=True)` BEFORE the inside-root check, so a planted symlink `<root>/rook -> /outside` creates `/outside/counterexamples` (or `/outside/tests`) before PermissionError. Fix: walk components with dir fds (`os.open(name, O_DIRECTORY|O_NOFOLLOW, dir_fd=parent)`, `os.mkdir(name, dir_fd=parent)`), write the leaf via that fd. Extend `test_writes_refuse_symlinks_out_of_the_root` to assert NOTHING (not even a dir) is created outside, for both dirs and a deeper symlink (`rook/tests -> outside`).
    - Cheap extras: check 4 (fresh_search) must fail if no step got a <400 response ("could not exercise the app"); depth/size cap on `observed` before JSON/AST.
-2. **ROOK-018 (Lawmaker + Rule Critic)** — coder was stopped at the very start; **no files were written**. Start it fresh (brief below).
+2. ~~ROOK-018~~ **DONE + committed by account 1.** OPEN DECISION for user: a response rule that fails on the 1st request on the buggy app (admin_export as customer) is rejected, so the admin bug is never searched. Proposed option B: flag it as 'possibly already broken' for the human instead of rejecting (do in 023, doc change). Old notes: — coder was stopped at the very start; **no files were written**. Start it fresh (brief below).
 
 **Then continue in order:** 011 (fix) → 018 → 020 (deps 011) → 019 → 021 → 023 (Session) → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
 Parallel pairs that worked: 011-fix ‖ 018; later 019 ‖ 020.
@@ -59,6 +59,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep | 1 | ROOK-018 PASS + committed (0.13 coins); 020 coding | ROOK-018 |
 | 26 Sep | 1 | ROOK-011 PASS round 2 + committed (M2 done); 018 coding | ROOK-011 |
 | 26 Sep (resume) | 1 | Resumed: suite green (825 passed); 011 fix round 2 + 018 coding in parallel | (none) |
 | 26 Sep 15:30 | 2 | Stopped for account switch: 011 review FAIL (fix not applied), 018 not started; agents stopped | (docs) |
