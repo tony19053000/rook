@@ -6,12 +6,12 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep ~21:00 IST. Account 1 hit its limit mid-023; the other account continues in the same orchestrator session.
+**Updated:** 26 Sep 18:25 IST. Account 2 stopped ("update handoff") while the ROOK-023 coder was still running in the background; its files are uncommitted and UNREVIEWED. Earlier (~18:10) account 1 hit its limit mid-023. No orphan sandboxes or bob processes at 18:20.
 
 **Committed and DONE (reviewer PASS):** ROOK-001–022 (22 / 40). M1–M4 complete. Pushed to GitHub (HEAD 8b7b8f2). Bob coins used ≈ 2.0 of 40.
 
 **UNCOMMITTED work in the working tree:**
-- **ROOK-023 (Session + Conductor)**: partially coded (coder resumed after the account limit). Files: `src/rook/core/session.py`, `core/workspace.py`, `tests/unit/session_helpers.py`, `test_session.py`, `test_session_recorded.py`, plus edits to `agents/diagnose.py`, `agents/fix.py`, `agents/guide.py`, `core/events.py`, `store/repo.py`, `tests/unit/test_events.py`, `test_store.py`. Not reviewed yet. If a new session finds it unfinished: resume a coder with the 023 brief (recorded full run PREPARE→SHIP on minishop chaining the 5 committed recordings; questions/--auto; budget; persistence; cancel with no orphans; SHIP = local branch `rook/fix-cx-001`), then reviewer, then commit.
+- **ROOK-023 (Session + Conductor)**: partially coded, maybe complete (the coder was resumed after the account limit and may have finished more before this session closed). First run `uv run pytest -q` and read `core/session.py` to see how far it got. Files: `src/rook/core/session.py`, `core/workspace.py`, `tests/unit/session_helpers.py`, `test_session.py`, `test_session_recorded.py`, plus edits to `agents/diagnose.py`, `agents/fix.py`, `agents/guide.py`, `core/events.py`, `store/repo.py`, `tests/unit/test_events.py`, `test_store.py`. Not reviewed yet. If a new session finds it unfinished: resume a coder with the 023 brief (recorded full run PREPARE→SHIP on minishop chaining the 5 committed recordings; questions/--auto; budget; persistence; cancel with no orphans; SHIP = local branch `rook/fix-cx-001`), then reviewer, then commit.
 
 **Then continue in order:** 023 → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
 
@@ -50,7 +50,7 @@ You are continuing the Rook project (IBM Bob hackathon) in /home/aayush/Desktop/
 Start now.
 ```
 
-**Current goal:** Fix + commit ROOK-011 (review F1), build ROOK-018, then 020 → 019 → 021 → 023 → M6 CLI (see "Next session starts here").
+**Current goal:** Finish + review + commit ROOK-023 (Session, uncommitted in tree), then M6 CLI 024–028 → 029 server → web → deploy. Ask the user the open A/B admin-rule decision.
 
 ---
 
@@ -58,6 +58,8 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 18:25 | 2 | Update handoff: 023 coder still running (uncommitted); 22/40 done, ≈2.0 coins | (docs) |
+| 26 Sep 18:10 | 1 | Account limit hit mid-023; coder resumed on account 2 | (docs) |
 | 26 Sep | 1 | ROOK-021 PASS + committed (M4 done; 1.42 coins; fileRegex absolute-path bug fixed; tape-after-guard) | ROOK-021 |
 | 26 Sep | 1 | ROOK-019 PASS + committed (0.04 coins; 5 vs 1903 seqs); 021 coding | ROOK-019 |
 | 26 Sep | 1 | ROOK-020 PASS round 2 + committed (0.08 coins); 019 in review | ROOK-020 |

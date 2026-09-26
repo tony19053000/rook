@@ -2,15 +2,15 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 IST · **By:** Account 1 (M4 complete; next ROOK-023)
+**Last updated:** 2026-09-26 18:25 IST · **By:** Account 2 (update handoff; 023 coding, uncommitted)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
-**Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
+**Current block:** B2 (M5 Session → M6 CLI)
 
 ## Progress
 
 ```
 OVERALL   [████████████████░░░░░░░░░░░░░░]  55%  22 / 40 tickets
-TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~29h left (to 27 Sep 20:30 IST)
+TIME      [██████░░░░░░░░░░░░░░░░░░░░░░░░]  21%   ~26h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -64,7 +64,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-020 | Detective + Diagnosis Reviewer | P0 | DONE | reviewer PASS round 2 (recording paths scrubbed); 0.08 coins; points to minishop app.py:214, approved round 1. Session calls DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=) |
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | DONE | reviewer PASS (3 review rounds: code, recording delta, tape-after-guard fix). Live run verified 4/4 (Bob test fails on buggy, 1-line fix, 1500-seq fresh search clean). 1.42 coins. Found + fixed: Bob matches fileRegex on ABSOLUTE paths. Edit tapes store only guard-approved files |
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
-| ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | account 1 coding |
+| ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | partially coded, uncommitted, unreviewed (see HANDOFF) |
 | ROOK-024 | Typer commands + CI mode | P0 | TODO | |
 | ROOK-025 | TUI shell | P0 | TODO | |
 | ROOK-026 | Sprite + row widgets | P0 | TODO | |
