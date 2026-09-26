@@ -6,16 +6,28 @@
 
 ## ▶ Next session starts here
 
-**State:** DONE: ROOK-001 to 006 and 015. IN PROGRESS: ROOK-007+008 (Runner + Judge, one coder) and ROOK-016 (agent registry/prompts/modes).
-**Do next:** review and commit 007+008 and 016, then 009 (Shrinker) → 010 → 011 → 012, then 013/014 (sandbox), then 017–022 (agents).
-**How:** the orchestrator sends each ticket to the `coder` sub-agent, then the `reviewer` sub-agent (CLAUDE.md, section 2).
-**Watch out:**
-- Sub-agents: `coder` = Opus 5.5 at medium effort, `reviewer` = Sonnet 5 at medium effort (set in `.claude/agents/*.md`). They only load in a session started *after* the files existed. In the session that created them, run them as `general-purpose` agents told to read their `.md`, with the model override (opus / sonnet).
-- Bob calls need `source ~/.bob-key.env` and Node 24 on `PATH` (`~/.nvm/versions/node/v24.21.0/bin`). **Always use stdin=DEVNULL.**
-- Keep Bob spend low during development: use recorded NDJSON fixtures for tests and the `-m bob` marker only for manual live checks.
-- The mockups in `docs/mockups/` use the old name "Counterexample" / `cx`; treat that as Rook / `rook`.
+**Updated:** 26 Sep 14:08 IST. Account 1 stopped at about 90% of its 5-hour limit.
 
-**Open questions for the user:** none right now. When needed, ask for: the demo-apps prompt (U5), the Supabase keys (U1), the GitHub App (U2), the Hugging Face Space (U3) and the Vercel project (U4).
+**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015. M1 is complete.
+
+**UNCOMMITTED work in the working tree (verify it before anything else):**
+1. **ROOK-016 (agent registry, schemas, prompts, modes)**: coded, and the review was in progress when the session ended.
+   Files: `src/rook/agents/schemas.py`, `registry.py`, `modes.py`, `prompts/__init__.py`, `prompts/*.md`, `tests/unit/test_agents_registry.py`.
+   The coder reported 374 tests passing. Run the `reviewer` sub-agent on it again; on PASS, commit it as `ROOK-016`.
+   Reviewer focus: Surgeon fileRegex widening attacks, breaking out of the untrusted block, deterministic prompts, schema fields per 02 §5.3, and prompt quality.
+2. **ROOK-007 + ROOK-008 (Generator + Runner + Judge)**: one coder was building both when the session ended, so the files may be missing, partial or complete:
+   `src/rook/engine/generator.py`, `judge.py`, `runner.py` and `tests/unit/test_generator.py`, `test_judge.py`, `test_runner.py` (possibly also small additive changes in `executor.py`).
+   Run `git status` and `uv run pytest -q`. If they're incomplete, send the ticket to the `coder` sub-agent to finish it (both tickets' ACs in `docs/05_FEATURE_TICKETS.md`, including ≥500 seq/s or an honest measured ceiling, zero violations on fixed minishop, and finding the refund bug for 5 seeds). Then review and commit.
+3. Docs wording (13 agents = Coordinator + 12 specialists) is committed.
+
+**Then continue in order:** 009 (Shrinker) → 010 (Replayer) → 011 (Export + Verifier) → 012 (parallel race) → 013/014 (sandbox) → 017–022 (agent pipelines) → 023 (Session) → M6 CLI.
+Independent tickets may run as parallel coders on separate files (this worked well for 002–005). Commit each on PASS, update the STATUS progress bars, and update this file after every ticket.
+
+**Lessons from this session:**
+- The reviewer finds real bugs (O(n²) regexes, nested-loop DoS, gather task leaks, env leaks). Always review, and always give the reviewer attack ideas.
+- Per-ticket scope: tell each coder which files to stay in, and tell it not to edit pyproject.toml or uv.lock when others run in parallel.
+- Bob facts: `cwd` MUST be the workspace; stdin DEVNULL; child env allowlisted (done in bob.py). Coins used ≈ 0.15 of 40.
+- Performance note: the executor alone does about 290 seq/s in-process on minishop; 007 must optimise (touched-entity state reads, concurrency, caching the admin setup).
 
 ---
 
@@ -33,7 +45,7 @@ You are continuing the Rook project (IBM Bob hackathon) in /home/aayush/Desktop/
 Start now.
 ```
 
-**Current goal:** Implement M1 + M2 (ROOK-001 → ROOK-012): the foundation and the deterministic engine on the minishop fixture.
+**Current goal:** Verify and commit ROOK-016 and ROOK-007+008 (see "Next session starts here"), then finish M2 (ROOK-009 → 012), M3 (013, 014) and M4 (017 → 022).
 
 ---
 
@@ -41,6 +53,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 14:08 | 1 | ROOK-016 coded (in review), 007+008 coding; docs say 13 agents; session ended at the 90% limit | (docs) |
 | 26 Sep 14:05 | 1 | ROOK-006 (round 2: gather leak fixed) and ROOK-015 (round 2: env allowlist) PASS + committed | ROOK-006/015 |
 | 26 Sep 13:48 | 1 | ROOK-002, 004 (after a work-budget fix) and 005 PASS + committed; 003 in fix round | ROOK-002/004/005 |
 | 26 Sep 13:36 | 1 | ROOK-001 scaffold (coder → reviewer PASS) | ROOK-001 |

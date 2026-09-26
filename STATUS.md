@@ -2,9 +2,9 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 14:05 IST · **By:** Account 1 (Claude Code)
+**Last updated:** 2026-09-26 14:08 IST · **By:** Account 1 (hit its limit; Account 2 continues)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
-**Current block:** B1 (next: ROOK-002)
+**Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
 
 ## Progress
 
@@ -48,8 +48,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-004 | Safe expression evaluator | P0 | DONE | reviewer PASS on round 2 (work budget added) |
 | ROOK-005 | Fixture app minishop | P0 | DONE | reviewer PASS (race test 10/10) |
 | ROOK-006 | HTTP executor | P0 | DONE | reviewer PASS on round 2; ~290 seq/s, tune in 007 |
-| ROOK-007 | Generator + Runner | P0 | IN PROGRESS | |
-| ROOK-008 | Judge | P0 | IN PROGRESS | |
+| ROOK-007 | Generator + Runner | P0 | IN PROGRESS | uncommitted; coded together with 008 |
+| ROOK-008 | Judge | P0 | IN PROGRESS | uncommitted; coded together with 007 |
 | ROOK-009 | Shrinker | P0 | TODO | |
 | ROOK-010 | Replayer | P0 | TODO | |
 | ROOK-011 | Export + Verifier + Test Runner | P0 | TODO | |
@@ -57,7 +57,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-013 | Sandbox + ProcessSandbox | P0 | TODO | |
 | ROOK-014 | DockerSandbox | P0 | TODO | |
 | ROOK-015 | BobClient + recorder | P0 | DONE | reviewer PASS on round 2 (env allowlist) |
-| ROOK-016 | Agent registry, prompts, modes | P0 | IN PROGRESS | |
+| ROOK-016 | Agent registry, prompts, modes | P0 | IN REVIEW | uncommitted; re-review, then commit |
 | ROOK-017 | Scout → Mechanic → Mapper | P0 | TODO | |
 | ROOK-018 | Lawmaker + Rule Critic | P0 | TODO | |
 | ROOK-019 | Test Designer + Strategist | P1 | TODO | |
@@ -104,7 +104,7 @@ None.
 
 ## Key decisions (log)
 - 26 Sep: name **Rook** (warned about the rook.io / Rookout name clash; the user kept it). The CLI is the hero; the full web app is required at the URL.
-- 26 Sep: 12 Bob agents as custom modes plus 6 deterministic engine workers; only the engine judges.
+- 26 Sep: 13 Bob agents as custom modes (Coordinator + 12 specialists) plus 6 deterministic engine workers; only the engine judges.
 - 26 Sep: agents appear inline as blob characters while working (no roster panel).
 - 26 Sep: web = Claude Code web layout; Vercel (web) + Hugging Face Docker Space (API + demo apps via ProcessSandbox).
 - 26 Sep: Google sign-in (Supabase) + a separate GitHub App connect; guest demo mode on the web.

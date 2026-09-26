@@ -37,7 +37,7 @@ Rook reads a repository and uses **IBM Bob agents** to work out the business rul
 2. **Minimal reproduction.** Always shrink to the smallest failing sequence.
 3. **Bob thinks, the engine proves.** The LLM never judges pass or fail.
 4. **Humans own the rules.** Bob proposes, the developer approves.
-5. **Bob is central and meaningful.** 12 specialised Bob agents, not a thin wrapper.
+5. **Bob is central and meaningful.** 13 specialised Bob agents (a Coordinator plus 12 specialists), not a thin wrapper.
 6. **Build what really works.** No faked capabilities.
 
 ## 3. Users
@@ -97,7 +97,7 @@ Rook **only stops for decisions**: missing setup values, approving rules, what t
 - **FR-E10** Run the target in a sandbox: **Docker** locally, and **process** mode for the allowlisted demo apps on the hosted server.
 
 ### 6.3 Bob agents (intelligence)
-- **FR-B1** 12 Bob agents as Bob custom modes, each with its own role, inputs, JSON output schema and tool permissions (see `02_ARCHITECTURE.md`, section 5).
+- **FR-B1** 13 Bob agents (a Coordinator plus 12 specialists) as Bob custom modes, each with its own role, inputs, JSON output schema and tool permissions (see `02_ARCHITECTURE.md`, section 5).
 - **FR-B2** Every agent output is schema-validated and checked by the engine where possible. On failure, the agent retries with the error, up to 3 times.
 - **FR-B3** The Coordinator (AI) picks the next step from an allowed set. **Rails** in code enforce: no code change without approval, no PR without verification, only the engine marks found/fixed, and retry caps.
 - **FR-B4** Every Bob call is streamed live (tool use → UI detail), costed and recorded. **Recorded mode** replays saved real Bob answers, always labeled "recorded".

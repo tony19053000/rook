@@ -63,7 +63,7 @@ flowchart LR
 
 ## Meet the team
 
-Rook uses **12 IBM Bob agents** (Bob custom modes), each with one focused job. They appear in your terminal as little characters while they work.
+Rook uses **13 IBM Bob agents** (a Coordinator plus 12 specialists) (Bob custom modes), each with one focused job. They appear in your terminal as little characters while they work.
 
 | | Agent | Job |
 |---|---|---|
@@ -133,7 +133,7 @@ Any backend with an **HTTP API**, in any language, because Rook talks to your ru
 
 ## How IBM Bob is used
 
-- **In the product:** 12 Bob custom modes, called through `bob run --format stream-json`, with per-agent tool permissions (only the Surgeon can edit, and only the files it was approved to edit). Every step Bob takes streams live into the UI.
+- **In the product:** 13 Bob custom modes, called through `bob run --format stream-json`, with per-agent tool permissions (only the Surgeon can edit, and only the files it was approved to edit). Every step Bob takes streams live into the UI.
 - **In building it:** Bob IDE was used during development (see the demo video).
 
 ## Roadmap

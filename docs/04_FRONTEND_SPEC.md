@@ -140,7 +140,7 @@ Plain Rich output with no animation. It ends with a summary table, exit code 1 i
 │ ⌄ More                   │  ┌ composer ─────────────────────────────────┐ │
 │ Recents                  │  │ [Docker sandbox] [+ Select repository…]  🟠│ │
 │ ● shop-app · finding…    │  │ Describe what to check, or "find bugs"  ↵ │ │
-│ ● billing · 2 broken     │  │ + Auto-approve: off     Bob · 12 agents   │ │
+│ ● billing · 2 broken     │  │ + Auto-approve: off     Bob · 13 agents   │ │
 │ …                        │  └───────────────────────────────────────────┘ │
 │ [Add to CI]  A aayush ·  │                                                │
 └──────────────────────────┴────────────────────────────────────────────────┘

@@ -14,7 +14,7 @@ flowchart LR
   end
   subgraph Core["Rook core (Python)"]
     SES["Session + Conductor<br/>(phases, rails, event bus)"]
-    AGT["Bob agent layer<br/>12 custom modes"]
+    AGT["Bob agent layer<br/>13 custom modes"]
     ENG["Engine<br/>Runner · Judge · Shrinker · Replayer · Test Runner · Verifier"]
     SBX["Sandbox<br/>Docker (local) · Process (hosted)"]
     STO[("SQLite store<br/>runs · events · counterexamples")]
@@ -149,7 +149,7 @@ customModes:
 ```
 Tool groups are the **real permission boundary**, because `bob run` pre-approves every tool call that's allowed.
 
-### 5.3 The 12 agents
+### 5.3 The 13 agents (Coordinator + 12 specialists)
 
 | Slug | Character | Group | Input | Output schema (key fields) | Tools |
 |---|---|---|---|---|---|
