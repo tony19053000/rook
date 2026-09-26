@@ -6,12 +6,14 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 18:25 IST. Account 2 stopped ("update handoff") while the ROOK-023 coder was still running in the background; its files are uncommitted and UNREVIEWED. Earlier (~18:10) account 1 hit its limit mid-023. No orphan sandboxes or bob processes at 18:20.
+**Updated:** 26 Sep 19:45 IST by account 1. ONLY ONE orchestrator session at a time (a second session clobbered 023 at 18:45).
 
-**Committed and DONE (reviewer PASS):** ROOK-001–022 (22 / 40). M1–M4 complete. Pushed to GitHub (HEAD 8b7b8f2). Bob coins used ≈ 2.0 of 40.
+**Committed and DONE (reviewer PASS):** ROOK-001–022, 026 (23 / 40). Bob coins used ≈ 2.0 + the 023 recordings (the coder reports the total).
 
-**UNCOMMITTED work in the working tree:**
-- **ROOK-023 (Session + Conductor)**: partially coded, maybe complete (the coder was resumed after the account limit and may have finished more before this session closed). First run `uv run pytest -q` and read `core/session.py` to see how far it got. Files: `src/rook/core/session.py`, `core/workspace.py`, `tests/unit/session_helpers.py`, `test_session.py`, `test_session_recorded.py`, plus edits to `agents/diagnose.py`, `agents/fix.py`, `agents/guide.py`, `core/events.py`, `store/repo.py`, `tests/unit/test_events.py`, `test_store.py`. Not reviewed yet. If a new session finds it unfinished: resume a coder with the 023 brief (recorded full run PREPARE→SHIP on minishop chaining the 5 committed recordings; questions/--auto; budget; persistence; cancel with no orphans; SHIP = local branch `rook/fix-cx-001`), then reviewer, then commit.
+**In flight (uncommitted, parallel coders on separate files):**
+- **ROOK-023 (Session)**: coder adding admin-rule **B** (sanity.py `already_broken`, flagged rules never auto-approved), 02 doc for `fix.committed`/SHIP/B, then re-records only the stale session_minishop recordings (cap 2 coins). Then review.
+- **ROOK-025 (TUI shell)**: review FAIL round 1 (ESC/C1 control chars unescaped in render.py/shell.py). Coder fixing with `cli/tui/safe_text.clean`.
+- **ROOK-033 (web scaffold)**: coded (59 vitest, tsc clean), in review. Its contract questions for 029: SSE via fetch + Bearer (CORS must allow Authorization), guest cookie needs SameSite=None;Secure cross-site (Vercel↔hf.space: 03 §5 decision), undefined §11 response shapes, engine.progress.pct = 0–100.
 
 **Then continue in order:** 023 → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
 
