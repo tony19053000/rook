@@ -2,24 +2,24 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 21:00 IST · **By:** Account 2 (034 committed; 023 review r2, 024 review r1, 029 PASS waiting on 023)
+**Last updated:** 2026-09-26 21:10 IST · **By:** Account 2 (023, 029, 024 committed; 028 + 035 coding)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
-**Current block:** B2 (M5 Session → M6 CLI)
+**Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [████████████████████░░░░░░░░░░]  67%  27 / 40 tickets
-TIME      [████████░░░░░░░░░░░░░░░░░░░░░░]  27%   ~24h left   (to 27 Sep 20:30 IST)
+OVERALL   [██████████████████████░░░░░░░░]  75%  30 / 40 tickets
+TIME      [█████████░░░░░░░░░░░░░░░░░░░░░]  30%   ~23h left   (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
 M2  Engine            [██████████] 100%   8 / 8    ROOK-005…012
 M3  Sandbox           [██████████] 100%   2 / 2    ROOK-013…014
 M4  Bob agents        [██████████] 100%   8 / 8    ROOK-015…022
-M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
-M6  CLI (hero)        [██████░░░░]  60%   3 / 5     ROOK-024…028
-M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
+M5  Session           [██████████] 100%   1 / 1    ROOK-023
+M6  CLI (hero)        [████████░░]  80%   4 / 5     ROOK-024…028
+M7  Server            [██████████] 100%   1 / 1    ROOK-029
 M8  Auth & GitHub     [░░░░░░░░░░]   0%   0 / 3    ROOK-030…032
 M9  Web               [█████░░░░░]  50%   2 / 4     ROOK-033…036
 M10 Deploy & demo     [░░░░░░░░░░]   0%   0 / 4    ROOK-037…040
@@ -64,14 +64,14 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-020 | Detective + Diagnosis Reviewer | P0 | DONE | reviewer PASS round 2 (recording paths scrubbed); 0.08 coins; points to minishop app.py:214, approved round 1. Session calls DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=) |
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | DONE | reviewer PASS (3 review rounds: code, recording delta, tape-after-guard fix). Live run verified 4/4 (Bob test fails on buggy, 1-line fix, 1500-seq fresh search clean). 1.42 coins. Found + fixed: Bob matches fileRegex on ABSOLUTE paths. Edit tapes store only guard-approved files |
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
-| ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | review FAIL round 1: workspace copy keeps escaping symlinks (security) + flaky cancel-at-PREPARE test + mypy; fixing. Recordings 0.34 coins total |
-| ROOK-024 | Typer commands + CI mode | P0 | IN REVIEW | reviewer PASS round 1; commit AFTER 023 (imports core/session.py). Follow-ups: 02 §12 → call_soon_threadsafe; scaffold mkdir through a symlinked .github |
+| ROOK-023 | Session + Conductor end to end | P0 | DONE | reviewer PASS round 2 (symlink-escape skip + clone core.symlinks=false; cancel race fixed, 30/30; admin rule B). Recordings 0.34 coins. Follow-ups: cancel latency per copy entry (huge single file); local-copy TOCTOU accepted risk |
+| ROOK-024 | Typer commands + CI mode | P0 | DONE | reviewer PASS round 1. replay/verify need loopback --base-url; login exits 1 until 030. Follow-up: scaffold mkdir through a symlinked .github |
 | ROOK-025 | TUI shell | P0 | DONE | reviewer PASS round 3 (clean_multiline keeps \n for cards; control chars stripped). Follow-ups: sprite.py:150 mypy override (026); clean_data has no depth cap; bidi/zero-width pass through |
 , breaks the diff card); round-3 fix partial (clean_multiline). LAST round |
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
 | ROOK-027 | Question prompts + cards | P0 | DONE | reviewer PASS round 1. Follow-up: 'e to edit one rule' not implemented (no Session answer shape; 04 §3.4). 024 wires prompts.register(app) + Backend.answer Any |
-| ROOK-028 | Background run + chat | P0 | TODO | |
-| ROOK-029 | FastAPI server | P0 | IN REVIEW | reviewer PASS round 1; commit right AFTER 023 (imports core/session.py). Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify Vercel rewrite streams SSE |
+| ROOK-028 | Background run + chat | P0 | IN PROGRESS | coding (SessionBackend from 024 already has the worker thread + chat) |
+| ROOK-029 | FastAPI server | P0 | DONE | reviewer PASS round 1. Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify the Vercel rewrite streams SSE |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | TODO | |

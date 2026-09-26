@@ -6,45 +6,30 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 20:00 IST. Account 1 stopped ("update handoff"). All 4 background coders were STOPPED; no pytest/bob/minishop processes left (the node bob pids 70572/70580 are the user's interactive Bob from 12:18, so leave them). ONLY ONE orchestrator session at a time.
+**Updated:** 26 Sep 21:10 IST, Account 2. ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–022, 025, 026, 027, 033, 034 (27 / 40). HEAD 4705c23 before this docs commit. Bob coins ≈ 2.4 of 40 (the 023 recordings total 0.34).
+**Committed and DONE (reviewer PASS):** ROOK-001–027, 029, 033, 034 (30 / 40). Bob coins ≈ 2.4 of 40.
 
-**UNCOMMITTED work in the tree (do NOT commit before a reviewer PASS):**
-1. **ROOK-023 (Session + Conductor, incl. admin rule B)**: coded; review FAIL round 1 of 3; a fix round was stopped midway. Files: core/session.py, core/workspace.py, engine/sanity.py, agents/rules.py, diagnose.py, fix.py, guide.py, core/events.py, store/repo.py, docs/02_ARCHITECTURE.md; tests/unit/session_helpers.py, test_session.py, test_session_recorded.py, test_sanity.py, test_pipeline_rules.py, test_events.py, test_store.py; tests/fixtures/recordings/session_minishop/ (10 files, scrubbed). Findings to fix (send a coder):
-   a. SECURITY: workspace.py `_copy` uses copytree(symlinks=True). A symlink in an untrusted repo pointing outside (/etc/passwd, ~/.ssh, ~/.bob-key.env) is readable in the workspace where Bob runs on the host. Skip links that escape the source root (absolute, ../, chains, dir links) with a warn; the same for GitHub clones (core.symlinks=false or a post-clone scan). Tests for each case.
-   b. FLAKY: test_session.py::test_cancel_at_every_phase_leaves_no_process_behind[PREPARE] fails ~1/10 runs solo. Root-cause the race (cancel vs to_thread(prepare_workspace) / SandboxTracker) and prove 30x with 0 failures. (The coder was mid-debug: "a child process outlived the 10 s wait".)
-   c. mypy (`uv run --with mypy mypy`): events.py:416, fix.py:91, fix.py:488.
-   Then the reviewer (round 2), then commit `ROOK-023: Session + Conductor end to end`.
-2. **ROOK-025 (TUI shell)**: review FAIL round 2 of 3 (the LAST round). Control-char fix verified. Remaining: `clean_data` flattened \n, so the fix.ready diff loses its lines. The round-3 coder was stopped PARTWAY: `safe_text.clean_multiline` exists and render.py references it. Finish: clean_multiline keeps \n (\r\n/\r→\n, \t\v\f→space, strips other C0/DEL/C1); clean_data uses it for values; single-line chrome still uses clean; tests (`clean_data({"diff":"-a\r\n+b\n c"})["diff"]=="-a\n+b\n c"`, one-line rows stay one line). Files: cli/logo.py, cli/tui/{app,__main__,auth,backend,commands,history,render}.py, widgets/shell.py, safe_text.py (modified, additive), tests/unit/test_tui_app.py, test_tui_commands.py, tui_samples.py. If round 3 fails → BLOCKED per the rules (tell the user).
-3. **ROOK-027 (prompts + cards)** and **ROOK-029 (FastAPI server)**: were started, then stopped; NO files written. Restart from scratch (briefs below).
+**In flight (uncommitted):**
+- ROOK-035 (web cards + answers + chat): coding, only in web/ (RunView, Transcript, components/cards/, lib/cardText.ts, lib/questions.ts, DevStream.tsx). Then reviewer.
+- ROOK-028 (background run + chat): coding. The 024 SessionBackend already has the worker thread + chat-to-Guide; 028 may be mostly tests + /bg-style details per 04.
 
-**Next steps in order (run in parallel on separate files):** fix 023 + finish 025 → review both → commit. Start 029 (server) and 027 (cards) in parallel now (neither edits 023/025 files). After 025 passes: 024 (Typer commands, CI mode, bare `rook` → `run_tui()`, update test_smoke). Then 028 → 030/031/032 (need U1/U2) → 034–036 web → 037–040 deploy.
+**Next steps in order:** 028 + 035 → review → commit. Then 036 (web pages, picker, guest). 030/031/032 need U1/U2 (ask the user). 037–040 deploy need U3/U4/U5.
 
-**Brief notes for 029:** routes per 02 §11 except auth/GitHub (seam for 030/031); SSE `after` resume; owner checks (404); guest cookie + demo-only + quotas; CORS for the web origin with credentials + Authorization (never *); rate + size limits. Match web/lib/sse.ts + api.ts (fetch-streamed SSE with Bearer, envelope JSON with seq, fatal 400/401/403/404/410, pct 0–100). DECISION: the web calls the API through a same-origin Vercel rewrite proxy (/api/v1/* → HF Space), so the guest cookie stays first-party SameSite=Lax; note it in 03 and pin the open §11 response shapes in 02. Tests use a fake Session or the recorded run (0 coins, no Docker).
-**Brief notes for 027:** menu/confirm/setup-value prompts (mask secrets), rules/counterexample/diagnosis/fix-diff/verify/PR cards, the shrink line (04 §2.2). An `already_broken` rule is shown "possibly already broken" and NOT pre-selected. Plug in only via 025 seams (`app.views[type]`, `transcript.mount_item`, `backend.answer`); new files widgets/prompts.py and cards.py; clean all payload text; fits 80 cols.
+**Follow-ups noted (non-blocking):**
+- Replay: `POST /counterexamples/{id}/replay` answers 501 until Session gets a replay-only mode (pass `create_app(replay_factory=...)`).
+- Deploy (037): set ROOK_TRUSTED_PROXY_HOPS (probably 2), ROOK_GUEST_SECRET (≥32 chars), ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS, ROOK_ALLOWLIST, ROOK_DAILY_COIN_CAP, ROOK_DB_PATH; check that the Vercel rewrite streams SSE unbuffered.
+- 027: "e to edit one rule" not implemented (no Session answer shape; 04 §3.4).
+- sprite.py:150 mypy override (026); scaffold mkdir through a symlinked .github (024); cancel latency per copy entry (023); bidi/zero-width chars pass through clean() (TUI + web).
+- Older: Mechanic fileRegex `^\.rook-sandbox/` never matches (registry.py:26); per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; CostUpdate ge=0 + monotonic cost; NFKC-normalise Surgeon paths; understand_minishop recordings hold /tmp/pytest-of-aayush paths; document cx JSON shape in 02 §7.8.
 
-**Then continue in order:** 023 → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
-
-**Session API notes for 024/029:** DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=); FixPipeline gated by rails fix approval; edit tapes store only guard-approved files.
-
-**Open decisions for the user:**
-- ~~ADMIN RULE~~ DECIDED 26 Sep 18:40: **B**. A response rule broken on the 1st request is flagged 'possibly already broken' and needs explicit human approval (never auto-approved by --auto). Implemented inside 023.
-- Live Bob recording for 023 approved, cap 3 coins.
-- Start TUI (025/026) early on fake events while 023 finishes? (recommended yes)
-- ROOK-007 throughput: 268 seq/s measured (target 500). Ceiling is minishop itself (sync `current_user` + O(n) user scans); engine alone ≈750/s. Recorded in STATUS as not met.
-- ROOK-014: sandboxed apps have NO internet at run time. Apps that need it would need a new `SandboxPlan.egress` field (contract change in 02 §8) — not added; ask the user if a demo app needs it.
-
-**Follow-ups noted (non-blocking, from reviews):** Mechanic fileRegex `^\.rook-sandbox/` (registry.py:26) never matches (Bob matches ABSOLUTE paths): fix like surgeon_edit_regex or drop the unused edit group; per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; `CostUpdate` ge=0 + monotonic cost in RunState; NFKC-normalise Surgeon paths; understand_minishop recordings still contain local `/tmp/pytest-of-aayush` paths (018–021 recordings are scrubbed); document cx JSON shape in 02 §7.8.
+**Open decisions for the user:** ROOK-007 throughput 268 seq/s (target 500, ceiling is minishop); ROOK-014 SandboxPlan.egress for apps needing internet (not added).
 
 **Lessons from this session:**
-- Bob matches mode `fileRegex` against ABSOLUTE paths (found live in 021).
-- Recording edit tapes must be written only AFTER the path guard (021 review).
-- redact_text heuristics can alter app source ("missing bearer token") — never redact file contents that must replay byte-exact.
-- Always give the reviewer attack ideas — it found real bugs in 013 (LD_PRELOAD env), 014 (open egress, then compose hostname DNS hijack: 11/20 requests stolen), 011 (mkdir symlink escape).
-- Parallel coders on separate files work well; tell each which files NOT to touch. A reviewer may see transient failures from another coder's in-progress file — re-run before blaming.
-- `ROOK_SLOW=1` enables the slow 20k-sequence tests; Docker tests: `uv run pytest -q -m docker`.
-- Live Bob recordings live in `tests/fixtures/recordings/<name>/` (only that path is un-ignored). Re-record if prompts/templates change.
+- Commit order matters: 024/029 imported the uncommitted 023 session.py, so they waited for 023. Shared doc files were split per ticket with `git apply --cached --unidiff-zero` on a filtered `git diff -U0`.
+- Bob matches mode `fileRegex` against ABSOLUTE paths. Record edit tapes only AFTER the path guard. Never redact file contents that must replay byte-exact.
+- Always give the reviewer attack ideas. Parallel coders on separate files work; tell each which files NOT to touch.
+- `ROOK_SLOW=1` enables the slow tests; Docker tests: `uv run pytest -q -m docker`. Live recordings live in `tests/fixtures/recordings/<name>/`.
 
 ---
 
@@ -62,7 +47,7 @@ You are continuing the Rook project (IBM Bob hackathon) in /home/aayush/Desktop/
 Start now.
 ```
 
-**Current goal:** Finish + review + commit ROOK-023 (Session, uncommitted in tree), then M6 CLI 024–028 → 029 server → web → deploy. Ask the user the open A/B admin-rule decision.
+**Current goal:** Finish 028 (background run + chat) and 035 (web cards), then 036 web pages → 030–032 (need U1/U2) → 037–040 deploy (need U3–U5).
 
 ---
 
@@ -70,6 +55,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 21:10 | 2 | ROOK-023 PASS round 2 + committed, then 029 and 024 committed (doc hunks split per ticket). 30/40. 028 + 035 coding | ROOK-023/029/024 |
 | 26 Sep 21:01 | 2 | ROOK-024 reviewer PASS (uncommitted; commit order: 023 → 029 → 024). 035 coding; 023 review r2 | (none) |
 | 26 Sep 21:00 | 2 | ROOK-034 PASS round 1 + committed | ROOK-034 |
 | 26 Sep 20:40 | 2 | ROOK-029 reviewer PASS (uncommitted: depends on uncommitted session.py → commit right after 023; 02/03 doc hunks are mixed: 023 = 02 §5/§9/§10 + 03 §4.1, 029 = 02 §11/§13 + 03 §8). 023 review r2; 024 coding | (none) |
