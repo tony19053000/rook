@@ -18,7 +18,8 @@
 **Session API notes for 024/029:** DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=); FixPipeline gated by rails fix approval; edit tapes store only guard-approved files.
 
 **Open decisions for the user:**
-- ADMIN RULE (A/B): ROOK-018 rejects a response rule broken on the 1st request on the buggy app (admin_export as customer → 200), so the admin bug is never searched. A = keep (spec). B (recommended) = flag as 'possibly already broken' for human approval. 023 is built for A without blocking B.
+- ~~ADMIN RULE~~ DECIDED 26 Sep 18:40: **B**. A response rule broken on the 1st request is flagged 'possibly already broken' and needs explicit human approval (never auto-approved by --auto). Implemented inside 023.
+- Live Bob recording for 023 approved, cap 3 coins.
 - Start TUI (025/026) early on fake events while 023 finishes? (recommended yes)
 - ROOK-007 throughput: 268 seq/s measured (target 500). Ceiling is minishop itself (sync `current_user` + O(n) user scans); engine alone ≈750/s. Recorded in STATUS as not met.
 - ROOK-014: sandboxed apps have NO internet at run time. Apps that need it would need a new `SandboxPlan.egress` field (contract change in 02 §8) — not added; ask the user if a demo app needs it.
@@ -58,6 +59,8 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 19:01 | 2 | Stopped: killed this session's 023 coder at user request. Tree has 023 files + tests/fixtures/recordings/session_minishop/ (new, unreviewed; no local paths found) + 02_ARCHITECTURE edits, all uncommitted. Check that no two orchestrators run at once | (docs) |
+| 26 Sep 18:40 | 1 | Resumed: 1014 passed / 4 failed (all 023). User chose admin rule B + 3-coin cap; coder finishing 023 (+B) | (docs) |
 | 26 Sep 18:25 | 2 | Update handoff: 023 coder still running (uncommitted); 22/40 done, ≈2.0 coins | (docs) |
 | 26 Sep 18:10 | 1 | Account limit hit mid-023; coder resumed on account 2 | (docs) |
 | 26 Sep | 1 | ROOK-021 PASS + committed (M4 done; 1.42 coins; fileRegex absolute-path bug fixed; tape-after-guard) | ROOK-021 |

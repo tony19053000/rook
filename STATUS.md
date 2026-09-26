@@ -107,4 +107,5 @@ None.
 - 26 Sep: 13 Bob agents as custom modes (Coordinator + 12 specialists) plus 6 deterministic engine workers; only the engine judges.
 - 26 Sep: agents appear inline as blob characters while working (no roster panel).
 - 26 Sep: web = Claude Code web layout; Vercel (web) + Hugging Face Docker Space (API + demo apps via ProcessSandbox).
+- 26 Sep 18:40: admin rule = **B** (flag a rule broken on the 1st request as 'possibly already broken', human approval, never --auto). Done in 023.
 - 26 Sep: Google sign-in (Supabase) + a separate GitHub App connect; guest demo mode on the web.
