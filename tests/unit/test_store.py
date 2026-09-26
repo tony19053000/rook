@@ -120,3 +120,19 @@ async def test_late_subscriber_with_store_gets_replay_then_live(tmp_path: Path) 
     await bus.close("r1")
     await asyncio.wait_for(task, 1)
     assert seen == [3, 4]
+
+
+def test_update_run_and_list_counterexamples(tmp_path: Path) -> None:
+    store = Store(tmp_path / "rook.db")
+    store.insert_run(_run("r1", "2026-09-26T08:00:00Z"))
+    store.update_run("r1")  # nothing to change
+    store.update_run("r1", status="done", finished_at="2026-09-26T08:05:00Z", coins=0.25)
+    run = store.get_run("r1")
+    assert run is not None and (run.status, run.finished_at, run.coins) == ("done", "2026-09-26T08:05:00Z", 0.25)
+    store.update_run("r1", status="failed")
+    assert store.get_run("r1").coins == 0.25  # type: ignore[union-attr]
+    store.save_counterexample("r1_cx_002", "r1", "b", {"n": 2})
+    store.save_counterexample("r1_cx_001", "r1", "a", {"n": 1}, status="verified")
+    store.save_counterexample("r2_cx_001", "r2", "a", {"n": 3})
+    assert [(c.id, c.status) for c in store.list_counterexamples("r1")] == [("r1_cx_001", "verified"),
+                                                                         ("r1_cx_002", "open")]

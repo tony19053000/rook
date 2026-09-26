@@ -5,9 +5,9 @@ from __future__ import annotations
 import asyncio
 import re
 import threading
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from datetime import UTC, datetime
-from typing import Any, Literal, Protocol
+from typing import Any, Literal, Protocol, cast
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -260,6 +260,13 @@ class VerifyDone(_Data):
     summary: str
 
 
+class FixCommitted(_Data):
+    cx_id: str
+    branch: str
+    commit: str
+    files: list[str]
+
+
 class PrOpened(_Data):
     url: str
     number: int
@@ -310,6 +317,7 @@ EVENT_TYPES: dict[str, type[BaseModel]] = {
     "fix.ready": FixReady,
     "verify.step": VerifyStep,
     "verify.done": VerifyDone,
+    "fix.committed": FixCommitted,
     "pr.opened": PrOpened,
     "chat.message": ChatMessage,
     "cost.update": CostUpdate,
@@ -322,7 +330,7 @@ EventType = Literal[
     "engine.progress", "engine.finished", "question.asked", "question.answered", "repo.summary",
     "sandbox.ready", "model.actions", "rules.proposed", "rules.reviewed", "rules.approved",
     "search.progress", "violation.found", "shrink.step", "counterexample.saved", "diagnosis.ready",
-    "fix.ready", "verify.step", "verify.done", "pr.opened", "chat.message", "cost.update", "log",
+    "fix.ready", "verify.step", "verify.done", "fix.committed", "pr.opened", "chat.message", "cost.update", "log",
     "run.finished",
 ]
 
@@ -375,13 +383,16 @@ class _RunChannel:
         self.seq = last_seq
         self.history: list[Event] = []
         self.subscribers: set[asyncio.Queue[Event | None]] = set()
+        self.observers: list[Callable[[Event], None]] = []
         self.closed = False
 
 
 class EventBus:
     """Async per-run pub/sub. Every event is validated, redacted, given the next seq, stored, then delivered.
 
-    Without a store, history is kept in memory so late subscribers can replay.
+    Without a store, history is kept in memory so late subscribers can replay. Observers are called
+    synchronously, in seq order, before `publish` returns (e.g. the run's rails state), so a check made
+    right after publishing an event always sees it.
     """
 
     def __init__(self, store: EventStore | None = None) -> None:
@@ -402,14 +413,24 @@ class EventBus:
             if channel.closed:
                 raise RuntimeError(f"run {run_id!r} is closed")
             channel.seq += 1
-            event = Event(seq=channel.seq, ts=now_ts(), run_id=run_id, type=event_type, data=payload)
+            event = Event(seq=channel.seq, ts=now_ts(), run_id=run_id,
+                          type=cast(EventType, event_type), data=payload)  # checked by validate_data
             if self._store is not None:
                 self._store.append_event(event)
             else:
                 channel.history.append(event)
+            for observer in channel.observers:
+                observer(event)
             for queue in channel.subscribers:
                 queue.put_nowait(event)
         return event
+
+    def add_observer(self, run_id: str, observer: Callable[[Event], None]) -> None:
+        """Call `observer(event)` for every later event of the run, in seq order, inside `publish`."""
+        self._channel(run_id).observers.append(observer)
+
+    def is_closed(self, run_id: str) -> bool:
+        return self._channel(run_id).closed
 
     async def close(self, run_id: str) -> None:
         """End the run's stream: current subscribers finish; late subscribers get the replay only."""

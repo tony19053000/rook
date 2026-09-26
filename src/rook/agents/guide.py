@@ -40,6 +40,7 @@ class RunSnapshot:
             "coins_total": 0.0,
         }
         self.rules: dict[str, str] = {}
+        self._cx_ids: set[str] = set()
         self.active_agents: dict[str, str] = {}  # call_id -> agent
         self.recent: deque[dict[str, Any]] = deque(maxlen=_RECENT)
         self.errors: deque[str] = deque(maxlen=_ERRORS)
@@ -57,8 +58,9 @@ class RunSnapshot:
                 self.rules = dict(d["rules"])
             case "violation.found":
                 c["violations"] += 1
-            case "counterexample.saved":
-                c["counterexamples"] += 1
+            case "counterexample.saved":  # published again when the regression test is saved
+                self._cx_ids.add(d["cx_id"])
+                c["counterexamples"] = len(self._cx_ids)
             case "cost.update":
                 c["coins_total"] = d["coins_total"]
             case "agent.started":

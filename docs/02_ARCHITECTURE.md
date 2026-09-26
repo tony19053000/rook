@@ -59,7 +59,7 @@ rook/                           # repo root (github.com/tony19053000/rook)
 ├─ .claude/agents/coder.md, reviewer.md
 ├─ pyproject.toml               # package "rook-cli", entry point: rook = rook.cli.main:app
 ├─ src/rook/
-│  ├─ core/            session.py (Session, Conductor), phases.py, rails.py, events.py (bus + models), config.py
+│  ├─ core/            session.py (Session, Conductor), workspace.py (PREPARE copy/clone/demo, SHIP git branch), rails.py, events.py (bus + models), config.py
 │  ├─ agents/          bob.py (BobClient), registry.py (AgentSpec x12), prompts/*.md, schemas.py, modes.py (writes .bob/custom_modes.yaml), recorder.py, caller.py, coordinator.py, guide.py, understand.py (SCOUT → START_APP → MAP pipeline)
 │  ├─ model/           schema.py (rook.yaml pydantic), expr.py (safe evaluator), loader.py
 │  ├─ engine/          runner.py, generator.py, executor.py (HTTP), judge.py, shrinker.py, replayer.py, verifier.py, testrunner.py, isolation.py, dryrun.py (MAP dry-run)
@@ -98,8 +98,11 @@ MAP          agent mapper       -> actions + state (rook.yaml part); engine dry-
 RULES        agent lawmaker     -> rules; engine sanity-checks (parse + holds on fresh app); agent rule_critic -> verdicts
              (agents/rules.py; engine/sanity.py: parses + known names/fields, then holds on a fresh app = the rule's
               entities just created, or its `when` action sent once, judged by the Judge on the rule's own check,
-              never on the HTTP status; engine-rejected rules skip the critic; critic revisions are re-checked)
-APPROVE      ASK approve_rules  (auto mode: accept critic-approved)
+              never on the HTTP status; engine-rejected rules skip the critic; critic revisions are re-checked.
+              A response rule whose check evaluates to false on that first request is NOT rejected: it is kept
+              and flagged `already_broken` (a one-step bug or a wrong rule; the engine can't tell). The critic
+              sees the flag. A check that fails to evaluate is still rejected; state rules are unchanged)
+APPROVE      ASK approve_rules  (auto: accept critic-approved, never a rule flagged possibly already broken)
 DESIGN       agents test_designer + strategist (parallel) -> scenarios, weights
 SEARCH       engine runner+judge (background; chat allowed) until violation or budget
   └─ on violation: SHRINK -> REPLAY -> SAVE (json + native regression test written by surgeon in test-only scope, see §7.8)
@@ -108,9 +111,39 @@ APPROVE_FIX  ASK fix
 FIX          agent surgeon (only edit-capable agent) -> patch in workspace; agent fix_reviewer -> verdict (loop ≤3)
 VERIFY       engine verifier: replay + project tests + fresh search  (fail -> back to DIAGNOSE, ≤3)
 APPROVE_PR   ASK pr
-SHIP         push branch + open PR (or apply to local tree if local folder mode and user chooses)
+SHIP         commit fix + regression test + rook/rook.yaml + cx JSON to a new branch rook/fix-<cx> (fix.committed);
+             GitHub repos only: then push the branch + open a PR (ROOK-031, pr.opened). Test mode and local folders
+             (LocalBranchShipper, the default) stop after the local commit: nothing is pushed, never the default branch.
 DONE
 ```
+
+**Session (`core/session.py`, ROOK-023).** Implementation notes and the API the CLI and server use:
+- PREPARE (`core/workspace.py`): a local folder is **copied** (no `.git`, caches or `node_modules`) into
+  `~/.rook/workspaces/<run>/` and gets a fresh git repo with one baseline commit, so the user's folder and its
+  `.git` are never written to. GitHub: `git clone` with the installation token passed only through the git child
+  env (`http.extraheader`), never argv or `.git/config`. Demo: allowlisted repos only; `hosted` refuses all else.
+  Git runs with no user/system config and no hooks.
+- In SAVE only the cx JSON is written and `counterexample.saved{test_path:null}` published. The native regression
+  test is written after APPROVE_FIX (a Surgeon edit needs the human's OK, CLAUDE.md rule 5), at the start of FIX,
+  and `counterexample.saved` is published again with its `test_path`.
+- VERIFY fail -> Coordinator at `verify_failed` -> DIAGNOSE (rails: at most 3 verifications). Before re-diagnosing,
+  the unverified patch is reverted (path-guard snapshot taken before FIX) and the app reloaded; the Detective is
+  told what failed. If the rails end the loop, the last patch stays in the workspace, unshipped, and the summary
+  says so.
+- approve_rules payload: `{rules:[{id, text, kind, check, accepted, reason, critic: approve|reject|revise|null,
+  already_broken: bool}]}` (every proposed rule, with its outcome; only `accepted` ones can be approved; a flagged
+  rule's `reason` ends with the engine's reason).
+- Auto answers: approve_rules = critic-approved rules, never one flagged `already_broken` (only a human may
+  approve it); fix = yes only for a reviewed diagnosis; pr = yes (a branch,
+  never the default branch); menu = the first allowed of retry/skip/extend/diagnose/report/stop. Setup values come
+  from `options.setup_values` or the user, never auto.
+- RunState and the Guide snapshot observe the bus synchronously (`EventBus.add_observer`). Live Bob calls go
+  through `BudgetedClient`: refused once the budget/daily cap is spent, else capped with `--max-cost`.
+- API: `Session(repo, request, options, bus=, store=, ...)`, `await run() -> RunResult`, `events(after)`,
+  `answer(question_id, answer) -> bool`, `chat(text) -> bool`, `cancel()`, `pending_questions()`; `answer`,
+  `chat`, `cancel` are thread-safe. Cancel kills Bob process groups, stops the search, waits for a sandbox that is
+  still starting, then stops every sandbox. `read_run(store, id)` rebuilds state from stored events;
+  `mark_interrupted(store)` fails runs left `running` by a dead process (runs are not resumed mid-phase).
 
 **The Coordinator (AI) and the rails:**
 - The Conductor has a **default path** (above). At **branch points** (an agent failed 3 times, the search budget ran out with no violation, verification failed, or the user sent a free-form request), it calls the **coordinator** agent with a compact state summary and the **allowed next steps** for the current phase. It gets back `{"next": <step>, "reason": str}`.
@@ -313,7 +346,7 @@ Envelope, one JSON object per event:
 | `sandbox.ready` | `{base_url_redacted, mode}` |
 | `model.actions` | `{actors[], actions[], state[]}` |
 | `rules.proposed` | `{rules[]}` |
-| `rules.reviewed` | `{verdicts[]}`, each `{rule_id, verdict: approve\|reject\|revise, reason, by: engine\|critic, revised?}` |
+| `rules.reviewed` | `{verdicts[]}`, each `{rule_id, verdict: approve\|reject\|revise, reason, by: engine\|critic, revised?, already_broken?}` (`already_broken: true` only on the critic verdict of a flagged rule) |
 | `rules.approved` | `{rule_ids[]}` |
 | `search.progress` | `{sequences, per_sec, rules:{rule_id: holding\|broken}}` (throttled to 5/s) |
 | `violation.found` | `{violation_id, rule_id, steps_count, observed}` |
@@ -323,6 +356,7 @@ Envelope, one JSON object per event:
 | `fix.ready` | `{cx_id, files[], diff, reviewed:bool}` |
 | `verify.step` | `{cx_id, check: replay\|project_tests\|regression_test\|fresh_search, status: running\|passed\|failed, detail}` |
 | `verify.done` | `{cx_id, verified, summary}` |
+| `fix.committed` | `{cx_id, branch, commit, files[]}` (SHIP: the verified fix committed to a new branch; not pushed yet) |
 | `pr.opened` | `{url, number, branch}` |
 | `chat.message` | `{role: user\|guide, text}` |
 | `cost.update` | `{coins_total}` |
@@ -334,7 +368,7 @@ Envelope, one JSON object per event:
 ```sql
 runs(id TEXT PK, user_id TEXT, repo_kind TEXT, repo_ref TEXT, status TEXT, created_at TEXT, finished_at TEXT, coins REAL)
 events(run_id TEXT, seq INTEGER, ts TEXT, type TEXT, data TEXT, PRIMARY KEY(run_id, seq))
-counterexamples(id TEXT PK, run_id TEXT, rule_id TEXT, json TEXT, status TEXT)   -- open|fixed|verified
+counterexamples(id TEXT PK, run_id TEXT, rule_id TEXT, json TEXT, status TEXT)   -- id = <run_id>_<cx_id>; open|fixed|verified
 users(id TEXT PK, email TEXT, github_installation_id INTEGER, created_at TEXT)
 guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 ```
@@ -409,7 +443,7 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 | Bob returns invalid JSON | Retry with the error (up to 3), then the Coordinator decides, then tell the user |
 | The app won't start | The Mechanic loops up to 3 times with the logs, then ASK setup_value or show a clear error |
 | An action dry-run fails | Back to the Mapper with the HTTP response (up to 3). If it still fails, the action is disabled |
-| A rule doesn't hold on a fresh app | The rule is rejected automatically as "wrong rule" before the human sees it |
+| A rule doesn't hold on a fresh app | The rule is rejected automatically as "wrong rule" before the human sees it. Exception: a response rule broken by the very first request is kept, flagged `already_broken`; a human may approve it, auto mode never does |
 | No violation within budget | Report "no counterexample in N sequences". The Coordinator may extend the budget once |
 | A flaky counterexample | It's shown as `k/10 · flaky` and still reported. Races are expected to be flaky |
 | Verification fails | Back to DIAGNOSE with the new evidence (up to 3), then report honestly |

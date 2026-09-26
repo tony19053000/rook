@@ -4,7 +4,9 @@ Bob proposes and code decides (CLAUDE.md rule 1):
 - the Lawmaker proposes rules with evidence (`rules.proposed`);
 - the engine (engine/sanity.py) checks each rule: it must parse with the safe evaluator, use only known
   names and fields, and hold on a fresh app. A rule that fails is rejected with the engine's reason and
-  never reaches the critic;
+  never reaches the critic. A response rule the app breaks on its very first request is kept but flagged
+  `already_broken` (a one-step bug or a wrong rule): the critic is told, the flag is carried on its verdicts
+  and outcome, and only a human can approve it (never auto mode);
 - the Rule Critic judges what the surviving rules mean (a real invariant, too weak, a duplicate). Its
   verdict can reject or revise a rule, but it never overrides the engine: a revised rule is sanity-checked
   again, and a critic "approve" cannot save a rule the engine rejected;
@@ -66,6 +68,11 @@ class RuleOutcome:
     accepted: bool
     reason: str
 
+    @property
+    def already_broken(self) -> bool:
+        """The engine saw the (final) rule fail on the first request to a fresh app (see engine/sanity.py)."""
+        return self.engine.already_broken
+
 
 @dataclass
 class RulesResult:
@@ -122,11 +129,27 @@ def _rule_data(rule: Rule) -> dict[str, Any]:
     return rule.model_dump(mode="json", by_alias=True, exclude_none=True)
 
 
+# What the critic is told about a flagged rule. Fixed text (no app output), so prompts stay reproducible.
+ALREADY_BROKEN_NOTE = ("The engine saw this rule fail on the very first request to a fresh app. Either the "
+                       "app already breaks it in one step, or the rule is wrong. Judge what it means; a human "
+                       "decides whether to approve it.")
+
+
+def _critic_rule_data(rule: Rule, check: SanityResult) -> dict[str, Any]:
+    data = _rule_data(rule)
+    if check.already_broken:
+        data |= {"already_broken": True, "engine_note": ALREADY_BROKEN_NOTE}
+    return data
+
+
 def _verdict(rule_id: str, verdict: Literal["approve", "reject", "revise"], reason: str,
-             by: Literal["engine", "critic"], revised: Rule | None = None) -> dict[str, Any]:
+             by: Literal["engine", "critic"], revised: Rule | None = None,
+             already_broken: bool = False) -> dict[str, Any]:
     data: dict[str, Any] = {"rule_id": rule_id, "verdict": verdict, "reason": redact_text(reason), "by": by}
     if revised is not None:
         data["revised"] = _rule_data(revised)
+    if already_broken:
+        data["already_broken"] = True
     return data
 
 
@@ -174,18 +197,20 @@ class RulesPipeline:
             verdicts.append(_verdict(rule.id, "reject", check.reason, "engine"))
             await self._log("warn", f"Rule {rule.id} rejected by the engine: {redact_text(check.reason)}")
 
-        critic = await self._critic(passed, files) if passed else {}
         engine_ok = {c.rule_id: c for c in checks}
+        critic = await self._critic(passed, engine_ok, files) if passed else {}
         revisions: list[tuple[Rule, Rule, RuleVerdict]] = []
         taken = {r.id for r in passed}
         for rule in passed:
             verdict = critic.get(rule.id)
             check = engine_ok[rule.id]
             if verdict is None:
+                seen = check.reason if check.already_broken else "holds on a fresh app"
                 outcomes[rule.id] = RuleOutcome(rule, rule, check, None, True,
-                                                "holds on a fresh app; no critic verdict (left for the human)")
+                                                f"{seen}; no critic verdict (left for the human)")
                 continue
-            verdicts.append(_verdict(rule.id, verdict.verdict, verdict.reason, "critic", verdict.revised))
+            verdicts.append(_verdict(rule.id, verdict.verdict, verdict.reason, "critic", verdict.revised,
+                                     check.already_broken))
             if verdict.verdict == "approve":
                 outcomes[rule.id] = RuleOutcome(rule, rule, check, verdict, True, f"critic: {verdict.reason}")
             elif verdict.verdict == "reject":
@@ -254,11 +279,12 @@ class RulesPipeline:
         assert isinstance(output, LawmakerOutput)
         return [r.model_copy(update={"status": "proposed"}) for r in output.rules]
 
-    async def _critic(self, rules: list[Rule], files: dict[str, str]) -> dict[str, RuleVerdict]:
+    async def _critic(self, rules: list[Rule], checks: Mapping[str, SanityResult],
+                      files: dict[str, str]) -> dict[str, RuleVerdict]:
         """The critic's verdicts by rule id ({} if the critic failed: the human then decides alone)."""
         try:
             result = await call_agent(self.client, "rule_critic", self.workspace,
-                                      rules=[_rule_data(r) for r in rules], files=files)
+                                      rules=[_critic_rule_data(r, checks[r.id]) for r in rules], files=files)
         except BOB_FAILURES as exc:
             await self._log("warn", f"The Rule Critic failed; the rules are left for the human: "
                                     f"{redact_text(str(exc)).splitlines()[0] if str(exc) else 'error'}")
@@ -285,9 +311,13 @@ class RulesPipeline:
             worker="judge", label=f"Sanity-checking {len(rules)} {label} rules on a fresh app"))
         results = await sanity_check(self.model, rules, self.app.base_url, env=self.env,
                                      transport=self.app.transport)
-        good = sum(r.ok for r in results)
-        await self._publish("engine.finished", EngineFinished(
-            worker="judge", ok=good > 0, summary=f"{good}/{len(results)} {label} rules hold on a fresh app"))
+        good = sum(r.ok and not r.already_broken for r in results)
+        flagged = sum(r.already_broken for r in results)
+        summary = f"{good}/{len(results)} {label} rules hold on a fresh app"
+        if flagged:
+            summary += f" ({flagged} may already be broken)"
+        await self._publish("engine.finished", EngineFinished(worker="judge", ok=good + flagged > 0,
+                                                              summary=summary))
         return results
 
     # events

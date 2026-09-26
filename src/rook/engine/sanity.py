@@ -15,8 +15,10 @@ Two checks, both deterministic code (CLAUDE.md rule 1; the Rule Critic only judg
    A rule that could not be exercised at all (its entities could not be created) is rejected too: the
    search could never check it either.
 
-Note: a response rule is judged on a single request, so an app that breaks it on the very first
-request (a one-step bug) gets the rule rejected with a reason that says so; the human can still add it.
+A response rule is judged on a single request, so an app that already breaks it on the very first request
+(a one-step bug) cannot be told apart from a wrong rule. Such a rule is kept (`ok`) but flagged
+`already_broken`, with a reason that says so: a human may approve it, auto mode never does. A check that
+fails to *evaluate* is still rejected, and state rules that are false on a fresh app are still rejected.
 """
 
 from __future__ import annotations
@@ -48,6 +50,7 @@ class SanityResult:
     ok: bool
     stage: Literal["static", "fresh"]
     reason: str
+    already_broken: bool = False  # a response rule the app broke on its first request (see the module doc)
 
 
 class _NotExercised(Exception):
@@ -248,10 +251,11 @@ async def _check_response_rule(
                             f"its check fails to evaluate on a fresh app ({where}): "
                             f"{redact_text(judge.rule_errors[rule.id])}")
     if violation is not None:
-        return SanityResult(rule.id, False, "fresh",
-                            f"it is already false on a fresh app: {where} with body "
-                            f"{_excerpt(result.response_json)} fails `{rule.check}` (either the rule is "
-                            f"wrong or the app breaks it on the first request)")
+        return SanityResult(rule.id, True, "fresh",
+                            f"it may already be broken on the first request: on a fresh app {where} with "
+                            f"body {_excerpt(result.response_json)} fails `{rule.check}` (either the app "
+                            f"breaks it in one step or the rule is wrong; a human decides)",
+                            already_broken=True)
     return SanityResult(rule.id, True, "fresh", f"holds on a fresh app ({where})")
 
 

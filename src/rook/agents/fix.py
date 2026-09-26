@@ -88,13 +88,15 @@ def require_fix_approval(state: rails.RunState) -> None:
 class TestHarness(Protocol):
     """Runs tests next to the app. `SandboxHarness` is the real one; tests may supply their own."""
 
-    __test__ = False
-
     def can_run_native(self) -> bool: ...
     async def run_native(self, test_path: str) -> TestRun: ...
     async def run_fallback(self, test_file: Path) -> TestRun: ...
     async def run_project(self) -> TestRun | None: ...
     async def reload(self) -> None: ...
+
+
+# Not a pytest test class. Set outside the body: a Protocol attribute would become a protocol member.
+TestHarness.__test__ = False  # type: ignore[attr-defined]
 
 
 class SandboxHarness:
@@ -333,9 +335,13 @@ class FixPipeline:
     # --- 2. the fix ---
 
     async def fix(self, state: rails.RunState, model: RookModel, cx: Counterexample,
-                  diagnosis: DiagnosisResult, regression: RegressionTest) -> FixResult:
+                  diagnosis: DiagnosisResult, regression: RegressionTest, *,
+                  announce: bool = True) -> FixResult:
+        """`announce=False` when the caller already published the FIX phase (e.g. before the regression
+        test)."""
         require_fix_approval(state)
-        await self._publish("run.phase", RunPhase(phase="FIX"))
+        if announce:
+            await self._publish("run.phase", RunPhase(phase="FIX"))
         if not diagnosis.file:
             raise ValueError("there is no diagnosis to fix")
         checked = await asyncio.to_thread(check_diagnosis, self.workspace, Diagnosis(
@@ -478,10 +484,10 @@ class FixPipeline:
         if edit_tape.tape_mode(self.client) == "record" and call.output is not None and report.changes:
             rejected = [c.path for c in report.violations]
             # A rejected folder is implied by the rejected paths below it (replay creates it for them).
-            withheld = {c.path: "deleted" if c.path in allowed else c.kind for c in report.violations
+            withheld: dict[str, str] = {c.path: "deleted" if c.path in allowed else c.kind for c in report.violations
                         if not any(p.startswith(c.path + "/") for p in rejected)}
-            edit_tape.save(edit_tape.tape_path(self.client, call.key), self.workspace,
-                           {c.path: c.kind for c in report.allowed}, withheld)
+            approved: dict[str, str] = {c.path: c.kind for c in report.allowed}
+            edit_tape.save(edit_tape.tape_path(self.client, call.key), self.workspace, approved, withheld)
         return report
 
     async def _log(self, level: str, text: str) -> None:

@@ -365,8 +365,12 @@ class DiagnosePipeline:
         self.max_rounds = max_rounds
 
     async def run(self, model: RookModel, cx: Counterexample, executor: Executor, *,
-                  sandbox: Sandbox | None = None, summary: RepoSummary | None = None) -> DiagnosisResult:
-        """Replay the counterexample for its per-step state, build the bundle and run the review loop."""
+                  sandbox: Sandbox | None = None, summary: RepoSummary | None = None,
+                  prior: str = "") -> DiagnosisResult:
+        """Replay the counterexample for its per-step state, build the bundle and run the review loop.
+
+        `prior` is what went wrong before this diagnosis (e.g. an earlier fix that failed verification);
+        it is shown to the Detective with the round feedback."""
         await self._publish("run.phase", RunPhase(phase="DIAGNOSE"))
         await self._publish("engine.started", EngineStarted(
             worker="replayer", label=f"Replaying {cx.cx_id} to record the state after each step"))
@@ -375,7 +379,7 @@ class DiagnosePipeline:
             worker="replayer", ok=True, summary=f"Recorded the state after {len(cx.steps)} steps"))
         logs = await self._logs(sandbox)
         bundle = await asyncio.to_thread(build_bundle, self.workspace, model, cx, states, logs, summary)
-        return await self.diagnose(bundle)
+        return await self.diagnose(bundle, prior=prior)
 
     async def _logs(self, sandbox: Sandbox | None) -> str:
         if sandbox is None:
@@ -385,13 +389,13 @@ class DiagnosePipeline:
         except (SandboxError, OSError) as exc:
             return f"(the sandbox logs could not be read: {exc})"
 
-    async def diagnose(self, bundle: EvidenceBundle) -> DiagnosisResult:
+    async def diagnose(self, bundle: EvidenceBundle, *, prior: str = "") -> DiagnosisResult:
         """Detective -> engine check -> reviewer, up to `max_rounds`; publishes `diagnosis.ready`."""
         write_modes(self.workspace)
         rounds: list[Round] = []
         last_valid: CheckedDiagnosis | None = None
         for number in range(1, self.max_rounds + 1):
-            outcome = await self._round(number, bundle, rounds)
+            outcome = await self._round(number, bundle, rounds, prior)
             rounds.append(outcome[0])
             if outcome[1] is not None:
                 last_valid = outcome[1]
@@ -402,12 +406,13 @@ class DiagnosePipeline:
                                     f"{outcome[0].reason}")
         return await self._finish(bundle, last_valid, False, rounds)
 
-    async def _round(self, number: int, bundle: EvidenceBundle, history: list[Round]
+    async def _round(self, number: int, bundle: EvidenceBundle, history: list[Round], prior: str = ""
                      ) -> tuple[Round, CheckedDiagnosis | None]:
+        feedback = "\n\n".join(part for part in (prior, _feedback(history)) if part)
         try:
             result = await call_agent(self.client, "detective", self.workspace, rule=bundle.rule,
                                       steps=bundle.steps, states=bundle.states, logs=bundle.logs,
-                                      files=bundle.files, feedback=_feedback(history))
+                                      files=bundle.files, feedback=feedback)
         except BOB_FAILURES as exc:
             return Round(number, None, "failed", f"the Detective gave no valid answer: {exc}"), None
         diagnosis = result.output

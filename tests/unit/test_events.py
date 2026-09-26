@@ -61,6 +61,7 @@ SAMPLES: dict[str, dict[str, Any]] = {
     "fix.ready": {"cx_id": "cx_001", "files": ["app/refunds.py"], "diff": "--- a\n+++ b\n", "reviewed": True},
     "verify.step": {"cx_id": "cx_001", "check": "replay", "status": "passed", "detail": "10/10"},
     "verify.done": {"cx_id": "cx_001", "verified": True, "summary": "all checks passed"},
+    "fix.committed": {"cx_id": "cx_001", "branch": "rook/fix-cx-001", "commit": "0123abcd", "files": ["app.py"]},
     "pr.opened": {"url": "https://github.com/acme/shop/pull/7", "number": 7, "branch": "rook/cx_001"},
     "chat.message": {"role": "guide", "text": "The search is at 5000 sequences."},
     "cost.update": {"coins_total": 0.46},
@@ -81,7 +82,7 @@ def _no_secrets() -> Iterator[None]:
 
 def test_samples_cover_every_event_type() -> None:
     assert set(SAMPLES) == set(EVENT_TYPES)
-    assert len(EVENT_TYPES) == 29
+    assert len(EVENT_TYPES) == 30
 
 
 @pytest.mark.parametrize("event_type", sorted(EVENT_TYPES))

@@ -77,32 +77,44 @@ async def test_minishop_rules_hold_on_a_fresh_fixed_app() -> None:
 
 async def test_an_expected_4xx_response_rule_is_not_rejected_for_its_status() -> None:
     [result] = await check([RULES["admin_export_forbidden"]], fixed=True)
-    assert result.ok
+    assert result.ok and not result.already_broken
     assert "admin_export as customer -> HTTP 403" in result.reason
 
 
 async def test_a_rule_false_on_a_fresh_app_is_rejected_with_a_reason() -> None:
     [result] = await check([rule("order.refunded > 0")], fixed=True)
-    assert not result.ok and result.stage == "fresh"
+    assert not result.ok and result.stage == "fresh" and not result.already_broken
     assert result.reason.startswith("it is already false on a fresh app: a new order gives {")
     assert '"refunded": 0' in result.reason and "fails `order.refunded > 0`" in result.reason
 
 
 async def test_a_response_rule_is_judged_by_its_check() -> None:
-    # `when` without an actor uses the action's own actor.
+    # `when` without an actor uses the action's own actor. A response rule false on its first request is
+    # kept but flagged: the engine cannot tell a wrong rule from a one-step bug.
     [wrong] = await check([response_rule("response.status == 201", action="buy", actor=None)], fixed=True)
-    assert not wrong.ok and "buy as customer -> HTTP " in wrong.reason
+    assert wrong.ok and wrong.already_broken and "buy as customer -> HTTP " in wrong.reason
     [right] = await check([response_rule("response.status < 500", action="buy", actor=None)], fixed=True)
-    assert right.ok and "buy as customer -> HTTP " in right.reason
+    assert right.ok and not right.already_broken and "buy as customer -> HTTP " in right.reason
 
 
-async def test_a_one_step_bug_rejects_its_response_rule_with_an_explicit_reason() -> None:
+async def test_a_one_step_bug_flags_its_response_rule_as_possibly_already_broken() -> None:
     # Buggy minishop lets a customer read the admin export; a single request breaks the rule.
     results = await check(list(MODEL.rules), fixed=False)
     by_id = {r.rule_id: r for r in results}
-    assert all(by_id[i].ok for i in ("refund_le_paid", "stock_non_negative", "cancelled_never_ships"))
+    for i in ("refund_le_paid", "stock_non_negative", "cancelled_never_ships"):
+        assert by_id[i].ok and not by_id[i].already_broken
     admin = by_id["admin_export_forbidden"]
-    assert not admin.ok and "HTTP 200" in admin.reason and "breaks it on the first request" in admin.reason
+    assert admin.ok and admin.already_broken and admin.stage == "fresh"
+    assert admin.reason.startswith("it may already be broken on the first request: on a fresh app "
+                                   "admin_export as customer -> HTTP 200")
+    assert "fails `response.status in (401, 403)`" in admin.reason and "a human decides" in admin.reason
+
+
+async def test_a_response_check_that_cannot_evaluate_is_still_rejected() -> None:
+    # Only a check that evaluates to False is flagged; one that errors is rejected, never flagged.
+    [result] = await check([response_rule('response.json["nope"] == 1')], fixed=False)
+    assert not result.ok and not result.already_broken
+    assert "fails to evaluate on a fresh app" in result.reason
 
 
 async def test_global_rules_see_every_new_entity() -> None:

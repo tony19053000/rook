@@ -58,6 +58,19 @@ class Store:
             row = self._conn.execute("SELECT * FROM runs WHERE id = ?", (run_id,)).fetchone()
         return RunRecord(**dict(row)) if row else None
 
+    def update_run(
+        self, run_id: str, *, status: str | None = None, finished_at: str | None = None,
+        coins: float | None = None,
+    ) -> None:
+        """Set the given fields of a run (None leaves a field as it is)."""
+        fields = {"status": status, "finished_at": finished_at, "coins": coins}
+        changes = {k: v for k, v in fields.items() if v is not None}
+        if not changes:
+            return
+        assignments = ", ".join(f"{k} = :{k}" for k in changes)  # keys are fixed names, never input
+        with self._lock:
+            self._conn.execute(f"UPDATE runs SET {assignments} WHERE id = :id", {**changes, "id": run_id})
+
     def list_runs(self, user_id: str | None = None, limit: int = 50) -> list[RunRecord]:
         """Newest first; all runs when `user_id` is None."""
         query = "SELECT * FROM runs"
@@ -106,6 +119,17 @@ class Store:
                 "INSERT OR REPLACE INTO counterexamples(id, run_id, rule_id, json, status) VALUES (?, ?, ?, ?, ?)",
                 (cx_id, run_id, rule_id, json.dumps(redact(data)), status),
             )
+
+    def list_counterexamples(self, run_id: str) -> list[CounterexampleRecord]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM counterexamples WHERE run_id = ? ORDER BY id", (run_id,)
+            ).fetchall()
+        return [
+            CounterexampleRecord(id=r["id"], run_id=r["run_id"], rule_id=r["rule_id"],
+                                 data=json.loads(r["json"]), status=r["status"])
+            for r in rows
+        ]
 
     def get_counterexample(self, cx_id: str) -> CounterexampleRecord | None:
         with self._lock:

@@ -50,7 +50,7 @@ Rules:
 
 ## 4. Bob agents (T3, T4, T8)
 
-1. **The workspace copy is the only place Bob works.** Every call uses `--workspace ~/.rook/workspaces/<run>`. The user's original folder is never the workspace.
+1. **The workspace copy is the only place Bob works.** Every call uses `--workspace ~/.rook/workspaces/<run>`. The user's original folder is never the workspace. **No symlink in the workspace leads outside it**: the copy drops every link that escapes the source root (absolute or `../` targets, chains, directory links) and every dangling or looping link, with a warning; a link that stays inside becomes a relative link to its final target. GitHub clones check links out as plain files (`core.symlinks=false`) and are then scanned the same way.
 2. **Permissions come from mode tool groups**, since `bob run` pre-approves all allowed tools:
    - Every agent is **read-only** except:
      - `rook-mechanic`: can edit only `^\.rook-sandbox/`

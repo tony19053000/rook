@@ -38,7 +38,7 @@ from test_pipeline_understand import (
 )
 
 from rook.agents.bob import AgentOutputError, AgentResult, BobClient
-from rook.agents.rules import RulesError, RulesPipeline, RulesResult, lawmaker_files
+from rook.agents.rules import ALREADY_BROKEN_NOTE, RulesError, RulesPipeline, RulesResult, lawmaker_files
 from rook.agents.schemas import LawmakerOutput, RepoSummary
 from rook.agents.understand import StartedApp, Understanding, UnderstandPipeline
 from rook.core.events import EventBus
@@ -70,15 +70,15 @@ def approve(*ids: str) -> dict[str, Any]:
     return {"verdicts": [{"rule_id": i, "verdict": "approve", "reason": "backed by the code"} for i in ids]}
 
 
-def fixed_app() -> StartedApp:
+def fixed_app(fixed: bool = True) -> StartedApp:
     with mock.patch.dict(os.environ, ENV):
-        app = minishop.create_app(fixed=True)
+        app = minishop.create_app(fixed=fixed)
     return StartedApp(sandbox=NullSandbox(), base_url=BASE, transport=InProcessTransport(app))
 
 
-def pipeline(client: Any, workspace: Path) -> RulesPipeline:
+def pipeline(client: Any, workspace: Path, *, fixed: bool = True) -> RulesPipeline:
     return RulesPipeline(client, workspace, model=MINISHOP_MODEL, summary=RepoSummary.model_validate(SUMMARY),
-                         app=fixed_app(), env=ENV)
+                         app=fixed_app(fixed), env=ENV)
 
 
 def outcome(result: RulesResult, rule_id: str) -> Any:
@@ -184,6 +184,38 @@ async def test_critic_reject_and_revise_are_applied_and_revisions_are_rechecked(
                       "Sanity-checking 2 revised rules on a fresh app"]
     verdicts = events(client, "rules.reviewed")[0].data["verdicts"]
     assert {"rule_id": "ship_rule_v2", "verdict": "reject", "by": "engine"}.items() <= verdicts[-1].items()
+
+
+async def test_a_rule_broken_on_the_first_request_is_kept_flagged_and_the_critic_is_told(workspace: Path) -> None:
+    # Buggy minishop serves the admin export to a customer: the engine cannot tell a one-step bug from a
+    # wrong rule, so the rule reaches the critic flagged, and the flag is carried on the outcome.
+    ids = [r["id"] for r in MINISHOP_RULES]
+    client = FakeClient({"lawmaker": [{"rules": MINISHOP_RULES}], "rule_critic": [approve(*ids)]})
+    result = await pipeline(client, workspace, fixed=False).run()
+
+    assert [r.id for r in result.accepted] == ids
+    admin = outcome(result, "admin_export_forbidden")
+    assert admin.accepted and admin.already_broken and admin.engine.ok
+    assert "may already be broken on the first request" in admin.engine.reason
+    assert not any(outcome(result, i).already_broken for i in ids if i != "admin_export_forbidden")
+    prompt = client.prompts("rule_critic")[0]
+    assert prompt.count('"already_broken": true') == 1 and ALREADY_BROKEN_NOTE in prompt
+    verdicts = {v["rule_id"]: v for v in events(client, "rules.reviewed")[0].data["verdicts"]}
+    assert verdicts["admin_export_forbidden"]["already_broken"] is True
+    assert all("already_broken" not in v for i, v in verdicts.items() if i != "admin_export_forbidden")
+    (finished,) = [e.data for e in events(client, "engine.finished")]
+    assert finished["summary"] == "3/4 proposed rules hold on a fresh app (1 may already be broken)"
+    assert load_model(result.model_path).rules == result.model.rules  # kept as `proposed`, like the rest
+
+
+async def test_a_flagged_rule_without_a_critic_verdict_says_why(workspace: Path) -> None:
+    admin = next(r for r in MINISHOP_RULES if r["id"] == "admin_export_forbidden")
+    client = FakeClient({"lawmaker": [{"rules": [admin]}], "rule_critic": [AgentOutputError("bad json")]})
+    result = await pipeline(client, workspace, fixed=False).run()
+    kept = outcome(result, "admin_export_forbidden")
+    assert kept.accepted and kept.already_broken and kept.critic is None
+    assert kept.reason.startswith("it may already be broken on the first request")
+    assert kept.reason.endswith("no critic verdict (left for the human)")
 
 
 async def test_a_failed_critic_leaves_engine_checked_rules_for_the_human(workspace: Path) -> None:
