@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 20:30 IST · **By:** Account 2 (025 committed; 023 fixing, 027 in review, 029 coding)
+**Last updated:** 2026-09-26 20:45 IST · **By:** Account 2 (027 committed; 023 fixing, 024 coding, 029 in review)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B2 (M5 Session → M6 CLI)
 
 ## Progress
 
 ```
-OVERALL   [██████████████████░░░░░░░░░░░░]  62%  25 / 40 tickets
+OVERALL   [███████████████████░░░░░░░░░░░]  65%  26 / 40 tickets
 TIME      [████████░░░░░░░░░░░░░░░░░░░░░░]  27%   ~24h left   (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
@@ -18,7 +18,7 @@ M2  Engine            [██████████] 100%   8 / 8    ROOK-005�
 M3  Sandbox           [██████████] 100%   2 / 2    ROOK-013…014
 M4  Bob agents        [██████████] 100%   8 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
-M6  CLI (hero)        [████░░░░░░]  40%   2 / 5     ROOK-024…028
+M6  CLI (hero)        [██████░░░░]  60%   3 / 5     ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
 M8  Auth & GitHub     [░░░░░░░░░░]   0%   0 / 3    ROOK-030…032
 M9  Web               [██░░░░░░░░]  25%   1 / 4     ROOK-033…036
@@ -69,7 +69,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-025 | TUI shell | P0 | DONE | reviewer PASS round 3 (clean_multiline keeps \n for cards; control chars stripped). Follow-ups: sprite.py:150 mypy override (026); clean_data has no depth cap; bidi/zero-width pass through |
 , breaks the diff card); round-3 fix partial (clean_multiline). LAST round |
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
-| ROOK-027 | Question prompts + cards | P0 | IN PROGRESS | coding (restart 26 Sep 20:15) via 025 seams |
+| ROOK-027 | Question prompts + cards | P0 | DONE | reviewer PASS round 1. Follow-up: 'e to edit one rule' not implemented (no Session answer shape; 04 §3.4). 024 wires prompts.register(app) + Backend.answer Any |
 | ROOK-028 | Background run + chat | P0 | TODO | |
 | ROOK-029 | FastAPI server | P0 | IN PROGRESS | coding (restart 26 Sep 20:15). Decision: web→API via Vercel rewrite proxy (guest cookie stays Lax) |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
