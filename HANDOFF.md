@@ -6,8 +6,8 @@
 
 ## ▶ Next session starts here
 
-**State:** ROOK-001, 002, 004 and 005 are DONE and committed. ROOK-003 is coded and failed review round 1 (O(n²) template regex, a DoS); the coder is fixing it and it needs re-review before commit.
-**Do next:** finish ROOK-003 (re-review, then commit), then the engine: ROOK-006 (HTTP executor) → 007 → 008 → 009 → 010 → 011 → 012. Tickets with no dependency on each other can run as parallel coders on separate files (as was done for 002–005).
+**State:** M1 is complete (ROOK-001 to 004) and ROOK-005 is done, all committed. ROOK-006 (HTTP executor) is being coded.
+**Do next:** review and commit ROOK-006, then ROOK-007 (Generator + Runner) → 008 → 009 → 010 → 011 → 012.
 **How:** the orchestrator sends each ticket to the `coder` sub-agent, then the `reviewer` sub-agent (CLAUDE.md, section 2).
 **Watch out:**
 - Sub-agents: `coder` = Opus 5.5 at medium effort, `reviewer` = Sonnet 5 at medium effort (set in `.claude/agents/*.md`). They only load in a session started *after* the files existed. In the session that created them, run them as `general-purpose` agents told to read their `.md`, with the model override (opus / sonnet).

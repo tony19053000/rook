@@ -9,11 +9,11 @@
 ## Progress
 
 ```
-OVERALL   [███░░░░░░░░░░░░░░░░░░░░░░░░░░░]  10%   4 / 40 tickets
+OVERALL   [███░░░░░░░░░░░░░░░░░░░░░░░░░░░]  12%   5 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~27h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
-M1  Foundation        [███████░░░]  75%   3 / 4    ROOK-001…004
+M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
 M2  Engine            [█░░░░░░░░░]  12%   1 / 8    ROOK-005…012
 M3  Sandbox           [░░░░░░░░░░]   0%   0 / 2    ROOK-013…014
 M4  Bob agents        [░░░░░░░░░░]   0%   0 / 8    ROOK-015…022
@@ -44,10 +44,10 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 |---|---|---|---|---|
 | ROOK-001 | Project scaffold | P0 | DONE | reviewer PASS; Python pinned to 3.12 |
 | ROOK-002 | Event bus, models, redaction, store | P0 | DONE | reviewer PASS; note: register BOB_API_KEY via register_secret in ROOK-015 |
-| ROOK-003 | Model schema, loader, templating | P0 | IN REVIEW | round 2: fixing O(n²) template regex |
+| ROOK-003 | Model schema, loader, templating | P0 | DONE | reviewer PASS on round 2 (linear parser) |
 | ROOK-004 | Safe expression evaluator | P0 | DONE | reviewer PASS on round 2 (work budget added) |
 | ROOK-005 | Fixture app minishop | P0 | DONE | reviewer PASS (race test 10/10) |
-| ROOK-006 | HTTP executor | P0 | TODO | |
+| ROOK-006 | HTTP executor | P0 | IN PROGRESS | |
 | ROOK-007 | Generator + Runner | P0 | TODO | |
 | ROOK-008 | Judge | P0 | TODO | |
 | ROOK-009 | Shrinker | P0 | TODO | |
