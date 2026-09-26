@@ -2,15 +2,15 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-27 00:23 IST · **By:** Account 1 (ROOK-032 DONE; rest waits on user tasks U1–U5)
+**Last updated:** 2026-09-27 03:19 IST · **By:** Account 1 (ROOK-037 DONE: AWS image + scripts; user to run create/deploy)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████████████░░░░░]  85%  34 / 40 tickets
-TIME      [████████████░░░░░░░░░░░░░░░░░░]  40%   ~20.1h left (to 27 Sep 20:30 IST)
+OVERALL   [██████████████████████████░░░░]  87%  35 / 40 tickets
+TIME      [██████████████░░░░░░░░░░░░░░░░]  49%   ~17.2h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -22,7 +22,7 @@ M6  CLI (hero)        [██████████] 100%   5 / 5    ROOK-024�
 M7  Server            [██████████] 100%   1 / 1    ROOK-029
 M8  Auth & GitHub     [███░░░░░░░]  33%   1 / 3    ROOK-030…032
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
-M10 Deploy & demo     [░░░░░░░░░░]   0%   0 / 4    ROOK-037…040
+M10 Deploy & demo     [██░░░░░░░░]  25%   1 / 4    ROOK-037…040
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -34,7 +34,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | Product | Rook (`rook`), IBM Bob-powered invariant breaker |
 | Repo | https://github.com/tony19053000/rook (public) |
 | Hosted web | not deployed yet (Vercel) |
-| Hosted API | not deployed yet (Hugging Face Space) |
+| Hosted API | not deployed yet (AWS EC2 + Caddy; scripts in deploy/aws/) |
 | Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 2.01 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
 
@@ -79,7 +79,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-034 | Web sprite + rows | P0 | DONE | reviewer PASS round 1 (91 vitest; /dev/* 404 in prod verified). Follow-ups: 035 must clean() DevStream card text; bidi/zero-width pass through; one shared ticker for many rows |
 | ROOK-035 | Web cards + answers + chat | P0 | DONE | reviewer PASS round 1 (132 vitest). Not built (no backend yet): Edit-rule, Replay, Download-test buttons. Follow-ups: DOM tests for double-submit/countdown; gate /dev/* before 038 |
 | ROOK-036 | Web pages, picker, guest | P0 | DONE | reviewer PASS round 2; `npm run test:e2e` (web/e2e/smoke.mjs, replay, 0 coins, 17 checks). Replayed run ends `failed` at DIAGNOSE (Detective recording key includes sandbox logs; recorded in-process vs real uvicorn) → follow-up |
-| ROOK-037 | Hugging Face Space image | P0 | TODO | needs U3 |
+| ROOK-037 | Server image + AWS EC2 deploy | P0 | DONE | reviewer PASS r1. Re-targeted from HF (Docker Spaces now paid) to AWS EC2 t3.small + Caddy on `<ip-dashes>.sslip.io`, profile `rook`, us-west-2 ($100 credits). Local: image builds, /health via Caddy, guest replay run to SAVE (fails at DIAGNOSE, known). NOT deployed yet: user runs deploy/aws/create.sh + deploy.sh + set-secret.sh BOB_API_KEY |
 | ROOK-038 | Vercel deploy | P0 | TODO | needs U4 |
 | ROOK-039 | Demo apps integration + recordings | P0 | TODO | needs U5 |
 | ROOK-040 | Release polish + PyPI | P1 | TODO | |
@@ -92,7 +92,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 |---|---|---|
 | U1 | Supabase + Google OAuth | TODO |
 | U2 | GitHub App "Rook" | TODO |
-| U3 | Hugging Face Docker Space | TODO |
+| U3 | AWS account + IAM user rook-deploy (profile `rook`) | DONE (was HF Space; $100 credits) |
 | U4 | Vercel project | TODO |
 | U5 | 3 demo apps via Antigravity | TODO (ask Claude for the prompt) |
 | U6 | Bob IDE clips | TODO |

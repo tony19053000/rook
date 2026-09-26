@@ -6,13 +6,16 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 27 Sep 00:23 IST. Account 1 working. ONLY ONE orchestrator session at a time.
+**Updated:** 27 Sep 03:19 IST. Account 1 working. ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS), pushed:** ROOK-001–029, 032–036 (34 / 40). Bob coins ≈ 2.4 of 40. Full suite: 1344 passed. Web: 194 vitest + `npm run test:e2e` (17 checks, replay, 0 coins; run `npm run build` after it).
+**Committed and DONE (reviewer PASS), pushed:** ROOK-001–029, 032–037 (35 / 40). Bob coins ≈ 2.4 of 40. Full suite: 1377 passed.
 
 **UNCOMMITTED work in the tree:** none.
 
-**Next steps in order:** everything left needs the user: 030 (U1 Supabase + Google), 031 (U2 GitHub App), 037 (U3 HF Space), 038 (U4 Vercel), 039 (U5 demo apps), 040 polish. Ask the user which U-tasks are done.
+**Hosting decision (user, 27 Sep ~02:00):** Hugging Face Docker Spaces are now paid → server moved to **AWS EC2** (user has $100 credits). AWS CLI profile `rook` (IAM user rook-deploy, AmazonEC2FullAccess), region us-west-2. The auto-mode classifier blocks the orchestrator/sub-agents from creating AWS resources → the USER runs, in order (see deploy/README.md): `deploy/aws/create.sh` (y/N, prints `https://<ip-dashes>.sslip.io`) → `deploy/aws/deploy.sh` → `deploy/aws/scripts/set-secret.sh BOB_API_KEY` → `uv run python deploy/smoke.py https://<host>`. Later: `ROOK_WEB_ORIGINS=https://<vercel> deploy/aws/deploy.sh`. Tear down: `deploy/aws/destroy.sh`. Bob tgz vendored (gitignored) at deploy/vendor/.
+**User's disk is full** (~400 MB free; Docker build cache 35.8 GB) — asked them to run `docker builder prune`. Don't docker build until freed.
+
+**Next steps in order:** user deploys server (above) → 038 Vercel (U4, needs server URL) → 030 (U1 Supabase) → 031 (U2 GitHub App) → 039 (U5 demo apps; also fix DIAGNOSE replay key) → 040. The user got a full phase-by-phase guide (Phase 1 AWS ✓, 2 Vercel, 3 Supabase+Google, 4 GitHub App, 5 demo apps with the Antigravity prompt).
 
 **Wiring notes from 036 for later tickets:** 030 → replace currentSession()/getToken() in web/lib/session.ts, SIGN_IN_AVAILABLE=true, OAuth handler in LoginView (SimpleViews.tsx). 031 → fill githubConnected from /me, pass onConnectGithub to RepoPicker (api.githubInstallUrl()). 037/038 → ROOK_API_PROXY_TARGET=https://<space>.hf.space at Vercel build time; CSP (connect-src 'self' + Supabase); verify SSE streams unbuffered through the rewrite; ROOK_TRUSTED_PROXY_HOPS on the Space.
 
@@ -59,6 +62,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep 03:19 | 1 | ROOK-037 PASS r1 + committed (HF → AWS EC2 + Caddy; user must run create/deploy). 35/40 | ROOK-037 |
 | 27 Sep 00:23 | 1 | ROOK-032 PASS r1 + committed. 34/40. Remaining 030/031/037–040 wait on U1–U5 | ROOK-032 |
 | 27 Sep 00:10 | 1 | ROOK-036 PASS r2 + committed (e2e smoke, 02 §14 proxy target; 02 hunks split from 032). 032 coded, review r1. 33/40 | ROOK-036 |
 | 26 Sep 23:55 | 1 | ROOK-028 PASS r1 + committed (contextvars fix for teardown LookupError). 036 r1 FAIL (E2E proof, 02 §14) → coder fixing. 32/40 | ROOK-028 |
