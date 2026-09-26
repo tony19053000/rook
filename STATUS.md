@@ -2,19 +2,19 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 14:32 IST · **By:** Account 2
+**Last updated:** 2026-09-26 14:38 IST · **By:** Account 2
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
 
 ## Progress
 
 ```
-OVERALL   [███████░░░░░░░░░░░░░░░░░░░░░░░]  25%  10 / 40 tickets
+OVERALL   [█████████░░░░░░░░░░░░░░░░░░░░░]  30%  12 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~27h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
-M2  Engine            [██░░░░░░░░]  25%   2 / 8    ROOK-005…012
+M2  Engine            [█████░░░░░]  50%   4 / 8    ROOK-005…012
 M3  Sandbox           [█████░░░░░]  50%   1 / 2    ROOK-013…014
 M4  Bob agents        [███░░░░░░░]  37%   3 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
@@ -48,12 +48,12 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-004 | Safe expression evaluator | P0 | DONE | reviewer PASS on round 2 (work budget added) |
 | ROOK-005 | Fixture app minishop | P0 | DONE | reviewer PASS (race test 10/10) |
 | ROOK-006 | HTTP executor | P0 | DONE | reviewer PASS on round 2; ~290 seq/s, tune in 007 |
-| ROOK-007 | Generator + Runner | P0 | IN PROGRESS | uncommitted; coded together with 008 |
-| ROOK-008 | Judge | P0 | IN PROGRESS | uncommitted; coded together with 007 |
-| ROOK-009 | Shrinker | P0 | TODO | |
+| ROOK-007 | Generator + Runner | P0 | DONE | reviewer PASS; throughput 268 seq/s in-process (500 NOT met: ceiling is minishop sync current_user + O(n) user scans, engine alone ~750/s; verified by reviewer). Follow-ups: per-actor cookie jars on real-HTTP path; reject inf weights |
+| ROOK-008 | Judge | P0 | DONE | reviewer PASS; refund bug seeds 1-5 found at seq 8/4/3/53/26; fixed mode clean over 20k (ROOK_SLOW=1) |
+| ROOK-009 | Shrinker | P0 | IN PROGRESS | coder (account 2) |
 | ROOK-010 | Replayer | P0 | TODO | |
 | ROOK-011 | Export + Verifier + Test Runner | P0 | TODO | |
-| ROOK-012 | Parallel steps (race) | P1 | TODO | |
+| ROOK-012 | Parallel steps (race) | P1 | IN PROGRESS | coder (account 2) |
 | ROOK-013 | Sandbox + ProcessSandbox | P0 | DONE | reviewer PASS on round 2 (settable_env whitelist + env denylist, fullmatch SHA) |
 | ROOK-014 | DockerSandbox | P0 | IN PROGRESS | coder (account 2) |
 | ROOK-015 | BobClient + recorder | P0 | DONE | reviewer PASS on round 2 (env allowlist) |

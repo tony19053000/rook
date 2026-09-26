@@ -36,7 +36,7 @@ from rook.model.schema import (
     Step,
     StringParam,
 )
-from rook.model.template import TemplateError, render
+from rook.model.template import TemplateError, placeholders, render
 
 EDGE_BIAS = 0.3
 DEFAULT_TIMEOUT = 10.0
@@ -126,8 +126,11 @@ class _Prepared:
     error: str | None = None
 
 
+_CONTROL_CHARS = re.compile(r"[\x00-\x1f\x7f]")
+
+
 def _has_control_chars(text: str) -> bool:
-    return any(ord(c) < 0x20 or ord(c) == 0x7F for c in text)
+    return _CONTROL_CHARS.search(text) is not None
 
 
 # --- origin / egress ---
@@ -175,6 +178,10 @@ class Executor:
         }
         self._readers = {r.name: r for r in model.state}
         self._reader_templates = {r.name: _request_template(r.request) for r in model.state}
+        # Actors whose setup and auth use no `fresh` value (e.g. an admin login) set up the same way
+        # every time, so their result is shared across sequences instead of logging in again.
+        self._shareable_actors = {a.name for a in model.actors if _is_shareable(a)}
+        self._actor_cache: dict[str, tuple[dict[str, Any], dict[str, str]]] = {}
 
     async def __aenter__(self) -> Self:
         self._client = httpx.AsyncClient(
@@ -222,10 +229,18 @@ class Executor:
         start = time.perf_counter()
         result = _Response()
         try:
-            request = self._client.build_request(req["method"], str(self.base_url) + path, **kwargs)
+            if self._transport is not None:
+                # An explicit transport (in-process app) is called directly: the client's cookie jar,
+                # auth and redirect layers are not wanted here and cost more than a small app request.
+                request = httpx.Request(req["method"], str(self.base_url) + path, **kwargs)
+            else:
+                request = self._client.build_request(req["method"], str(self.base_url) + path, **kwargs)
             self.check_egress(request.url)
             async with asyncio.timeout(self.timeout):
-                response = await self._client.send(request, stream=True, follow_redirects=False)
+                if self._transport is not None:
+                    response = await self._transport.handle_async_request(request)
+                else:
+                    response = await self._client.send(request, stream=True, follow_redirects=False)
                 try:
                     result.status = response.status_code
                     body = await self._read_capped(response)
@@ -294,8 +309,19 @@ class Executor:
         return namespace
 
     async def _ensure_actor(self, ctx: SequenceContext, actor_name: str) -> None:
-        if actor_name not in ctx.actors:
-            await self.setup_actor(ctx, actor_name)
+        if actor_name in ctx.actors:
+            return
+        cached = self._actor_cache.get(actor_name)
+        if cached is not None:
+            ctx.actors[actor_name], ctx.auth_headers[actor_name] = dict(cached[0]), dict(cached[1])
+            return
+        namespace = await self.setup_actor(ctx, actor_name)
+        if actor_name in self._shareable_actors:
+            self._actor_cache[actor_name] = (dict(namespace), dict(ctx.auth_headers[actor_name]))
+
+    def clear_actor_cache(self) -> None:
+        """Forget shared actor setups (e.g. after the sandbox restarts and old tokens are gone)."""
+        self._actor_cache.clear()
 
     # --- params ---
 
@@ -303,7 +329,7 @@ class Executor:
         """Draw a value for every declared param of `action` (deterministic for a given rng state)."""
         if isinstance(action, str):
             action = self._actions[action]
-        return {name: _draw(spec, rng) for name, spec in action.params.items()}
+        return draw_params(action, rng)
 
     # --- steps ---
 
@@ -377,7 +403,7 @@ class Executor:
         for p in prepared:
             if p.error is None and p.actor not in ctx.actors:
                 try:
-                    await self.setup_actor(ctx, p.actor)
+                    await self._ensure_actor(ctx, p.actor)
                 except ExecutorError as exc:
                     p.error = str(exc)
 
@@ -472,7 +498,22 @@ class Executor:
         return {name: extract(resp.json, path) for name, path in reader.fields.items()}
 
 
+def _is_shareable(actor: Actor) -> bool:
+    names = placeholders([r.model_dump(by_alias=True) for r in actor.setup])
+    if actor.auth is not None:
+        names |= placeholders(actor.auth.value)
+    return not any(name.split(".", 1)[0] == "fresh" for name in names)
+
+
 # --- param drawing ---
+
+
+def draw_params(action: Action, rng: random.Random) -> dict[str, Any]:
+    """Draw a value for every declared param of `action` (deterministic for a given rng state).
+
+    Int params pick one of their edge values with probability EDGE_BIAS, else a uniform value.
+    """
+    return {name: _draw(spec, rng) for name, spec in action.params.items()}
 
 
 def _draw(spec: IntRange | Choice | StringParam, rng: random.Random) -> Any:

@@ -240,10 +240,10 @@ rules:
 
 ### 7.1 Runner and generator
 - `Runner(model, sandbox, seed, budget)` produces `Sequence = list[Step]`, where `Step = {action, actor, params, parallel?}`.
-- Generation is a random walk with a `random.Random(seed + i)` per sequence. At each step it picks among actions whose `requires` are satisfied, weighted by `action.weight × strategist weight`. Params are drawn from the range, with a **30% chance** of an edge value. `ref` picks from the var pool. The length is 1–12 (the default max is 12).
+- Generation is a random walk with a `random.Random(f"{seed}:{i}")` per sequence (so seeds never overlap), and the generator fixes each step's actor and params. At each step it picks among actions whose `requires` are satisfied, weighted by `action.weight × strategist weight`. Params are drawn from the range, with a **30% chance** of an edge value. `ref` picks from the var pool. The length is 1–12 (the default max is 12).
 - **Designed scenarios** from the Test Designer are run first, then mutated (insert/delete/duplicate a step, jitter params) and mixed in at 20%.
 - Execution goes through `executor.py` (an async `httpx` client). Each sequence gets **fresh actors** and a fresh var pool.
-- **Speed:** async, with N concurrent sequences (default 8, isolated by fresh entities). The state is read only for entities touched by the step.
+- **Speed:** async, with N concurrent sequences (default 16, isolated by fresh entities). The state is read only for entities touched by the step (ids it referenced or captured). Actors whose setup uses no `fresh` value (e.g. an admin login) are set up once and shared. With an explicit (in-process) transport the executor calls it directly, bypassing the httpx client layers.
 
 ### 7.2 Judge
 After **every step**, it evaluates the rules in scope: state rules for the touched entities (and global ones), and response rules for matching actions. It returns `Violation{rule_id, step_index, entity, observed, expected_expr}` on the first failure. The Judge is the **only** component that can emit `violation.found`.
