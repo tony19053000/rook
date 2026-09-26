@@ -12,7 +12,7 @@
 
 **UNCOMMITTED work in the tree:** none.
 
-**Next steps in order:** everything left needs the user: Then everything left needs the user: 030 (U1 Supabase + Google), 031 (U2 GitHub App), 037 (U3 HF Space), 038 (U4 Vercel), 039 (U5 demo apps), 040 polish. Ask the user which U-tasks are done.
+**Next steps in order:** everything left needs the user: 030 (U1 Supabase + Google), 031 (U2 GitHub App), 037 (U3 HF Space), 038 (U4 Vercel), 039 (U5 demo apps), 040 polish. Ask the user which U-tasks are done.
 
 **Wiring notes from 036 for later tickets:** 030 → replace currentSession()/getToken() in web/lib/session.ts, SIGN_IN_AVAILABLE=true, OAuth handler in LoginView (SimpleViews.tsx). 031 → fill githubConnected from /me, pass onConnectGithub to RepoPicker (api.githubInstallUrl()). 037/038 → ROOK_API_PROXY_TARGET=https://<space>.hf.space at Vercel build time; CSP (connect-src 'self' + Supabase); verify SSE streams unbuffered through the rewrite; ROOK_TRUSTED_PROXY_HOPS on the Space.
 
