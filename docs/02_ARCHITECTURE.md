@@ -442,7 +442,7 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
   - `CounterexampleCard`
   - a status bar and an input box
 - The chat input stays active while the search runs, and messages go to the Guide.
-- The engine runs in a worker thread with its own asyncio loop. Events are posted to Textual with `call_from_thread`.
+- The engine runs in a worker thread with its own asyncio loop. Events are posted to Textual with `loop.call_soon_threadsafe` on the app loop captured at bind time (non-blocking; `call_from_thread` can hang once the app has quit).
 - Frame rate is 12 fps, and the sprite is static when `NO_MOTION` is set or reduced motion is on.
 
 ## 13. Web architecture

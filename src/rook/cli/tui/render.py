@@ -126,10 +126,15 @@ def _lines(event: Event) -> list[Text]:
     return []
 
 
+def event_lines(event: Event) -> list[Text]:
+    """The plain one-line rows for `event`, every field flattened and cleaned (also used by `rook run --ci`)."""
+    return _lines(event.model_copy(update={"data": clean_data(event.data, multiline=False)}))
+
+
 def default_view(event: Event, transcript: Transcript) -> None:
     # Each default row is one line, so every field is flattened here (this also keeps the view safe when it
     # is called outside `show_event`).
-    for line in _lines(event.model_copy(update={"data": clean_data(event.data, multiline=False)})):
+    for line in event_lines(event):
         transcript.write(line)
 
 

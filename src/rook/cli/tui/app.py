@@ -1,9 +1,10 @@
 """The interactive `rook` shell (04_FRONTEND_SPEC.md §2): logo, first-run auth, home box, prompt, transcript.
 
 Seams for later tickets:
-- ROOK-026/027: replace entries in `RookApp.views` (event type → view) or mount widgets with
-  `app.transcript.mount_item(...)`.
-- ROOK-024/028: pass a real `Backend`; from a worker thread call `app.call_from_thread(app.show_event, ev)`.
+- ROOK-026/027: `build_app` installs the live rows, cards and question prompts into `RookApp.views`
+  (wiring.py); a bare `RookApp()` keeps the plain one-line views.
+- ROOK-024/028: `SessionBackend` runs the Session in a worker thread and posts events with
+  `app.call_from_thread(app.show_event, ev)`.
 - ROOK-030: pass a real `AuthProvider`.
 """
 
@@ -21,12 +22,14 @@ from textual.widgets import Input
 
 from rook import __version__
 from rook.cli.logo import TAGLINE, WORD
-from rook.cli.tui import commands
+from rook.cli.tui import commands, wiring
 from rook.cli.tui.auth import AuthProvider, AuthState, StubAuth
 from rook.cli.tui.backend import Backend, OfflineBackend
 from rook.cli.tui.history import InputHistory
 from rook.cli.tui.render import BAD, DIM, GOOD, EventView, clean_data, default_views
 from rook.cli.tui.safe_text import clean
+from rook.cli.tui.widgets.cards import latest
+from rook.cli.tui.widgets.prompts import QuestionPrompt
 from rook.cli.tui.widgets.shell import (
     SPINNER,
     FooterBar,
@@ -202,6 +205,9 @@ class RookApp(App[None]):
         self.prompt.value = ""
         self.suggestions.hide()
         if not text:
+            prompt = self.open_prompt()
+            if prompt is not None:  # Enter in the empty input goes to the open question
+                prompt.focus_prompt()
             return
         self.history.add(text)
         parsed = commands.parse(text)
@@ -209,11 +215,29 @@ class RookApp(App[None]):
             self.transcript.write(Text(f"> {text}", style=DIM))
             self._run_command(parsed)
         elif self.active_question is not None:
-            question_id, self.active_question = self.active_question, None
-            self.backend.answer(question_id, text)
+            self._answer_typed(text)
         else:
             self.transcript.write(Text(f"> {text}", style="bold"))
             self.backend.submit(text)
+
+    def open_prompt(self) -> QuestionPrompt | None:
+        """The prompt widget of the open question (None with the plain views, or when nothing is asked)."""
+        question_id = self.active_question
+        if question_id is None:
+            return None
+        return latest(self.transcript, QuestionPrompt, lambda p: p.question_id == question_id and p.state == "open")
+
+    def _answer_typed(self, text: str) -> None:
+        """Text typed in the main input while a question is open: mapped to one of the prompt's choices."""
+        prompt = self.open_prompt()
+        if prompt is None:  # the plain views have no prompt widget: the backend checks the answer
+            question_id, self.active_question = self.active_question, None
+            if question_id is not None:
+                self.backend.answer(question_id, text)
+            return
+        if not wiring.answer_from_input(prompt, text):
+            self.transcript.write(Text(wiring.hint(prompt), style=DIM))
+            prompt.focus_prompt()
 
     def _run_command(self, parsed: commands.Parsed) -> None:
         error = commands.validate(parsed)
@@ -288,8 +312,12 @@ class RookApp(App[None]):
         if self.suggestions.display:
             self.suggestions.hide()
         elif self.active_question is not None:
-            self.active_question = None
-            self.transcript.write(Text("  · Question cancelled", style=DIM))
+            prompt = self.open_prompt()
+            if prompt is not None:
+                prompt.action_cancel()
+            else:
+                self.active_question = None
+                self.transcript.write(Text("  · Question cancelled", style=DIM))
         elif self.backend.running:
             if self._armed == "interrupt":
                 self._disarm()
@@ -301,6 +329,14 @@ class RookApp(App[None]):
             self.prompt.value = ""
 
 
+def build_app(backend: Backend | None = None, auth: AuthProvider | None = None, motion: bool | None = None,
+              letter_delay: float = 0.12) -> RookApp:
+    """The full shell: live agent/engine rows, cards and question prompts registered before events flow."""
+    app = RookApp(backend=backend, auth=auth, motion=motion, letter_delay=letter_delay)
+    wiring.register_views(app)
+    return app
+
+
 def run_tui(backend: Backend | None = None, auth: AuthProvider | None = None, motion: bool | None = None) -> None:
-    """Entry point for the interactive shell (wired to bare `rook` by ROOK-024)."""
-    RookApp(backend=backend, auth=auth, motion=motion).run()
+    """Entry point for the interactive shell (bare `rook`, and `rook run` without --ci)."""
+    build_app(backend=backend, auth=auth, motion=motion).run()

@@ -123,6 +123,7 @@ Needs truecolor. If it's not detected, it falls back to 256 colors and the sprit
 
 ### 2.6 Non-interactive output (`rook run --ci`)
 Plain Rich output with no animation. It ends with a summary table, exit code 1 if any approved rule is broken, and it writes `rook-report.json` + `rook-report.md` for the GitHub Action comment.
+Exit codes: `0` every approved rule held, `1` an approved rule is broken, `2` the run failed or was stopped before it could tell (or bad arguments). With `--auto` the Session answers its questions (the rails' auto answers). Without it, CI mode approves only critic-approved rules and never one flagged `already_broken`, answers "no" to fix and PR (it changes no code), picks "report"/"stop" in a menu, and stops on a setup value not given with `--setup NAME` (read from the env var `NAME`). `rook replay|verify <cx> --base-url` use the same 0/1/2 codes and accept only a loopback URL.
 
 ---
 

@@ -1,6 +1,10 @@
+from typing import Any
+
+import pytest
 from typer.testing import CliRunner
 
 import rook
+from rook.cli import main as cli_main
 from rook.cli.main import app
 
 runner = CliRunner()
@@ -16,7 +20,16 @@ def test_cli_version_flag() -> None:
     assert result.output.strip() == "rook 0.1.0"
 
 
-def test_cli_no_args_prints_placeholder() -> None:
+def test_cli_no_args_opens_the_shell(monkeypatch: pytest.MonkeyPatch) -> None:
+    opened: list[Any] = []
+    monkeypatch.setattr(cli_main, "launch_tui", opened.append)
     result = runner.invoke(app, [])
     assert result.exit_code == 0
-    assert "coming soon" in result.output
+    assert len(opened) == 1
+
+
+def test_cli_lists_every_command() -> None:
+    result = runner.invoke(app, ["--help"])
+    assert result.exit_code == 0
+    for command in ("run", "replay", "explain", "verify", "init", "serve", "login", "logout"):
+        assert command in result.output

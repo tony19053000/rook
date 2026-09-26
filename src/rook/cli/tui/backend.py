@@ -1,8 +1,7 @@
 """The seam between the TUI and whatever runs the work.
 
-ROOK-024/028 provide a real backend that runs the session in a worker thread and hands events back with
-`app.call_from_thread(app.show_event, event)`. Until then `OfflineBackend` only explains that runs
-aren't wired yet.
+`SessionBackend` (session_backend.py) runs a Session in a worker thread and hands events back with
+`app.call_from_thread(app.show_event, event)`. `OfflineBackend` only explains that nothing is connected.
 """
 
 from __future__ import annotations
@@ -43,7 +42,9 @@ class Backend(Protocol):
         """A validated slash command the TUI doesn't handle itself."""
         ...
 
-    def answer(self, question_id: str, answer: str) -> None: ...
+    def answer(self, question_id: str, answer: Any) -> None:
+        """The answer's shape depends on the question: approve_rules takes "all" | "none" | [rule ids]."""
+        ...
 
     def interrupt(self) -> None: ...
 
@@ -72,7 +73,7 @@ class OfflineBackend:
     def command(self, name: str, arg: str) -> None:
         self._notice(f"/{name} isn't connected in this build yet.")
 
-    def answer(self, question_id: str, answer: str) -> None:
+    def answer(self, question_id: str, answer: Any) -> None:
         self._notice("There is no run to answer.")
 
     def interrupt(self) -> None:
