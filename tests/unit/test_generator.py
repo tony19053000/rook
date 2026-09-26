@@ -137,19 +137,26 @@ def test_all_zero_weights_give_empty_sequences() -> None:
     assert gen.sequence(0) == [] and gen.sequence(99) == []
 
 
-def test_parallel_steps_pair_the_same_entity_touching_action() -> None:
+def test_parallel_steps_group_actions_touching_the_same_entity() -> None:
     gen = Generator(MODEL, 9, parallel_prob=1.0)
     seen = 0
+    pairs: Counter[tuple[str, ...]] = Counter()
     for i in range(200):
         for step in gen.sequence(i):
             action = ACTIONS[_subs(step)[0].action]
             if action.requires:
                 assert isinstance(step, ParallelStep)
-                assert len({s.action for s in step.parallel}) == 1
+                for sub in step.parallel:  # every partner touches an entity the first one touches
+                    assert set(ACTIONS[sub.action].requires) & set(action.requires)
+                pairs[tuple(s.action for s in step.parallel)] += 1
                 seen += 1
             else:
                 assert isinstance(step, Step)
     assert seen > 0
+    assert all(_requires_met(gen.sequence(i)) for i in range(200))
+    assert pairs[("buy", "buy")] > 0  # buy is the only action touching a product
+    assert all(a == "buy" for pair in pairs for a in pair if "buy" in pair)
+    assert any(len(set(pair)) == 2 for pair in pairs)  # e.g. cancel || ship on one order
     none = Generator(MODEL, 9, parallel_prob=0.0)
     assert not any(isinstance(s, ParallelStep) for i in range(300) for s in none.sequence(i))
     with pytest.raises(ValueError):

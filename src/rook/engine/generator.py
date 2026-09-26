@@ -5,6 +5,10 @@ random walk over the actions whose `requires` can be met by vars captured earlie
 sequence, with mutated scenarios mixed in about 20% of the time. Every generated step has its actor
 and params fixed (int params hit an edge value 30% of the time). Only `ref` picks are left to run
 time, because they choose among values the app returns.
+
+With probability `parallel_prob`, a step whose action requires a var becomes a parallel group
+(ROOK-012): the action plus a partner that requires one of the same vars (the same action half of the
+time). A group's `requires` must all be met by captures from *earlier* steps, never by a sibling.
 """
 
 import random
@@ -17,6 +21,7 @@ DEFAULT_MAX_LEN = 12
 MUTATION_RATE = 0.2
 PARALLEL_PROB = 0.1
 PARALLEL_WIDTH = 2
+SAME_ACTION_SHARE = 0.5  # share of parallel partners that repeat the first action
 
 
 class Generator:
@@ -81,12 +86,25 @@ class Generator:
     def _sub(self, action: Action, rng: random.Random) -> Step:
         return Step(action=action.name, actor=action.actor, params=draw_params(action, rng))
 
-    def _step(self, action: Action, rng: random.Random) -> SequenceStep:
-        # Sometimes a parallel pair of the same entity-touching action (the runner pins both to one
-        # entity), to catch races such as two buys of the last item.
+    def _step(self, action: Action, rng: random.Random, available: set[str]) -> SequenceStep:
+        # Sometimes a parallel group of actions touching the same entity (the runner pins every
+        # sub-step to one entity), to catch races such as two buys of the last item.
         if action.requires and self.parallel_prob > 0 and rng.random() < self.parallel_prob:
-            return ParallelStep(parallel=[self._sub(action, rng) for _ in range(PARALLEL_WIDTH)])
+            subs = [self._sub(action, rng)]
+            subs += [self._sub(self._partner(action, rng, available), rng) for _ in range(PARALLEL_WIDTH - 1)]
+            return ParallelStep(parallel=subs)
         return self._sub(action, rng)
+
+    def _partner(self, action: Action, rng: random.Random, available: set[str]) -> Action:
+        """Another sub-step for a parallel group: the same action half of the time, otherwise any
+        action (weighted) that requires one of the same vars and whose `requires` are already met."""
+        if rng.random() < SAME_ACTION_SHARE:
+            return action
+        shared = set(action.requires)
+        candidates = [
+            a for a in self._actions if shared & set(a.requires) and all(v in available for v in a.requires)
+        ]
+        return rng.choices(candidates, weights=[self._weights[a.name] for a in candidates])[0]
 
     def _walk(self, rng: random.Random) -> list[SequenceStep]:
         length = rng.randint(1, self.max_len)
@@ -96,8 +114,10 @@ class Generator:
             action = self._pick(rng, available)
             if action is None:
                 break
-            steps.append(self._step(action, rng))
-            available.update(action.capture)
+            step = self._step(action, rng, available)
+            steps.append(step)
+            for sub in _substeps(step):
+                available.update(self._by_name[sub.action].capture)
         return steps
 
     # --- scenario mutation ---
@@ -107,9 +127,10 @@ class Generator:
         op = rng.choice(("insert", "delete", "duplicate", "jitter"))
         pos = rng.randrange(len(steps))
         if op == "insert":
-            action = self._pick(rng, self._available_before(steps, pos))
+            available = self._available_before(steps, pos)
+            action = self._pick(rng, available)
             if action is not None:
-                steps.insert(pos, self._step(action, rng))
+                steps.insert(pos, self._step(action, rng, available))
         elif op == "delete" and len(steps) > 1:
             del steps[pos]
         elif op == "duplicate":

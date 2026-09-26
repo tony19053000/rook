@@ -228,7 +228,7 @@ rules:
 ```
 
 **Templates:** `{{p.x}}` is a generated param, `{{ref.v}}` picks a captured var (a random earlier value), `{{fresh.*}}` is a unique per-sequence value, `{{env.X}}` comes from the sandbox env, and `{{actor.token}}` is the current actor's token.
-**Concurrency:** a sequence step may be `{parallel: [step, step]}`. Its steps are sent concurrently (to catch races like the last item selling twice).
+**Concurrency:** a sequence step may be `{parallel: [step, step]}`. Its steps are sent concurrently (to catch races like the last item selling twice). The generator emits a group (10% of entity-touching steps) of an action plus a partner that requires one of the same vars. Every sub-step's `requires` must be met by *earlier* steps (never by a sibling), or the whole group is skipped; the runner pins all sub-steps to the same entity; captures are applied after all sub-steps finish, in sub-step order; the Judge runs once after the whole group; and the group is one entry of the trace (`step_index` counts groups).
 
 ### 6.1 Safe expression evaluator (`model/expr.py`)
 - It parses with `ast.parse(mode="eval")`. Allowed nodes: `Expression, BoolOp, BinOp(+ - * / // %), UnaryOp(not, -), Compare (all ops incl. in / not in), Name, Constant, Tuple, List, Attribute` (reading dict keys only), `Subscript, Call, GeneratorExp, comprehension`.
