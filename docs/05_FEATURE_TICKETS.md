@@ -189,13 +189,14 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 
 ## M10 · Deploy & demo
 
-**ROOK-037 · Hugging Face Space image** · P0 · deps: 029, 013
-- `deploy/hf/Dockerfile`: Python 3.12, Node 22 and 24, Go, Bob Shell 2.0.5, the demo apps cloned at pinned SHAs and pre-built, a non-root user, and start.sh. The allowlist config. Secrets documented. A keep-alive workflow.
-- **AC:** `docker build` works locally; the container serves `/health`; a guest demo run on shop-app completes in replay mode inside the container.
+**ROOK-037 · Server image + AWS EC2 deploy** · P0 · deps: 029, 013
+- Re-targeted from Hugging Face (Docker Spaces now need a paid plan) to AWS EC2 + Caddy on `https://<ip-dashes>.sslip.io` (02 §14).
+- `deploy/Dockerfile`: Python 3.12 + uv, Node 22 and 24, Go, Bob Shell 2.0.5 (from the gitignored `deploy/vendor/`, packed by `deploy/pack-bob.sh`; without it the image is replay-only), the demo apps cloned at pinned SHAs and pre-built (`deploy/demos/`; interim demo `rook-demo/minishop` with its recordings), a non-root user, and start.sh. `deploy/docker-compose.yml` (rook + Caddy), the allowlist config, secrets documented (`/etc/rook/rook.env`, `deploy/aws/scripts/set-secret.sh`). `deploy/aws/` scripts: create, deploy, destroy, ssh. No keep-alive (EC2 does not sleep).
+- **AC:** `docker build` works locally; the container serves `/health`; a guest demo run completes in replay mode inside the container.
 
 **ROOK-038 · Vercel deploy** · P0 · deps: 036
-- A Vercel project, env vars (`ROOK_API_PROXY_TARGET` = the Space origin at build time, `NEXT_PUBLIC_API_URL` unset; see 02 §14), CSP headers (03 §8), the production URL in the README.
-- **AC:** the public URL loads, a guest demo run streams from the Hugging Face server, and there are no console errors.
+- A Vercel project, env vars (`ROOK_API_PROXY_TARGET` = the EC2 server origin `https://<ip-dashes>.sslip.io` at build time, `NEXT_PUBLIC_API_URL` unset; see 02 §14), CSP headers (03 §8), the production URL in the README.
+- **AC:** the public URL loads, a guest demo run streams from the EC2 server, and there are no console errors.
 
 **ROOK-039 · Demo apps integration & recordings** · P0 · deps: 023, 037, U5
 - Run the full flow live on shop-app, billing-service and wallet-api; fix any engine or agent issues; record the Bob runs for replay mode; tune budgets so each bug is found in under 60 s.
@@ -211,9 +212,9 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 
 | ID | Task | Needed by |
 |---|---|---|
-| U1 | Supabase project + Google OAuth client (Google Cloud Console); send the URL + anon key, and put the JWT secret in the Hugging Face secrets | ROOK-030 |
-| U2 | Create the GitHub App "Rook" (permissions per 03 §6) and store the private key + app id in the Hugging Face secrets | ROOK-031 |
-| U3 | Create the Hugging Face Docker Space `rook` and add the secrets | ROOK-037 |
+| U1 | Supabase project + Google OAuth client (Google Cloud Console); send the URL + anon key, and put the JWT secret on the server (`deploy/aws/scripts/set-secret.sh SUPABASE_JWT_SECRET`) | ROOK-030 |
+| U2 | Create the GitHub App "Rook" (permissions per 03 §6) and store the private key + app id on the server (`set-secret.sh GITHUB_APP_PRIVATE_KEY < app.pem`, `GITHUB_APP_ID`) | ROOK-031 |
+| U3 | Run the AWS EC2 scripts (`deploy/README.md`: pack Bob, `create.sh`, `deploy.sh`) with the AWS profile `rook`, then add the secrets with `set-secret.sh` | ROOK-037 |
 | U4 | Create the Vercel project from `web/` | ROOK-038 |
 | U5 | Build the 3 demo apps with Antigravity (prompt from Claude, on request) and push them to GitHub | ROOK-039 |
 | U6 | Use Bob IDE visibly (e.g. review agent prompts, build demo app bugs) and screen-record short clips | Video |

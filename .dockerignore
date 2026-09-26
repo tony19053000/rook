@@ -1,0 +1,19 @@
+# Build context of deploy/Dockerfile (context = repo root). Allowlist: only what the image needs goes in,
+# so .git, .env*, *.pem, .venv, web/, node_modules and local data can never reach the image.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+!deploy/Dockerfile
+!deploy/start.sh
+!deploy/demos/
+!deploy/vendor/
+!tests/fixtures/minishop/app.py
+!tests/fixtures/minishop/test_minishop_app.py
+!tests/fixtures/recordings/*_minishop/
+**/__pycache__
+**/*.pyc
+**/.env*
+**/*.pem

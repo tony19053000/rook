@@ -176,7 +176,7 @@ Any backend with an **HTTP API**, in any language, because Rook talks to your ru
 | [`docs/05_FEATURE_TICKETS.md`](docs/05_FEATURE_TICKETS.md) | Tickets and roadmap |
 | [`STATUS.md`](STATUS.md) · [`HANDOFF.md`](HANDOFF.md) | Live progress and session handoff |
 
-**Stack:** Python (engine, agents, API, Textual CLI) · Next.js (web) · IBM Bob Shell · SQLite · Docker · Supabase Auth · GitHub App · Vercel + Hugging Face.
+**Stack:** Python (engine, agents, API, Textual CLI) · Next.js (web) · IBM Bob Shell · SQLite · Docker · Supabase Auth · GitHub App · Vercel + AWS EC2 (Docker Compose, Caddy).
 
 ## How IBM Bob is used
 

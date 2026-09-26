@@ -20,10 +20,10 @@ describe("API base (02 §13)", () => {
 });
 
 describe("same-origin proxy rewrite", () => {
-  it("proxies /api/v1/* to the Space origin", () => {
-    const target = proxyTarget("https://tony-rook.hf.space/");
-    expect(target).toBe("https://tony-rook.hf.space");
-    expect(apiRewrites(target)).toEqual([{ source: "/api/v1/:path*", destination: "https://tony-rook.hf.space/api/v1/:path*" }]);
+  it("proxies /api/v1/* to the server origin", () => {
+    const target = proxyTarget("https://203-0-113-7.sslip.io/");
+    expect(target).toBe("https://203-0-113-7.sslip.io");
+    expect(apiRewrites(target)).toEqual([{ source: "/api/v1/:path*", destination: "https://203-0-113-7.sslip.io/api/v1/:path*" }]);
   });
 
   it("no target, no rewrite", () => {
@@ -32,10 +32,10 @@ describe("same-origin proxy rewrite", () => {
   });
 
   it("refuses credentials, paths, queries and other schemes", () => {
-    expect(proxyTarget("https://user:pw@x.hf.space")).toBeNull();
-    expect(proxyTarget("https://x.hf.space/api")).toBeNull();
-    expect(proxyTarget("https://x.hf.space?a=1")).toBeNull();
-    expect(proxyTarget("ftp://x.hf.space")).toBeNull();
+    expect(proxyTarget("https://user:pw@x.sslip.io")).toBeNull();
+    expect(proxyTarget("https://x.sslip.io/api")).toBeNull();
+    expect(proxyTarget("https://x.sslip.io?a=1")).toBeNull();
+    expect(proxyTarget("ftp://x.sslip.io")).toBeNull();
     expect(proxyTarget("not a url")).toBeNull();
   });
 });

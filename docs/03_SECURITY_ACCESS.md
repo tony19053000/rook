@@ -22,9 +22,9 @@ Rook runs **other people's code**, holds **API keys**, can **edit code** and can
 
 | Secret | Lives in | Never in |
 |---|---|---|
-| `BOB_API_KEY` | `~/.bob-key.env` (chmod 600) locally, Hugging Face Space secrets when hosted | git, logs, events, prompts, the web bundle, error messages |
-| `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET` | Hugging Face Space secrets only | the CLI, the web, git |
-| `SUPABASE_JWT_SECRET` / service key | Hugging Face Space secrets only | the web (the web only gets `NEXT_PUBLIC_SUPABASE_URL` + the **anon** key) |
+| `BOB_API_KEY` | `~/.bob-key.env` (chmod 600) locally, `/etc/rook/rook.env` on the EC2 host when hosted (root, chmod 600) | git, logs, events, prompts, the web bundle, error messages |
+| `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET` | `/etc/rook/rook.env` on the EC2 host only | the CLI, the web, git |
+| `SUPABASE_JWT_SECRET` / service key | `/etc/rook/rook.env` on the EC2 host only | the web (the web only gets `NEXT_PUBLIC_SUPABASE_URL` + the **anon** key) |
 | User tokens (Supabase session, GitHub installation token) | `~/.rook/credentials.json` (chmod 600), in memory on the server | logs, events, workspaces |
 
 Rules:
@@ -34,6 +34,7 @@ Rules:
 4. The sandbox **doesn't** get Rook's env. Target apps get only the env from their SandboxPlan (user-provided values, or fake ones).
 5. The REVIEWER greps every diff for secret patterns (see `reviewer.md`).
 6. The key pasted in chat on 26 Sep must be **rotated after the hackathon**.
+7. **Hosted secrets** (02 §14) are written only by `deploy/aws/scripts/set-secret.sh NAME`: a name allowlist, the value read hidden (or piped, e.g. a `.pem`) and sent over **ssh stdin** (never argv, shell history or logs) to `deploy/aws/remote/set_env.py`, which rewrites `/etc/rook/rook.env` atomically as root with mode 600. Docker compose passes the file to the rook container only (`env_file`); it is never in the image, the repo, EC2 user-data (readable from instance metadata) or the build context (`.dockerignore` is an allowlist that also drops `.env*` and `*.pem`). The EC2 SSH key is `~/.ssh/rook-ec2.pem` (chmod 600, gitignored as `*.pem`).
 
 ## 3. Running untrusted code (T1)
 
@@ -45,6 +46,7 @@ Rules:
 - Everything is cleaned up (containers, networks, volumes) when the run ends, including on crash (`atexit` + signal handlers).
 
 **Hosted server → ProcessSandbox**
+- The server container runs as the non-root user `rook` with `cap_drop: ALL`, `no-new-privileges`, a pids and memory limit, and no Docker socket. It is not published: only Caddy (80/443) is reachable, and SSH (22) is open only to the admin's IP /32. IMDSv2 is required with a hop limit of 1, so containers cannot reach the instance metadata.
 - **Only allowlisted demo repos** (`sandbox/allowlist.py`, pinned by commit SHA) can run. User-supplied repos are **never** executed on the hosted server. The API rejects them with a clear message: "run arbitrary repos with the CLI".
 - The demo apps run as a separate unprivileged user, each with a temp database directory, and are killed when the run ends.
 
@@ -99,8 +101,8 @@ Rules:
 ## 8. Web and server hardening
 
 - CORS allows only the Vercel origin(s) and `http://localhost:3000` (`ROOK_WEB_ORIGINS`; `*` is refused at startup), with credentials and only the `Authorization`, `Content-Type` and `Accept` headers.
-- **Same-origin proxy.** The web app calls `/api/v1/*` on its own origin, and a Vercel rewrite proxies it to the Space (target: `ROOK_API_PROXY_TARGET`, a public origin, 02 §14). So the `rook_guest` cookie is first-party and can stay `SameSite=Lax` (a cross-site cookie would need `SameSite=None` and is blocked by browsers that drop third-party cookies). CORS only matters for local development or direct calls. Behind the proxy the socket peer is the proxy, so the client IP for rate limits and guest quotas is read from `X-Forwarded-For`, counting `ROOK_TRUSTED_PROXY_HOPS` entries from the right (0 = use the socket peer). Never trust the left-most entry: the client can set it.
-- Rate limits: 60 requests per minute per IP on the API (`/health` is exempt for the keep-alive), and 10 per minute on `POST /runs`. Over the limit: 429 with `Retry-After`.
+- **Same-origin proxy.** The web app calls `/api/v1/*` on its own origin, and a Vercel rewrite proxies it to the EC2 server behind Caddy (target: `ROOK_API_PROXY_TARGET`, a public origin, 02 §14). So the `rook_guest` cookie is first-party and can stay `SameSite=Lax` (a cross-site cookie would need `SameSite=None` and is blocked by browsers that drop third-party cookies). CORS only matters for local development or direct calls. Behind the proxy the socket peer is the proxy, so the client IP for rate limits and guest quotas is read from `X-Forwarded-For`, counting `ROOK_TRUSTED_PROXY_HOPS` entries from the right (0 = use the socket peer). Never trust the left-most entry: the client can set it. Hosted, the chain is browser → Vercel → Caddy → rook with `ROOK_TRUSTED_PROXY_HOPS=2`: Vercel overwrites `X-Forwarded-For` with the client IP and Caddy appends Vercel's IP. Vercel has no fixed egress IPs, so Caddy trusts every peer; a caller who skips Vercel and hits Caddy directly can therefore choose the IP used for its quota. That only affects the per-IP guest quota: the per-cookie quota, the global concurrency cap (3), the daily coin cap and replay mode (the default) still hold. A shared-secret header from a Vercel middleware would close it (not built).
+- Rate limits: 60 requests per minute per IP on the API (`/health` is exempt for uptime checks), and 10 per minute on `POST /runs`. Over the limit: 429 with `Retry-After`.
 - Guest quota: 3 runs per day per guest cookie **and** per client IP (clearing the cookie doesn't reset it). At most 3 runs execute at once (the rest queue); past the daily coin cap, new runs get a 429.
 - Every body is validated with pydantic, with a 64 KB request size limit.
 - User-rendered text (repo files, Bob output, diffs) is rendered as text or with escaping in the web app. No `dangerouslySetInnerHTML` with untrusted content.
@@ -110,12 +112,12 @@ Rules:
 
 - Python dependencies are pinned in `uv.lock`, and web dependencies in `package-lock.json`.
 - Minimal dependencies. New dependencies must be justified in the CODER report.
-- The Bob Shell version is pinned in the Hugging Face image (2.0.5).
+- The Bob Shell version is pinned in the server image (2.0.5, checked at build). It is vendored from the local install into the gitignored `deploy/vendor/`, never committed. Node, Go and the uv image are pinned by version, and the Node and Go tarballs by SHA-256; demo apps by full commit SHA (`deploy/demos/repos.txt`).
 
 ## 10. Logging and privacy
 
 - Events and logs are redacted (section 2). Repo contents are never logged, only paths and line numbers.
-- Recordings (`~/.rook/recordings`) may contain repo snippets, so they stay local and gitignored. Only recordings of our **own demo apps** ship in the Hugging Face image.
+- Recordings (`~/.rook/recordings`) may contain repo snippets, so they stay local and gitignored. Only recordings of our **own demo apps** ship in the server image.
 
 ## 11. REVIEWER security checklist (short form)
 

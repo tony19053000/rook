@@ -35,3 +35,7 @@ web/.vercel/
 
 # scratch
 m.py
+
+# deploy: vendored Bob Shell (never committed) 
+deploy/vendor/*
+!deploy/vendor/README.md

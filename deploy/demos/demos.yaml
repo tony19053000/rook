@@ -1,0 +1,7 @@
+# The demo catalog of GET /repos (ROOK_DEMO_REPOS). Every ref@commit must also be in allowlist.yaml.
+repos:
+  - {ref: rook-demo/minishop, commit: '406059b53767b10f157b4eb92105d10af6a0c44d', name: minishop, language: Python}
+# ROOK-039:
+#  - {ref: tony19053000/shop-app, commit: '<sha>', name: shop-app, language: JavaScript}
+#  - {ref: tony19053000/billing-service, commit: '<sha>', name: billing-service, language: Python}
+#  - {ref: tony19053000/wallet-api, commit: '<sha>', name: wallet-api, language: Go}

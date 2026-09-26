@@ -1,5 +1,5 @@
 // Where the browser sends API calls (02 §13). In production NEXT_PUBLIC_API_URL is unset (or the web origin
-// itself) and calls go same-origin to `/api/v1/*`, which the rewrite in next.config.ts proxies to the Space,
+// itself) and calls go same-origin to `/api/v1/*`, which the rewrite in next.config.ts proxies to the server,
 // so the `rook_guest` cookie stays first-party. In local dev it can point straight at the server.
 
 /** The API base for createApiClient / useRunStream: "" means same-origin. */
@@ -9,7 +9,7 @@ export function apiBase(value: string | undefined = process.env.NEXT_PUBLIC_API_
 }
 
 /**
- * The rewrite target for `/api/v1/*` (the Hugging Face Space origin), read at build time from
+ * The rewrite target for `/api/v1/*` (the Rook server origin, e.g. https://203-0-113-7.sslip.io), read at build time from
  * ROOK_API_PROXY_TARGET. Only an http(s) origin with no path, query or credentials is accepted; anything
  * else means "no proxy" (null).
  */

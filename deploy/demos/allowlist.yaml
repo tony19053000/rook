@@ -1,0 +1,20 @@
+# The sandbox allowlist of the hosted image (03 §3, sandbox/allowlist.py): the ONLY repos the server runs.
+# ROOK_ALLOWLIST points here. app_dir is where the Dockerfile installed the app.
+#
+# rook-demo/minishop is the interim demo: the tests/fixtures/minishop app, with its Bob recordings baked in for
+# replay mode. Its "commit" is a fixed pseudo-SHA (sha1 of "rook-demo-minishop"): it is not a git repo.
+entries:
+  - repo: rook-demo/minishop
+    commit: '406059b53767b10f157b4eb92105d10af6a0c44d'
+    app_dir: /opt/rook/demos/minishop
+    start: ['{python}', '-m', 'uvicorn', 'app:app', '--host', '127.0.0.1', '--port', '{port}']
+
+# ROOK-039 hooks: add the real demo apps here with the SHAs pinned in repos.txt, e.g.
+#  - repo: tony19053000/shop-app
+#    commit: '<sha>'
+#    app_dir: /opt/rook/demos/shop-app
+#    start: ['node', 'server.js']
+#    port_env: PORT
+#    db_env: DATABASE_PATH
+#  - repo: tony19053000/billing-service    (app_dir /opt/rook/demos/billing-service)
+#  - repo: tony19053000/wallet-api         (app_dir /opt/rook/demos/wallet-api)

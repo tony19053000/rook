@@ -1,0 +1,29 @@
+# Caddy in front of the Rook server (02 §14): automatic HTTPS (Let's Encrypt) for ROOK_HOST, e.g.
+# 203-0-113-7.sslip.io, and a reverse proxy for /api/v1/* only. `ROOK_HOST=http://localhost` serves plain HTTP
+# for a local test; `ROOK_HOST=localhost` uses Caddy's internal CA.
+{
+	servers {
+		# The Vercel rewrite proxy has no fixed egress IPs, so every peer is "trusted": Caddy APPENDS the peer
+		# to X-Forwarded-For instead of replacing it. With browser -> Vercel -> Caddy -> rook, rook sees
+		# "<client>, <vercel>" and takes the entry ROOK_TRUSTED_PROXY_HOPS=2 from the right (03 §8).
+		trusted_proxies static 0.0.0.0/0 ::/0
+	}
+}
+
+{$ROOK_HOST} {
+	handle /api/v1/* {
+		reverse_proxy rook:8000 {
+			# SSE: pass every event through at once, never buffer.
+			flush_interval -1
+		}
+	}
+	handle {
+		respond "Not found" 404
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+}

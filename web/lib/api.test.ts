@@ -39,7 +39,7 @@ function mockFetch(respond: (call: Call) => Response = () => Response.json({ ok:
 
 describe("URLs", () => {
   it("adds /api/v1 to the origin and trims trailing slashes", () => {
-    expect(apiUrl("https://x.hf.space/", "/health")).toBe("https://x.hf.space/api/v1/health");
+    expect(apiUrl("https://x.sslip.io/", "/health")).toBe("https://x.sslip.io/api/v1/health");
     expect(runEventsUrl("http://localhost:7860", "r 1/2", 42)).toBe("http://localhost:7860/api/v1/runs/r%201%2F2/events?after=42");
   });
 });
