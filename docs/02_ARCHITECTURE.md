@@ -125,14 +125,14 @@ DONE
 ```
 argv = [BOB, "run", "--mode", slug, "--format", "stream-json", "--workspace", ws,
         "--max-turns", str(n), "--disable-mcp", "--trust", "--accept-license"]   # prompt passed via argv (last arg)
-subprocess: stdin=DEVNULL (MANDATORY, else it hangs), env adds BOB_API_KEY, PATH includes Node 24 bin, timeout per call
+subprocess: stdin=DEVNULL (MANDATORY, else it hangs), cwd=workspace (MANDATORY: --trust only trusts the cwd, and workspace custom modes load only from a trusted folder), env adds BOB_API_KEY, PATH includes Node 24 bin, timeout per call
 ```
 - It parses **NDJSON**:
   - `{"type":"message","role":"assistant","content":…}` chunks are concatenated
   - `{"type":"tool_use","tool_name":…,"parameters":…}` becomes `agent.progress` with a human detail (`read_file path` → `reading src/refunds.js`)
   - `{"type":"result","status","stats":{"session_costs","duration_ms"}}` ends the call and gives its cost
 - **Output contract:** every agent must end with **one fenced ```json block** that matches its pydantic schema (`agents/schemas.py`). BobClient extracts the last JSON block and validates it. On an error, it re-prompts with the validation error, up to 3 times.
-- **Recorder:** every call is stored in `~/.rook/recordings/<sha256(slug+prompt+input_digest)>.ndjson`. `ROOK_BOB_MODE=live|record|replay` controls this. Replay emits the recorded stream with the original timing (max 3×) and marks `agent.finished.recorded=true`, and the UIs show a "recorded" tag.
+- **Recorder:** every call is stored in `~/.rook/recordings/<sha256(slug + "\0" + prompt)>.ndjson`. Callers must build deterministic prompts that include every input (file contents or a digest), so the same inputs give the same key. `ROOK_BOB_MODE=live|record|replay` controls this. Replay emits the recorded stream with the original timing (max 3×) and marks `agent.finished.recorded=true`, and the UIs show a "recorded" tag.
 - **Cost:** `cost.update` events come from the `session_costs` totals.
 
 ### 5.2 Modes file

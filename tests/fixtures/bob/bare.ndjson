@@ -1,0 +1,2 @@
+{"type":"message","timestamp":"2026-09-26T08:00:00.000Z","role":"assistant","content":"Result {not json} then {\"ok\": true, \"note\": \"bare\", \"nested\": {\"a\": 1}}"}
+{"type":"result","timestamp":"2026-09-26T08:00:00.100Z","status":"success","stats":{"task_id":"task-bare","duration_ms":100,"session_costs":0.02,"max_cost":0,"tool_calls":0}}

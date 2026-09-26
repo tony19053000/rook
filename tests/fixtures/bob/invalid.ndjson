@@ -1,0 +1,3 @@
+{"type":"message","timestamp":"2026-09-26T08:00:00.000Z","role":"user","content":"Summarize the repo."}
+{"type":"message","timestamp":"2026-09-26T08:00:01.000Z","role":"assistant","content":"Here you go.\n```json\n{\"wrong\": 1}\n```\n"}
+{"type":"result","timestamp":"2026-09-26T08:00:01.100Z","status":"success","stats":{"task_id":"task-invalid","duration_ms":1100,"session_costs":0.01,"max_cost":0,"tool_calls":0}}

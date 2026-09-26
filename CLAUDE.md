@@ -58,6 +58,7 @@ Small doc fixes and status updates can be done directly without sub-agents.
 - **Bob Shell 2.0.5** lives at `~/.nvm/versions/node/v24.21.0/bin/bob`. Put that folder on `PATH` before calling it.
 - Bob needs `BOB_API_KEY`: run `source ~/.bob-key.env`. Never print it.
 - **Always call `bob run` with stdin closed** (`< /dev/null` or `stdin=subprocess.DEVNULL`), or it hangs forever. Also pass `--trust --accept-license`.
+- **Run `bob` with cwd = the workspace.** `--trust` only trusts the cwd, and custom modes load only from a trusted folder; otherwise you get `Mode with id … not found`.
 - A small call costs about 0.023 Bobcoins. The budget is 40 coins in total.
 - Custom modes are read from `<workspace>/.bob/custom_modes.yaml` and selected with `--mode <slug>`.
 
