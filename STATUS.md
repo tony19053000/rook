@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 21:10 IST · **By:** Account 2 (023, 029, 024 committed; 028 + 035 coding)
+**Last updated:** 2026-09-26 21:17 IST · **By:** Account 2 (035 committed; 028 + 036 coding)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [██████████████████████░░░░░░░░]  75%  30 / 40 tickets
+OVERALL   [███████████████████████░░░░░░░]  77%  31 / 40 tickets
 TIME      [█████████░░░░░░░░░░░░░░░░░░░░░]  30%   ~23h left   (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
@@ -21,7 +21,7 @@ M5  Session           [██████████] 100%   1 / 1    ROOK-023
 M6  CLI (hero)        [████████░░]  80%   4 / 5     ROOK-024…028
 M7  Server            [██████████] 100%   1 / 1    ROOK-029
 M8  Auth & GitHub     [░░░░░░░░░░]   0%   0 / 3    ROOK-030…032
-M9  Web               [█████░░░░░]  50%   2 / 4     ROOK-033…036
+M9  Web               [███████░░░]  75%   3 / 4     ROOK-033…036
 M10 Deploy & demo     [░░░░░░░░░░]   0%   0 / 4    ROOK-037…040
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
@@ -77,8 +77,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-032 | GitHub Action | P1 | TODO | |
 | ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
 | ROOK-034 | Web sprite + rows | P0 | DONE | reviewer PASS round 1 (91 vitest; /dev/* 404 in prod verified). Follow-ups: 035 must clean() DevStream card text; bidi/zero-width pass through; one shared ticker for many rows |
-| ROOK-035 | Web cards + answers + chat | P0 | IN PROGRESS | coding |
-| ROOK-036 | Web pages, picker, guest | P0 | TODO | |
+| ROOK-035 | Web cards + answers + chat | P0 | DONE | reviewer PASS round 1 (132 vitest). Not built (no backend yet): Edit-rule, Replay, Download-test buttons. Follow-ups: DOM tests for double-submit/countdown; gate /dev/* before 038 |
+| ROOK-036 | Web pages, picker, guest | P0 | IN PROGRESS | coding |
 | ROOK-037 | Hugging Face Space image | P0 | TODO | needs U3 |
 | ROOK-038 | Vercel deploy | P0 | TODO | needs U4 |
 | ROOK-039 | Demo apps integration + recordings | P0 | TODO | needs U5 |

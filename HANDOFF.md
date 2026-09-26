@@ -8,10 +8,10 @@
 
 **Updated:** 26 Sep 21:10 IST, Account 2. ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–027, 029, 033, 034 (30 / 40). Bob coins ≈ 2.4 of 40.
+**Committed and DONE (reviewer PASS):** ROOK-001–027, 029, 033–035 (31 / 40). Bob coins ≈ 2.4 of 40.
 
 **In flight (uncommitted):**
-- ROOK-035 (web cards + answers + chat): coding, only in web/ (RunView, Transcript, components/cards/, lib/cardText.ts, lib/questions.ts, DevStream.tsx). Then reviewer.
+- ROOK-036 (web pages, picker, guest): coding, web/ only. RunView (035) is ready for /runs/[id] with useRunStream + createApiClient.
 - ROOK-028 (background run + chat): coding. The 024 SessionBackend already has the worker thread + chat-to-Guide; 028 may be mostly tests + /bg-style details per 04.
 
 **Next steps in order:** 028 + 035 → review → commit. Then 036 (web pages, picker, guest). 030/031/032 need U1/U2 (ask the user). 037–040 deploy need U3/U4/U5.
@@ -19,6 +19,7 @@
 **Follow-ups noted (non-blocking):**
 - Replay: `POST /counterexamples/{id}/replay` answers 501 until Session gets a replay-only mode (pass `create_app(replay_factory=...)`).
 - Deploy (037): set ROOK_TRUSTED_PROXY_HOPS (probably 2), ROOK_GUEST_SECRET (≥32 chars), ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS, ROOK_ALLOWLIST, ROOK_DAILY_COIN_CAP, ROOK_DB_PATH; check that the Vercel rewrite streams SSE unbuffered.
+- 035: Edit-rule / Replay / Download-test buttons not built (no API); /dev/* must be gated before 038.
 - 027: "e to edit one rule" not implemented (no Session answer shape; 04 §3.4).
 - sprite.py:150 mypy override (026); scaffold mkdir through a symlinked .github (024); cancel latency per copy entry (023); bidi/zero-width chars pass through clean() (TUI + web).
 - Older: Mechanic fileRegex `^\.rook-sandbox/` never matches (registry.py:26); per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; CostUpdate ge=0 + monotonic cost; NFKC-normalise Surgeon paths; understand_minishop recordings hold /tmp/pytest-of-aayush paths; document cx JSON shape in 02 §7.8.
@@ -55,6 +56,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 21:17 | 2 | ROOK-035 PASS round 1 + committed; 036 coding; 028 coding | ROOK-035 |
 | 26 Sep 21:10 | 2 | ROOK-023 PASS round 2 + committed, then 029 and 024 committed (doc hunks split per ticket). 30/40. 028 + 035 coding | ROOK-023/029/024 |
 | 26 Sep 21:01 | 2 | ROOK-024 reviewer PASS (uncommitted; commit order: 023 → 029 → 024). 035 coding; 023 review r2 | (none) |
 | 26 Sep 21:00 | 2 | ROOK-034 PASS round 1 + committed | ROOK-034 |
