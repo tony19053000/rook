@@ -1,4 +1,7 @@
-// The sidebar (04 §3.1). Navigation targets and the mascot sprite arrive with ROOK-034/036.
+// The sidebar (04 §3.1). Navigation targets arrive with ROOK-036.
+
+import { AgentSprite } from "./AgentSprite";
+import { MASCOT } from "@/lib/agents";
 
 export type RecentStatus = "running" | "ok" | "broken" | "idle";
 
@@ -21,7 +24,7 @@ export function Sidebar({ recents, coins, userName }: { recents: RecentRun[]; co
   return (
     <aside className="flex min-h-0 w-full flex-col gap-1 border-r border-line bg-side px-2.5 py-3" aria-label="Sidebar">
       <div className="flex items-center gap-2 px-2 pb-2.5 pt-1">
-        <span aria-hidden className="size-4 rounded-full bg-accent" />
+        <AgentSprite look={MASCOT} px={2} animate={false} />
         <span className="font-serif text-[21px] tracking-tight">Rook</span>
       </div>
       <div className="mb-2 grid grid-cols-2 rounded-lg bg-sunk p-[3px]" role="group" aria-label="View">

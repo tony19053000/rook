@@ -1,11 +1,12 @@
 "use client";
 
-// Plain text rows for every transcript item. The real rows and cards come with ROOK-034/035.
+// Agent and engine rows (ROOK-034) plus plain text for the other items; the cards come with ROOK-035.
 
 import { useMemo } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Composer } from "@/components/Composer";
-import { agentInfo, WORKER_NAMES } from "@/lib/agents";
+import { AgentRow } from "@/components/AgentRow";
+import { EngineRow } from "@/components/EngineRow";
 import { createFakeEventServer } from "@/lib/fakeServer";
 import { minishopRun } from "@/lib/fixtures/minishop";
 import type { TranscriptItem } from "@/lib/runStore";
@@ -15,36 +16,10 @@ const RUN_ID = minishopRun[0]!.run_id;
 
 function Row({ item }: { item: TranscriptItem }) {
   switch (item.kind) {
-    case "agent": {
-      const info = agentInfo(item.agent);
-      if (item.status === "working")
-        return (
-          <div>
-            <span className="font-semibold" style={{ color: info.color }}>{info.name}</span> {info.verb}…
-            <div className="truncate font-mono text-xs text-muted">⎿ {item.detail}</div>
-          </div>
-        );
-      return (
-        <div className="truncate">
-          <span style={{ color: info.color }}>●</span> <b>{info.name}</b>{" "}
-          <span className={item.status === "done" ? "text-good" : "text-bad"}>{item.status === "done" ? "✓" : "✗"}</span> {item.summary}
-          {item.recorded && <span className="ml-2 rounded bg-sunk px-1.5 text-[11px] text-faint">recorded</span>}
-        </div>
-      );
-    }
+    case "agent":
+      return <AgentRow item={item} />;
     case "engine":
-      return (
-        <div className="truncate font-mono text-[12.5px]">
-          ■ {WORKER_NAMES[item.worker]}{" "}
-          {item.status === "working" ? (
-            <span className="num">{Math.round(item.pct)}% · {item.label}</span>
-          ) : (
-            <>
-              <span className={item.status === "done" ? "text-good" : "text-bad"}>{item.status === "done" ? "✓" : "✗"}</span> {item.summary}
-            </>
-          )}
-        </div>
-      );
+      return <EngineRow item={item} />;
     case "question":
       return (
         <div className="rounded-lg border border-line bg-surface px-3 py-2">
