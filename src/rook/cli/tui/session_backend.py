@@ -2,7 +2,9 @@
 
 - events → posted to the app's event loop in order (02_ARCHITECTURE.md section 12). Like
   `app.call_from_thread`, but it never blocks the run: a run that is still stopping after the shell has quit
-  must not wait on an app loop that is gone.
+  must not wait on an app loop that is gone. Each event runs in a copy of the app's context (captured at bind):
+  without it the callback inherits the run thread's context, and the prompts and cards it mounts have no
+  Textual `active_app` (LookupError when they render, e.g. a question that arrives as the shell quits).
 - answers → `Session.answer` (thread-safe); a refused answer is shown, never retried silently
 - plain text → `Session.chat` (the Guide) during a run; when idle it starts a run on the current repo
 - Esc (confirmed) → `Session.cancel`; `close()` cancels a live run and waits for its thread when the app quits
@@ -11,6 +13,7 @@
 from __future__ import annotations
 
 import asyncio
+import contextvars
 import threading
 from collections.abc import Callable
 from pathlib import Path
@@ -50,6 +53,7 @@ class SessionBackend:
         self._thread: threading.Thread | None = None
         self._app: RookApp | None = None
         self._app_loop: asyncio.AbstractEventLoop | None = None
+        self._app_context: contextvars.Context | None = None
         self._start_request = start_request
         self._notices = 0
 
@@ -63,6 +67,7 @@ class SessionBackend:
         """Called by the app on mount, on its own loop."""
         self._app = app
         self._app_loop = asyncio.get_running_loop()
+        self._app_context = contextvars.copy_context()  # holds Textual's active app
         if self._start_request is not None:
             request, self._start_request = self._start_request, None
             self._when_ready(lambda: self.start(self.repo, request))
@@ -149,11 +154,11 @@ class SessionBackend:
 
     def _show(self, event: Event) -> None:
         """From the run's thread: show `event` on the app's loop, without waiting for it."""
-        loop = self._app_loop
-        if loop is None:
+        loop, context = self._app_loop, self._app_context
+        if loop is None or context is None:
             return
         try:
-            loop.call_soon_threadsafe(self._show_now, event)
+            loop.call_soon_threadsafe(self._show_now, event, context=context.copy())
         except RuntimeError:  # the app's loop is closed: the shell has quit
             pass
 

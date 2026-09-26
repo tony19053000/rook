@@ -1,7 +1,7 @@
 """The seam between the TUI and whatever runs the work.
 
-`SessionBackend` (session_backend.py) runs a Session in a worker thread and hands events back with
-`app.call_from_thread(app.show_event, event)`. `OfflineBackend` only explains that nothing is connected.
+`SessionBackend` (session_backend.py) runs a Session in a worker thread and hands events back to
+`app.show_event` with `loop.call_soon_threadsafe` (02_ARCHITECTURE.md §12). `OfflineBackend` only explains that nothing is connected.
 """
 
 from __future__ import annotations

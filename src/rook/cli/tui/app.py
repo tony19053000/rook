@@ -3,8 +3,8 @@
 Seams for later tickets:
 - ROOK-026/027: `build_app` installs the live rows, cards and question prompts into `RookApp.views`
   (wiring.py); a bare `RookApp()` keeps the plain one-line views.
-- ROOK-024/028: `SessionBackend` runs the Session in a worker thread and posts events with
-  `app.call_from_thread(app.show_event, ev)`.
+- ROOK-024/028: `SessionBackend` runs the Session in a worker thread (its own asyncio loop) and posts each
+  event to `app.show_event` with `loop.call_soon_threadsafe`, so the input stays live during a run.
 - ROOK-030: pass a real `AuthProvider`.
 """
 
