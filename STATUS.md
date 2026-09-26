@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 19:40 IST · **By:** Account 1 (026 DONE; 023/025 coding, 033 in review)
+**Last updated:** 2026-09-26 19:50 IST · **By:** Account 1 (026, 033 DONE; 023/025 coding)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B2 (M5 Session → M6 CLI)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████░░░░░░░░░░░░░]  57%  23 / 40 tickets
+OVERALL   [██████████████████░░░░░░░░░░░░]  60%  24 / 40 tickets
 TIME      [███████░░░░░░░░░░░░░░░░░░░░░░░]  24%   ~25h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
@@ -21,7 +21,7 @@ M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
 M6  CLI (hero)        [██░░░░░░░░]  20%   1 / 5     ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
 M8  Auth & GitHub     [░░░░░░░░░░]   0%   0 / 3    ROOK-030…032
-M9  Web               [░░░░░░░░░░]   0%   0 / 4    ROOK-033…036
+M9  Web               [██░░░░░░░░]  25%   1 / 4     ROOK-033…036
 M10 Deploy & demo     [░░░░░░░░░░]   0%   0 / 4    ROOK-037…040
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
@@ -74,7 +74,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | TODO | |
-| ROOK-033 | Web scaffold + event client | P0 | IN PROGRESS | parallel, built on the 02 contract (029 not built yet) |
+| ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
 | ROOK-034 | Web sprite + rows | P0 | TODO | |
 | ROOK-035 | Web cards + answers + chat | P0 | TODO | |
 | ROOK-036 | Web pages, picker, guest | P0 | TODO | |

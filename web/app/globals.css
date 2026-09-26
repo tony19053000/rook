@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+/* Visual tokens (04 §3.5; extra shades from docs/mockups/4-web-app.html). Dark is the default; light comes
+   from prefers-color-scheme or [data-theme="light"], and [data-theme="dark"] forces dark. */
+:root {
+  color-scheme: dark;
+  --page: #0b0b0b;
+  --app: #1a1a1a;
+  --side: #141414;
+  --surface: #222222;
+  --sunk: #1e1e1e;
+  --ink: #ececea;
+  --muted: #a8a8a3;
+  --faint: #74746f;
+  --line: #2e2e2e;
+  --hover: #2a2a2a;
+  --accent: #e0563f;
+  --accent-ink: #ffffff;
+  --link: #8aa6ff;
+  --good: #6bd9a0;
+  --good-soft: #15301f;
+  --bad: #ff8c83;
+  --bad-soft: #3a1e1c;
+  --warn: #e9c46a;
+  --warn-soft: #352b14;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --page: #edefee;
+    --app: #f7f8f7;
+    --side: #eef0ef;
+    --surface: #ffffff;
+    --sunk: #f0f2f1;
+    --ink: #1a1f1d;
+    --muted: #5e6864;
+    --faint: #8c9692;
+    --line: #dce1de;
+    --hover: #e4e8e6;
+    --accent: #d9452f;
+    --link: #2f5bd3;
+    --good: #1c8a55;
+    --good-soft: #e2f3e9;
+    --bad: #c2372f;
+    --bad-soft: #fbe8e6;
+    --warn: #a86a12;
+    --warn-soft: #fbf0dc;
+  }
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --page: #edefee;
+  --app: #f7f8f7;
+  --side: #eef0ef;
+  --surface: #ffffff;
+  --sunk: #f0f2f1;
+  --ink: #1a1f1d;
+  --muted: #5e6864;
+  --faint: #8c9692;
+  --line: #dce1de;
+  --hover: #e4e8e6;
+  --accent: #d9452f;
+  --link: #2f5bd3;
+  --good: #1c8a55;
+  --good-soft: #e2f3e9;
+  --bad: #c2372f;
+  --bad-soft: #fbe8e6;
+  --warn: #a86a12;
+  --warn-soft: #fbf0dc;
+}
+
+@theme inline {
+  --color-page: var(--page);
+  --color-app: var(--app);
+  --color-side: var(--side);
+  --color-surface: var(--surface);
+  --color-sunk: var(--sunk);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-faint: var(--faint);
+  --color-line: var(--line);
+  --color-hover: var(--hover);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-link: var(--link);
+  --color-good: var(--good);
+  --color-good-soft: var(--good-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --font-sans: var(--font-plex-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --animate-pulse-dot: pulse-dot 1s infinite;
+}
+
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--app);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 04 §3.7: a visible focus ring on everything focusable. */
+:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+/* 04 §3.5: tabular numbers for every counter. */
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

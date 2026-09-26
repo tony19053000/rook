@@ -8,12 +8,12 @@
 
 **Updated:** 26 Sep 19:45 IST by account 1. ONLY ONE orchestrator session at a time (a second session clobbered 023 at 18:45).
 
-**Committed and DONE (reviewer PASS):** ROOK-001–022, 026 (23 / 40). Bob coins used ≈ 2.0 + the 023 recordings (the coder reports the total).
+**Committed and DONE (reviewer PASS):** ROOK-001–022, 026, 033 (24 / 40). Bob coins used ≈ 2.0 + the 023 recordings (the coder reports the total).
 
 **In flight (uncommitted, parallel coders on separate files):**
 - **ROOK-023 (Session)**: coder adding admin-rule **B** (sanity.py `already_broken`, flagged rules never auto-approved), 02 doc for `fix.committed`/SHIP/B, then re-records only the stale session_minishop recordings (cap 2 coins). Then review.
 - **ROOK-025 (TUI shell)**: review FAIL round 1 (ESC/C1 control chars unescaped in render.py/shell.py). Coder fixing with `cli/tui/safe_text.clean`.
-- **ROOK-033 (web scaffold)**: coded (59 vitest, tsc clean), in review. Its contract questions for 029: SSE via fetch + Bearer (CORS must allow Authorization), guest cookie needs SameSite=None;Secure cross-site (Vercel↔hf.space: 03 §5 decision), undefined §11 response shapes, engine.progress.pct = 0–100.
+- **ROOK-033 DONE.** Its contract questions for 029: SSE via fetch + Bearer (CORS must allow Authorization), guest cookie needs SameSite=None;Secure cross-site (Vercel↔hf.space: 03 §5 decision), undefined §11 response shapes, engine.progress.pct = 0–100.
 
 **Then continue in order:** 023 → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
 
@@ -61,6 +61,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 19:50 | 1 | ROOK-033 PASS round 1 + committed (web scaffold) | ROOK-033 |
 | 26 Sep 19:40 | 1 | ROOK-026 PASS round 2 + committed; 023 (+B) and 025 fix round coding; 033 in review | ROOK-026 |
 | 26 Sep 19:01 | 2 | Stopped: killed this session's 023 coder at user request. Tree has 023 files + tests/fixtures/recordings/session_minishop/ (new, unreviewed; no local paths found) + 02_ARCHITECTURE edits, all uncommitted. Check that no two orchestrators run at once | (docs) |
 | 26 Sep 18:40 | 1 | Resumed: 1014 passed / 4 failed (all 023). User chose admin rule B + 3-coin cap; coder finishing 023 (+B) | (docs) |
