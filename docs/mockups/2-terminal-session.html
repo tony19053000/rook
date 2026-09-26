@@ -1,0 +1,445 @@
+<title>Counterexample Terminal Session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F4F3; --surface:#FFFFFF; --ink:#141B19; --muted:#5A6662; --line:#D9DFDC;
+  --accent:#2F5BD3; --bad:#C2372F;
+  --term-bg:#0D1114; --term-bar:#171D21; --term-ink:#D5DEE2; --term-dim:#76848B; --term-line:#2A3338;
+  --t-red:#FF7A70; --t-green:#62D69B; --t-yellow:#E9C46A; --t-cyan:#72C8E4; --t-blue:#8FA8FF; --t-violet:#C3A6F2;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1412; --surface:#171E1B; --ink:#E6ECE9; --muted:#95A29D; --line:#2A3430;
+    --accent:#8AA6FF; --bad:#FF8C83; --term-bg:#070A0C; --term-bar:#11171A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1412; --surface:#171E1B; --ink:#E6ECE9; --muted:#95A29D; --line:#2A3430;
+  --accent:#8AA6FF; --bad:#FF8C83; --term-bg:#070A0C; --term-bar:#11171A;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-size:clamp(26px,4vw,36px);font-weight:700;letter-spacing:-0.02em;line-height:1.15}
+h3{font-size:16px;font-weight:600}
+p{margin:0;max-width:64ch}
+.lede{color:var(--muted);font-size:17px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:500}
+header{display:flex;flex-direction:column;gap:12px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:22px;align-items:start}
+@media (max-width:900px){.layout{grid-template-columns:1fr}}
+
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:6px;cursor:pointer}
+.btn.main{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted)}
+
+.term{background:var(--term-bg);border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(10,20,20,.18);display:flex;flex-direction:column;min-width:0}
+.term-bar{background:var(--term-bar);display:flex;align-items:center;gap:7px;padding:9px 12px}
+.dot{width:10px;height:10px;border-radius:50%;background:#3A444A}
+.term-title{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--term-dim)}
+.screen{height:620px;overflow:auto;padding:16px 18px 20px;font-family:var(--mono);font-size:13.5px;line-height:1.6;color:var(--term-ink);scroll-behavior:smooth}
+.ln{white-space:pre;min-height:1.6em}
+.p{color:var(--t-green)} .d{color:var(--term-dim)} .r{color:var(--t-red)} .g{color:var(--t-green)}
+.y{color:var(--t-yellow)} .c{color:var(--t-cyan)} .bl{color:var(--t-blue)} .v{color:var(--t-violet)}
+.b{font-weight:600;color:#fff}
+.logo{color:var(--t-red);font-weight:500;line-height:1.25}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.inbox{border:1px solid var(--term-line);border-radius:6px;padding:6px 10px;margin-block:8px;white-space:pre}
+.inbox .ph{color:var(--term-dim)}
+.user{color:var(--term-dim);margin-top:8px}
+.user b{color:var(--term-ink);font-weight:500}
+.card{border:1px solid var(--term-line);border-radius:6px;padding:10px 14px;margin-block:6px;display:flex;flex-direction:column;gap:2px}
+.card.bad{border-color:rgba(255,122,112,.6)}
+.card.ok{border-color:rgba(98,214,155,.5)}
+.card .ln{min-height:0}
+.foot{white-space:pre;color:var(--term-dim);font-size:12px}
+.status{border-top:1px solid var(--term-line);background:var(--term-bar);padding:8px 18px;font-family:var(--mono);font-size:13px;color:var(--term-ink);white-space:pre;overflow-x:auto}
+.status .lbl{color:var(--t-yellow);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-right:10px}
+.bobq{color:var(--term-ink)}
+.bobq .v{font-weight:600}
+.hl{background:rgba(255,122,112,.16);color:var(--t-red);padding:0 3px}
+.hlg{background:rgba(98,214,155,.16);color:var(--t-green);padding:0 3px}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none}.screen{scroll-behavior:auto}}
+
+aside{display:flex;flex-direction:column;gap:16px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.cmds{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.cmds div{display:flex;gap:10px;align-items:baseline}
+.cmds code{font-family:var(--mono);font-size:13px;color:var(--accent);min-width:84px}
+.cmds span{color:var(--muted)}
+.panel p{font-size:14px;color:var(--muted)}
+.panel code{font-family:var(--mono);font-size:13px}
+.phases{display:flex;flex-direction:column;gap:0;font-size:14px}
+.phase{display:flex;gap:10px;padding:6px 0;color:var(--muted)}
+.phase+.phase{border-top:1px solid var(--line)}
+.phase i{font-style:normal;font-family:var(--mono);font-size:12px;width:18px;color:var(--muted)}
+.phase.on{color:var(--ink);font-weight:600}
+.phase.on i{color:var(--bad)}
+.phase.done i{color:var(--accent)}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Interactive mode mockup</div>
+    <h1>Type <code style="font-family:var(--mono)">cx</code> and everything happens in one session</h1>
+    <p class="lede">Like Claude Code: it opens with the logo, signs you in, connects GitHub, then gives you a prompt. You say what you want, pick a repo, and it runs the whole flow, asking you only when it needs a decision. While it works, you can keep chatting with Bob.</p>
+  </header>
+
+  <div class="controls">
+    <button class="btn main" id="play" type="button">▶ Play the session</button>
+    <button class="btn" id="skip" type="button">Show full session</button>
+    <span class="hint">The full session is shown below. Press Play to watch it run.</span>
+  </div>
+
+  <div class="layout">
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~ — cx</span></div>
+      <div class="screen" id="screen" aria-live="polite"></div>
+      <div class="status" id="status" hidden></div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <h3>Where we are</h3>
+        <div class="phases" id="phases">
+          <div class="phase" data-p="0"><i>1</i>Open and sign in</div>
+          <div class="phase" data-p="1"><i>2</i>Connect GitHub</div>
+          <div class="phase" data-p="2"><i>3</i>Pick a repo</div>
+          <div class="phase" data-p="3"><i>4</i>Bob reads and starts the app</div>
+          <div class="phase" data-p="4"><i>5</i>Approve rules</div>
+          <div class="phase" data-p="5"><i>6</i>Search and shrink</div>
+          <div class="phase" data-p="6"><i>7</i>Bob explains and fixes</div>
+          <div class="phase" data-p="7"><i>8</i>Verify and open PR</div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Slash commands</h3>
+        <div class="cmds">
+          <div><code>/repo</code><span>switch repo</span></div>
+          <div><code>/rules</code><span>view or edit rules</span></div>
+          <div><code>/run</code><span>search for bugs</span></div>
+          <div><code>/replay</code><span>replay a counterexample</span></div>
+          <div><code>/explain</code><span>ask Bob why</span></div>
+          <div><code>/verify</code><span>prove a fix works</span></div>
+          <div><code>/dashboard</code><span>open the web view</span></div>
+          <div><code>/login</code><span>switch account</span></div>
+        </div>
+        <p>You can also type in plain words, like "find bugs in my refund flow" or "why did it break?". Bob understands those.</p>
+      </div>
+      <div class="panel">
+        <h3>Chat while it runs</h3>
+        <p>The search runs in the background, shown in the bar at the bottom of the terminal. You can ask Bob anything meanwhile. Bob answers from the live run data and logs, and it never decides pass or fail.</p>
+      </div>
+      <div class="panel">
+        <h3>It only stops for decisions</h3>
+        <p>Missing setup values, approving rules, what to do after a bug, and applying a fix. Everything else runs on its own. <code>cx --auto</code> skips the questions and only opens PRs for you to review.</p>
+      </div>
+      <div class="panel">
+        <h3>CI still works</h3>
+        <p>The same tool runs without the chat for pipelines: <code>cx run --ci</code> exits pass or fail.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(function(){
+  var screen = document.getElementById('screen');
+  var phaseEls = Array.prototype.slice.call(document.querySelectorAll('.phase'));
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var runId = 0, fast = false;
+  var statusEl = document.getElementById('status');
+  var bg = {n:0, to:0, timer:null, done:Promise.resolve()};
+  function stopBg(){ if (bg.timer){ clearInterval(bg.timer); bg.timer = null; } }
+
+  // Logo letters (3 rows each)
+  var L = {
+    C:["┌─┐","│  ","└─┘"], O:["┌─┐","│ │","└─┘"], U:["┬ ┬","│ │","└─┘"], N:["┌┐┌","│││","┘└┘"],
+    T:["┌┬┐"," │ "," ┴ "], E:["┌─┐","├┤ ","└─┘"], R:["┬─┐","├┬┘","┴└─"], X:["─┐ ┬","┌┴┬┘","┴ └─"],
+    A:["┌─┐","├─┤","┴ ┴"], M:["┌┬┐","│││","┴ ┴"], P:["┌─┐","├─┘","┴  "], L:["┬  ","│  ","┴─┘"]
+  };
+  var WORD = "COUNTEREXAMPLE".split('');
+
+  function Stop(){}
+  function check(id){ if (id !== runId) throw new Stop(); }
+  function wait(ms, id){
+    if (fast) return Promise.resolve();
+    return new Promise(function(res){ setTimeout(res, reduce ? Math.min(ms, 60) : ms); }).then(function(){ check(id); });
+  }
+  function scroll(){ if (!fast) screen.scrollTop = screen.scrollHeight; }
+  function add(html, cls){
+    var el = document.createElement('div');
+    el.className = cls || 'ln';
+    el.innerHTML = html == null ? '' : html;
+    screen.appendChild(el); scroll(); return el;
+  }
+  function phase(n){
+    phaseEls.forEach(function(el, i){
+      el.classList.toggle('on', i === n);
+      el.classList.toggle('done', i < n);
+    });
+  }
+  function fmt(n){ return n.toLocaleString('en-US'); }
+
+  var steps = {
+    phase: function(s){ phase(s.n); return Promise.resolve(); },
+    out: function(s, id){ add(s.html); return wait(s.d == null ? 140 : s.d, id); },
+    gap: function(s, id){ add(''); return wait(60, id); },
+    type: async function(s, id){
+      var el = add(s.prompt);
+      var t = document.createElement('span'); el.appendChild(t);
+      var cur = document.createElement('span'); cur.className = 'cursor'; el.appendChild(cur);
+      if (!fast){ for (var i=0;i<s.text.length;i++){ t.textContent += s.text[i]; await wait(70, id); } await wait(350, id); }
+      else t.textContent = s.text;
+      cur.remove();
+    },
+    logo: async function(s, id){
+      var rows = [add('', 'ln logo'), add('', 'ln logo'), add('', 'ln logo')];
+      for (var k=1;k<=WORD.length;k++){
+        for (var r=0;r<3;r++){
+          rows[r].textContent = '  ' + WORD.slice(0,k).map(function(ch){ return L[ch][r]; }).join('');
+        }
+        if (!fast) await wait(45, id);
+      }
+    },
+    spin: async function(s, id){
+      var el = add('');
+      var frames = ['◐','◓','◑','◒'], i = 0, t0 = Date.now();
+      if (!fast){
+        while (Date.now() - t0 < s.ms){
+          el.innerHTML = '<span class="' + (s.cls||'c') + '">' + frames[i++ % 4] + '</span> ' + s.text;
+          await wait(110, id);
+        }
+      }
+      el.innerHTML = s.done;
+    },
+    chat: async function(s, id){
+      var box = add('', 'inbox');
+      box.innerHTML = '<span class="d">&gt; </span><span class="t"></span><span class="cursor"></span>';
+      var t = box.querySelector('.t');
+      if (!fast){ await wait(500, id); for (var i=0;i<s.text.length;i++){ t.textContent += s.text[i]; await wait(55, id); } await wait(500, id); }
+      box.className = 'ln user';
+      box.innerHTML = '&gt; <b></b>';
+      box.querySelector('b').textContent = s.text;
+    },
+    menu: async function(s, id){
+      add(s.q);
+      var items = s.items.map(function(){ return add(''); });
+      var hint = add('<span class="d">  ↑↓ to move · enter to select</span>');
+      function draw(sel){
+        items.forEach(function(el, i){
+          el.innerHTML = (i === sel ? '<span class="c">  ❯ </span><span class="b">' : '    <span>') + s.items[i] + '</span>';
+        });
+      }
+      draw(0);
+      if (!fast){ await wait(700, id); for (var k=1;k<=s.pick;k++){ draw(k); await wait(450, id); } await wait(500, id); }
+      items.forEach(function(el){ el.remove(); }); hint.remove();
+      add(s.done);
+    },
+    ask: async function(s, id){
+      var el = add(s.q + ' ');
+      var a = document.createElement('span'); a.className = 'g'; el.appendChild(a);
+      if (!fast) await wait(800, id);
+      a.textContent = s.a;
+      await wait(250, id);
+    },
+    count: async function(s, id){
+      var el = add('');
+      var n = 0, feed = ['login → buy(40)','buy(100) → cancel_order','login → admin_export','buy(20) → buy(20) → refund(20)','buy(75) → refund(75)','buy(100) → refund(30) → cancel_order'];
+      var i = 0;
+      function draw(done){
+        el.innerHTML = (done ? '<span class="r">✗</span>' : '<span class="c">◐</span>') + ' Searching  <span class="b">' + fmt(n) + '</span> sequences  <span class="d">1,140/sec  ' + (done ? 'buy(100) → refund(60) → refund(50) → …' : feed[i % feed.length]) + '</span>';
+      }
+      if (!fast){ while (n < s.to){ n = Math.min(s.to, n + 61 + Math.floor(Math.random()*40)); i++; draw(false); await wait(35, id); } }
+      n = s.to; draw(true);
+    },
+    // Background search: keeps running in the status bar while chat steps continue.
+    bgstart: function(s, id){
+      stopBg();
+      bg.n = 0; bg.to = s.to;
+      statusEl.hidden = false;
+      var feed = ['login → buy(40)','buy(100) → cancel_order','login → admin_export','buy(20) → buy(20) → refund(20)','buy(75) → refund(75)','buy(100) → refund(30) → refund(30)'];
+      var i = 0;
+      function draw(){
+        statusEl.innerHTML = '<span class="lbl">running</span><span class="c">' + ['◐','◓','◑','◒'][i % 4] + '</span> Searching  <span class="b">' + fmt(bg.n) + '</span> sequences  <span class="d">1,140/sec · ' + feed[Math.floor(i/3) % feed.length] + '</span>';
+      }
+      bg.done = new Promise(function(res){
+        if (fast){ bg.n = s.to; draw(); res(); return; }
+        var step = s.to / (s.ms / 40);
+        bg.timer = setInterval(function(){
+          if (id !== runId){ stopBg(); return; }
+          i++; bg.n = Math.min(s.to, Math.round(bg.n + step * (0.7 + Math.random()*0.6)));
+          draw();
+          if (bg.n >= s.to){ stopBg(); res(); }
+        }, 40);
+      });
+      return Promise.resolve();
+    },
+    bob: async function(s, id){
+      if (!fast) await wait(900, id);
+      var n = fast ? s.fastN : bg.n;
+      add('<span class="v">◆ Bob</span>  ' + s.lines[0].replace('{n}', fmt(n)), 'ln bobq');
+      for (var k=1;k<s.lines.length;k++) add('        ' + s.lines[k].replace('{n}', fmt(n)), 'ln bobq');
+      await wait(1200, id);
+    },
+    bgwait: async function(s, id){
+      await bg.done; check(id);
+      statusEl.hidden = true;
+      add('<span class="r">✗</span> Searched <span class="b">' + fmt(bg.to) + '</span> sequences <span class="d">in the background</span>');
+      await wait(300, id);
+    },
+    shrink: async function(s, id){
+      var el = add('');
+      var parts = ['12','8','5','4','3'];
+      if (!fast){
+        for (var k=1;k<=parts.length;k++){
+          el.innerHTML = '  Shrinking  <span class="d">' + parts.slice(0,k).join(' → ') + '</span>' + (k < parts.length ? ' <span class="y">…</span>' : '');
+          await wait(550, id);
+        }
+      }
+      el.innerHTML = '  Shrinking  <span class="d">12 → 8 → 5 → 4 →</span> <span class="b">3 steps</span>';
+    },
+    card: async function(s, id){
+      var box = add('', 'card ' + (s.tone||''));
+      s.lines.forEach(function(h){ var l = document.createElement('div'); l.className = 'ln'; l.innerHTML = h; box.appendChild(l); });
+      scroll();
+      await wait(s.d || 500, id);
+    },
+    idle: function(s){
+      var box = add('', 'inbox');
+      box.innerHTML = '<span class="d">&gt; </span><span class="cursor"></span> <span class="ph">Try "keep searching" or /help</span>';
+      add('  ? for shortcuts                             aayush/shop-app · 4 rules · 1 fix verified', 'foot');
+      return Promise.resolve();
+    }
+  };
+
+  var S = [
+    {k:'phase', n:0},
+    {k:'type', prompt:'<span class="p">~ $</span> ', text:'cx'},
+    {k:'gap'},
+    {k:'logo'},
+    {k:'out', html:'  <span class="d">v0.1 · find the smallest sequence that breaks your software</span>', d:400},
+    {k:'gap'},
+    {k:'out', html:'<span class="b">Welcome.</span> Two quick steps and you\'re ready.', d:500},
+    {k:'gap'},
+    {k:'out', html:'<span class="y">1/2</span> Sign in with Google'},
+    {k:'spin', text:'Opening your browser to sign in with Google…', ms:1500, done:'  <span class="g">✓</span> Signed in as <span class="b">aayush</span> <span class="d">(Google)</span>'},
+    {k:'phase', n:1},
+    {k:'out', html:'<span class="y">2/2</span> Connect GitHub'},
+    {k:'spin', text:'Opening GitHub in your browser. Pick the repos to share…', ms:1800, done:'  <span class="g">✓</span> GitHub connected · <span class="b">3 repos</span> shared <span class="d">(2 private)</span>'},
+    {k:'gap'},
+    {k:'card', tone:'ok', lines:['<span class="g">✓</span> You\'re all set. Tell me what to check, or type <span class="c">/help</span>.'], d:600},
+    {k:'chat', text:'find bugs in my app'},
+    {k:'phase', n:2},
+    {k:'gap'},
+    {k:'menu', q:'<span class="bl">◆</span> Which repo?', pick:0,
+      items:['aayush/shop-app          <span class="d">private · Node.js</span>','aayush/billing-service   <span class="d">private · Python</span>','aayush/portfolio-site    <span class="d">public · frontend only</span>'],
+      done:'  <span class="g">✓</span> <span class="b">aayush/shop-app</span>'},
+    {k:'phase', n:3},
+    {k:'gap'},
+    {k:'spin', cls:'v', text:'<span class="v">Bob</span> is reading the repo…', ms:1800, done:'<span class="v">◆ Bob</span> Node.js · Express · Postgres · <span class="b">7 endpoints</span> · 18 tests'},
+    {k:'spin', text:'Starting the app in a sealed Docker box…', ms:1500, done:'  <span class="g">✓</span> App running · database ready'},
+    {k:'ask', q:'  <span class="y">?</span> Your app needs <span class="b">PAYMENT_API_KEY</span>. Use a fake payment server instead? <span class="d">(Y/n)</span>', a:'y'},
+    {k:'out', html:'  <span class="g">✓</span> Using fake payment server <span class="d">(saved, won\'t ask again)</span>'},
+    {k:'out', html:'<span class="v">◆ Bob</span> Found 6 actions: <span class="d">login  buy  refund  cancel_order  ship  admin_export</span>', d:400},
+    {k:'phase', n:4},
+    {k:'gap'},
+    {k:'out', html:'<span class="v">◆ Bob</span> These rules should always be true:'},
+    {k:'card', lines:[
+      '<span class="b">1</span>  Refunds never exceed amount paid         <span class="d">src/refunds.js · README</span>',
+      '<span class="b">2</span>  Stock never goes below 0                 <span class="d">models/product.js</span>',
+      '<span class="b">3</span>  A cancelled order never ships            <span class="d">src/orders.js</span>',
+      '<span class="b">4</span>  A normal user never opens admin export   <span class="d">routes/admin.js</span>'
+    ], d:700},
+    {k:'ask', q:'  <span class="y">?</span> Approve all 4? <span class="d">(Y / n / e to edit one)</span>', a:'y'},
+    {k:'out', html:'  <span class="g">✓</span> 4 rules approved and saved to <span class="c">counterexample/rules.js</span>', d:400},
+    {k:'phase', n:5},
+    {k:'gap'},
+    {k:'bgstart', to:3412, ms:11000},
+    {k:'out', html:'<span class="c">◐</span> Search started in the background. <span class="d">You can keep chatting.</span>', d:600},
+    {k:'chat', text:'what are you doing right now?'},
+    {k:'bob', fastN:1284, lines:[
+      'I\'m trying random orders of login, buy, refund, cancel and ship',
+      'on your running app. {n} sequences so far. All 4 rules holding.'
+    ]},
+    {k:'chat', text:'why did the docker step take so long?'},
+    {k:'bob', fastN:2210, lines:[
+      'Postgres took 38 seconds to start (from the Docker logs).',
+      'I kept its image, so next time it starts in about 3 seconds.'
+    ]},
+    {k:'chat', text:'which rule is most at risk?'},
+    {k:'bob', fastN:2930, lines:[
+      'Refunds. src/refunds.js has no limit on how many refunds one order',
+      'gets, so I\'ve asked the engine to try more refund sequences.',
+      '<span class="d">This is a guess. Only the engine\'s run can prove it.</span>'
+    ]},
+    {k:'bgwait'},
+    {k:'out', html:'<span class="r">✗ RULE BROKEN</span>  Refunds never exceed amount paid  <span class="d">(12 steps long)</span>', d:500},
+    {k:'shrink'},
+    {k:'card', tone:'bad', d:900, lines:[
+      '<span class="r">COUNTEREXAMPLE #001</span>',
+      '',
+      '  1. buy(mug, ₹100)',
+      '  2. refund(₹60)',
+      '  3. refund(₹50)',
+      '',
+      '  Paid ₹100     Refunded <span class="hl">₹110</span>   <span class="r">✗ rule broken</span>',
+      '  Replayed 10 / 10 on the real app  <span class="g">✓ real bug</span>'
+    ]},
+    {k:'out', html:'  <span class="g">✓</span> Saved test <span class="c">tests/counterexample/cx_001.test.js</span>', d:400},
+    {k:'gap'},
+    {k:'menu', q:'<span class="bl">◆</span> What next?', pick:0,
+      items:['Ask Bob why it broke','Replay it step by step','Keep searching for more bugs'],
+      done:'  <span class="g">✓</span> Ask Bob why it broke'},
+    {k:'phase', n:6},
+    {k:'gap'},
+    {k:'spin', cls:'v', text:'<span class="v">Bob</span> is tracing the 3 steps through the code…', ms:2000, done:'<span class="v">◆ Bob</span> Found it.'},
+    {k:'card', d:900, lines:[
+      '<span class="b">Root cause</span>   src/refunds.js : 42',
+      '  Each refund is checked alone against the order total.',
+      '  Earlier refunds on the same order are ignored.',
+      '',
+      '<span class="b">Fix</span>',
+      '<span class="r">- if (amount &lt;= order.total) {</span>',
+      '<span class="g">+ const already = sum(order.refunds);</span>',
+      '<span class="g">+ if (already + amount &lt;= order.total) {</span>',
+      '    approveRefund(order, amount);'
+    ]},
+    {k:'ask', q:'  <span class="y">?</span> Apply the fix and check it? <span class="d">(Y/n)</span>', a:'y'},
+    {k:'phase', n:7},
+    {k:'gap'},
+    {k:'spin', text:'Replaying counterexample #001…', ms:1300, done:'  <span class="g">✓</span> Replay: second refund now rejected · refunded <span class="hlg">₹60</span>'},
+    {k:'spin', text:'Running your tests…', ms:1100, done:'  <span class="g">✓</span> 18 / 18 existing tests pass · 1 / 1 new test passes'},
+    {k:'spin', text:'Fresh search with 20,000 sequences…', ms:1800, done:'  <span class="g">✓</span> 20,000 sequences · 0 rules broken'},
+    {k:'out', html:'  <span class="g b">✓ FIX VERIFIED</span>', d:400},
+    {k:'spin', text:'Opening pull request…', ms:1200, done:'  <span class="g">✓</span> PR <span class="b">#88</span> opened on aayush/shop-app · branch cx/fix-001'},
+    {k:'gap'},
+    {k:'idle'}
+  ];
+
+  async function play(isFast){
+    var id = ++runId; fast = isFast;
+    stopBg(); statusEl.hidden = true;
+    screen.innerHTML = '';
+    try {
+      for (var i=0;i<S.length;i++){ await steps[S[i].k](S[i], id); check(id); }
+      phase(8);
+      if (fast) screen.scrollTop = 0;
+    } catch(e){ if (!(e instanceof Stop)) throw e; }
+  }
+
+  document.getElementById('play').addEventListener('click', function(){ play(false); });
+  document.getElementById('skip').addEventListener('click', function(){ play(true); });
+  play(true);
+})();
+</script>

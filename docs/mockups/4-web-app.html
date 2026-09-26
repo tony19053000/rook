@@ -1,0 +1,486 @@
+<title>Counterexample Web App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap">
+<style>
+:root{
+  --page:#EDEFEE; --app:#F7F8F7; --side:#EEF0EF; --surface:#FFFFFF; --sunk:#F0F2F1; --ink:#1A1F1D; --muted:#5E6864; --faint:#8C9692; --line:#DCE1DE; --hover:#E4E8E6;
+  --accent:#D9452F; --accent-ink:#FFFFFF; --link:#2F5BD3;
+  --bad:#C2372F; --bad-soft:#FBE8E6; --good:#1C8A55; --good-soft:#E2F3E9; --warn:#A86A12; --warn-soft:#FBF0DC;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --page:#0B0B0B; --app:#1A1A1A; --side:#141414; --surface:#222222; --sunk:#1E1E1E; --ink:#ECECEA; --muted:#A8A8A3; --faint:#74746F; --line:#2E2E2E; --hover:#2A2A2A;
+    --accent:#E0563F; --link:#8AA6FF;
+    --bad:#FF8C83; --bad-soft:#3A1E1C; --good:#6BD9A0; --good-soft:#15301F; --warn:#E9C46A; --warn-soft:#352B14;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0B0B0B; --app:#1A1A1A; --side:#141414; --surface:#222222; --sunk:#1E1E1E; --ink:#ECECEA; --muted:#A8A8A3; --faint:#74746F; --line:#2E2E2E; --hover:#2A2A2A;
+  --accent:#E0563F; --link:#8AA6FF;
+  --bad:#FF8C83; --bad-soft:#3A1E1C; --good:#6BD9A0; --good-soft:#15301F; --warn:#E9C46A; --warn-soft:#352B14;
+}
+*{box-sizing:border-box}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.5;padding-inline:16px;padding-block:24px 48px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.intro{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+.intro h1{margin:0;font-size:20px;font-weight:600;letter-spacing:-0.01em}
+.intro p{margin:0;color:var(--muted);font-size:14px;max-width:70ch}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{font-family:var(--sans);font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:focus-visible,.tabbtn:focus-visible,.nav:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+/* app frame */
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);height:760px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--app);box-shadow:0 14px 40px rgba(0,0,0,.18)}
+@media (max-width:820px){.app{grid-template-columns:1fr;height:720px}.side{display:none!important}}
+
+/* sidebar */
+.side{background:var(--side);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:12px 10px;gap:4px;min-height:0}
+.brand{display:flex;align-items:center;gap:8px;padding:4px 8px 10px}
+.brand .word{font-family:var(--serif);font-size:21px;letter-spacing:-0.01em}
+.seg{display:grid;grid-template-columns:1fr 1fr;background:var(--sunk);border-radius:8px;padding:3px;margin-bottom:8px}
+.tabbtn{border:none;background:none;color:var(--muted);font-family:var(--sans);font-size:13px;padding:5px;border-radius:6px;cursor:pointer}
+.tabbtn.on{background:var(--hover);color:var(--ink)}
+.nav{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:8px;color:var(--ink);font-size:14px;border:none;background:none;font-family:var(--sans);text-align:left;cursor:pointer;width:100%}
+.nav:hover{background:var(--hover)}
+.nav.new{background:var(--hover)}
+.nav svg{width:16px;height:16px;flex:none;stroke:currentColor;fill:none;stroke-width:1.6}
+.nav .muted{color:var(--muted)}
+.rec-h{display:flex;justify-content:space-between;color:var(--faint);font-size:12.5px;padding:18px 10px 6px}
+.recent{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:8px;font-size:13.5px;color:var(--ink);white-space:nowrap;overflow:hidden}
+.recent .rd{width:6px;height:6px;border-radius:50%;background:var(--faint);flex:none}
+.recent .rd.live{background:var(--accent);animation:pulse 1s infinite}
+.recent .rd.ok{background:var(--good)}
+.recent .rd.bad{background:var(--bad)}
+.recent span{overflow:hidden;text-overflow:ellipsis}
+@keyframes pulse{50%{opacity:.35}}
+.side .fill{flex:1}
+.promo{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.promo b{color:var(--ink);font-weight:600}
+.me{display:flex;align-items:center;gap:8px;padding:10px 6px 2px;border-top:1px solid var(--line);margin-top:8px;font-size:13.5px}
+.me .av{width:24px;height:24px;border-radius:50%;background:var(--hover);display:grid;place-items:center;font-size:11px;font-weight:600}
+.me .plan{color:var(--faint)}
+
+/* main */
+.main{display:flex;flex-direction:column;min-height:0;position:relative}
+.scroll{flex:1;overflow:auto;min-height:0}
+.col{max-width:760px;margin:0 auto;padding:28px 20px 16px;display:flex;flex-direction:column;gap:10px}
+.hello{display:flex;align-items:center;gap:12px;justify-content:center;padding-top:60px}
+.hello h2{margin:0;font-family:var(--serif);font-weight:400;font-size:30px;letter-spacing:-0.01em}
+.hello-sub{text-align:center;color:var(--muted);font-size:14px}
+.m-user{align-self:flex-end;max-width:80%;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+.m-sys{color:var(--muted);font-size:13px}
+.ag{display:flex;gap:10px;align-items:center}
+.ag .spr{flex:none;transition:transform .18s ease}
+.ag .spr.up{transform:translateY(-3px)}
+.ag .info{min-width:0;display:flex;flex-direction:column}
+.ag .top{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag .nm{font-weight:600}
+.ag .tm{color:var(--faint);font-family:var(--mono);font-size:12px}
+.ag .det{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag.done{gap:8px;align-items:baseline}
+.ag.done .dotc{width:8px;height:8px;border-radius:50%;flex:none;transform:translateY(-1px)}
+.ok{color:var(--good);font-weight:600} .no{color:var(--bad);font-weight:600}
+.eng{font-family:var(--mono);font-size:12.5px;display:flex;gap:8px;align-items:center;white-space:nowrap;overflow:hidden}
+.eng .sq{width:9px;height:9px;background:var(--ink);flex:none}
+.eng .bar{width:120px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
+.eng .bar i{display:block;height:100%;background:var(--good)}
+.eng .lbl{color:var(--muted);overflow:hidden;text-overflow:ellipsis}
+.pix{display:grid}
+.pix i{display:block}
+
+/* inline result cards */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.card.alert{border-color:var(--bad)}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.pill{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.pill.good{background:var(--good-soft);color:var(--good)} .pill.bad{background:var(--bad-soft);color:var(--bad)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.idle{background:var(--sunk);color:var(--faint)}
+.rows{border:1px solid var(--line);border-radius:8px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:13.5px}
+.row+.row{border-top:1px solid var(--line)}
+.row .grow{flex:1;min-width:0}
+.row .sub{display:block;font-size:12px;color:var(--faint);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row.struck .grow>span:first-child{text-decoration:line-through;color:var(--faint)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.answered{font-size:13px;color:var(--good);font-weight:600}
+.big{font-family:var(--mono);font-size:28px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:var(--app)}
+.shrink{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:14px}
+.shrink .s{padding:3px 10px;border-radius:6px;border:1px solid var(--line);transition:all .25s}
+.shrink .s.cur{background:var(--bad);border-color:var(--bad);color:#fff}
+.shrink .s.gone{opacity:.35}
+.shrink .ar{color:var(--faint)}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.steps li{display:flex;gap:10px;border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-family:var(--mono);font-size:13.5px}
+.steps li b{width:16px;color:var(--faint);font-weight:500}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.duo .box{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;display:flex;flex-direction:column;gap:2px;align-items:center;background:var(--app)}
+.duo .box.redbox{border-color:var(--bad);background:var(--bad-soft)}
+.duo .box.redbox .big{color:var(--bad)}
+.duo .box.greenbox{border-color:var(--good);background:var(--good-soft)}
+.duo .box.greenbox .big{color:var(--good)}
+.diff{font-family:var(--mono);font-size:12.5px;background:var(--sunk);border:1px solid var(--line);border-radius:8px;padding:10px 12px;white-space:pre;overflow-x:auto;line-height:1.6}
+.diff .a{color:var(--good)} .diff .r{color:var(--bad)} .diff .c{color:var(--faint)}
+@media (max-width:560px){.stats{grid-template-columns:1fr 1fr}.duo{grid-template-columns:1fr}}
+
+/* composer */
+.dock{padding:8px 20px 14px}
+.dock-in{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:8px;position:relative}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chipb{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--app);color:var(--ink);border-radius:8px;padding:4px 10px;font-size:13px;font-family:var(--sans);cursor:pointer}
+.chipb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.6}
+.chipb.set{border-color:var(--accent)}
+.menu{position:absolute;bottom:100%;left:120px;margin-bottom:6px;width:320px;max-width:calc(100% - 20px);background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column;gap:2px;z-index:5}
+.menu .mi{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;border-radius:6px;font-size:13.5px}
+.menu .mi.hi{background:var(--hover)}
+.menu .mi span:last-child{color:var(--faint);font-size:12px}
+.menu .mh{font-size:11.5px;color:var(--faint);padding:4px 10px}
+.input{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;display:flex;align-items:center;gap:10px;min-height:46px}
+.input .txt{flex:1;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.input .ph{color:var(--faint)}
+.input .ent{color:var(--faint);font-size:15px}
+.cursor{display:inline-block;width:2px;height:16px;background:var(--ink);vertical-align:-3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.opts{display:flex;justify-content:space-between;gap:10px;font-size:12.5px;color:var(--muted);padding:0 4px;flex-wrap:wrap}
+.opts span{display:inline-flex;gap:14px;align-items:center}
+.mascot{position:absolute;right:6px;top:-30px}
+
+.notes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.notes{grid-template-columns:1fr}}
+.note{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13.5px;color:var(--muted)}
+.note b{color:var(--ink);display:block;margin-bottom:2px}
+@media (prefers-reduced-motion:reduce){.cursor,.recent .rd.live{animation:none}.ag .spr,.shrink .s{transition:none}}
+</style>
+
+<div class="wrap">
+  <div class="intro">
+    <div>
+      <h1>Counterexample web app</h1>
+      <p>Laid out like Claude Code on the web: sidebar, greeting, and an input box with "Select repository…". Results appear as cards inside the chat. Plays automatically, and you can click the buttons.</p>
+    </div>
+    <div class="controls">
+      <button class="btn primary" id="restart" type="button">↻ Restart</button>
+      <button class="btn" id="pause" type="button">Pause</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="side" aria-label="Sidebar">
+      <div class="brand"><span id="brandblob"></span><span class="word">Counterexample</span></div>
+      <div class="seg"><button class="tabbtn" type="button">Home</button><button class="tabbtn on" type="button">Runs</button></div>
+      <button class="nav new" type="button"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>New run</button>
+      <button class="nav" type="button"><svg viewBox="0 0 16 16"><path d="M3 3h10v10H3zM3 7h10"/></svg>Counterexamples</button>
+      <button class="nav" type="button"><svg viewBox="0 0 16 16"><path d="M4 3h8M4 8h8M4 13h5"/></svg>Rules</button>
+      <button class="nav" type="button"><svg viewBox="0 0 16 16"><path d="M3 5l5-2 5 2v6l-5 2-5-2z"/></svg>Repositories</button>
+      <button class="nav" type="button"><svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg><span class="muted">More</span></button>
+      <div class="rec-h"><span>Recents</span><span>⇅</span></div>
+      <div id="recents"></div>
+      <div class="fill"></div>
+      <div class="promo"><b>Add to CI</b>Run on every pull request</div>
+      <div class="me"><span class="av">A</span><span>aayush</span><span class="plan">· 0.84 coins used</span></div>
+    </aside>
+
+    <section class="main" aria-label="Run">
+      <div class="scroll" id="scroll"><div class="col" id="col"></div></div>
+      <div class="dock">
+        <div class="dock-in">
+          <span class="mascot" id="mascot"></span>
+          <div class="chips">
+            <span class="chipb"><svg viewBox="0 0 16 16"><path d="M2 9h12v4H2zM4 9V6h8v3"/></svg>Docker sandbox</span>
+            <span class="chipb" id="repochip"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg><span id="repotxt">Select repository…</span></span>
+          </div>
+          <div class="menu" id="menu" hidden>
+            <div class="mh">Your GitHub repositories</div>
+            <div class="mi" data-i="0"><span>aayush/shop-app</span><span>private · Node.js</span></div>
+            <div class="mi" data-i="1"><span>aayush/billing-service</span><span>private · Python</span></div>
+            <div class="mi" data-i="2"><span>aayush/portfolio-site</span><span>public</span></div>
+          </div>
+          <div class="input"><span class="txt" id="txt"></span><span class="ent">↵</span></div>
+          <div class="opts"><span>＋ &nbsp;Auto-approve: off</span><span><span>Bob · 12 agents</span><span>Thorough</span></span></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="notes">
+    <div class="note"><b>Same engine as the terminal</b>The web app and <code>cx</code> share one engine and one set of Bob agents.</div>
+    <div class="note"><b>Results live in the chat</b>Rules, the live search, the counterexample, the fix and the verification appear as cards you can act on.</div>
+    <div class="note"><b>Recents in the sidebar</b>Every run is saved. Open an old run to replay its counterexample or see its pull request.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- characters ----------
+  var W = 12, H = 10;
+  function rot(dx, dy, deg){ var a = deg*Math.PI/180; return [dx*Math.cos(a)-dy*Math.sin(a), dx*Math.sin(a)+dy*Math.cos(a)]; }
+  var SHAPES = {
+    circle: function(x,y){ var dx=x-5.5, dy=y-4.8; return dx*dx+dy*dy <= 4.9*4.9; },
+    small: function(x,y){ var dx=x-5.5, dy=y-6; return dx*dx+dy*dy <= 3.6*3.6; },
+    roundsq: function(x,y){ var dx=Math.abs(x-5.5), dy=Math.abs(y-4.8); return dx<=5 && dy<=4.6 && dx+dy<=8.2; },
+    tilted: function(x,y){ var p=rot(x-5.5,y-4.8,-14); var dx=Math.abs(p[0]), dy=Math.abs(p[1]); return dx<=4.4 && dy<=4.1 && dx+dy<=7.4; },
+    triangle: function(x,y){ var dx=Math.abs(x-5.5); var hw=(y+0.6)*0.62; return y>=0 && dx<=hw && !(y>=9 && dx>4.6); },
+    cloud: function(x,y){ var c=[[3.4,5.6,3.1],[7.6,5.6,3.1],[5.5,3.4,3.1],[5.5,6.4,3.2]]; for (var i=0;i<c.length;i++){ var dx=x-c[i][0], dy=y-c[i][1]; if (dx*dx+dy*dy<=c[i][2]*c[i][2]) return true; } return false; },
+    blob: function(x,y){ var dx=(x-5.5)/5.6, dy=(y-5.2)/4.3; return dx*dx+dy*dy<=1; }
+  };
+  var EYE_ROW = {circle:3, small:5, roundsq:3, tilted:3, triangle:6, cloud:4, blob:4};
+  var AG = {
+    coord:{name:'Coordinator', color:'#F5B400', shape:'circle', verb:'Planning'},
+    scout:{name:'Scout', color:'#10B99A', shape:'roundsq', verb:'Scouting'},
+    mech:{name:'Mechanic', color:'#FF8A00', shape:'cloud', verb:'Building'},
+    map:{name:'Mapper', color:'#1FA8E0', shape:'blob', verb:'Mapping'},
+    law:{name:'Lawmaker', color:'#9B1FE8', shape:'tilted', verb:'Drafting rules'},
+    crit:{name:'Rule Critic', color:'#FF1493', shape:'triangle', verb:'Reviewing rules'},
+    test:{name:'Test Designer', color:'#FF5A1F', shape:'blob', verb:'Designing tests'},
+    strat:{name:'Strategist', color:'#A86B3C', shape:'circle', verb:'Strategizing'},
+    det:{name:'Detective', color:'#4F63FF', shape:'roundsq', verb:'Investigating'},
+    drev:{name:'Diag. Reviewer', color:'#F05FAA', shape:'triangle', verb:'Checking evidence'},
+    surg:{name:'Surgeon', color:'#22B868', shape:'tilted', verb:'Operating'},
+    frev:{name:'Fix Reviewer', color:'#D6247A', shape:'triangle', verb:'Reviewing fix'},
+    guide:{name:'Guide', color:'#8E99A6', shape:'small', verb:'Answering'},
+    mascot:{name:'', color:'#E0563F', shape:'cloud', verb:''}
+  };
+  function makeSprite(a, px){
+    var g = document.createElement('div'); g.className = 'pix';
+    g.style.gridTemplateColumns = 'repeat(' + W + ',' + px + 'px)';
+    var cells = [];
+    for (var i=0;i<W*H;i++){ var c = document.createElement('i'); c.style.width = px+'px'; c.style.height = px+'px'; g.appendChild(c); cells.push(c); }
+    var sp = {el:g, cells:cells, a:a}; paint(sp, 0, false); return sp;
+  }
+  function paint(sp, look, blink){
+    var a = sp.a, f = SHAPES[a.shape], er = EYE_ROW[a.shape], e1 = 4 + look, e2 = 7 + look;
+    for (var y=0;y<H;y++) for (var x=0;x<W;x++){
+      var c = f(x,y) ? a.color : 'transparent';
+      if (c !== 'transparent' && (x === e1 || x === e2)){
+        if (!blink && (y === er || y === er+1)) c = '#FFFFFF';
+        if (blink && y === er+1) c = '#FFFFFF';
+      }
+      sp.cells[y*W+x].style.background = c;
+    }
+  }
+  var brandSp = makeSprite(AG.mascot, 2); document.getElementById('brandblob').appendChild(brandSp.el);
+  var mascotSp = makeSprite(AG.mascot, 3); document.getElementById('mascot').appendChild(mascotSp.el);
+
+  // ---------- elements ----------
+  var col = document.getElementById('col'), scrollEl = document.getElementById('scroll');
+  var txt = document.getElementById('txt'), menu = document.getElementById('menu');
+  var repochip = document.getElementById('repochip'), repotxt = document.getElementById('repotxt');
+  var recents = document.getElementById('recents');
+  var RECENTS = [['bad','billing-service · 2 rules broken'],['ok','shop-app · stock bug fixed'],['ok','auth-api · all rules holding']];
+
+  var S;
+  function fresh(){ return {t:0, idx:0, frame:0, active:{}, engines:{}, waiting:null, typing:'', typeTarget:'', live:false, cards:{}}; }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function scroll(){ scrollEl.scrollTop = scrollEl.scrollHeight; }
+  function add(html, cls){ var d = document.createElement('div'); d.className = cls; d.innerHTML = html; col.appendChild(d); scroll(); return d; }
+  function drawRecents(){
+    var h = '';
+    if (S.live) h += '<div class="recent"><span class="rd ' + (S.live === 'done' ? 'ok' : 'live') + '"></span><span>shop-app · ' + (S.live === 'done' ? 'refund bug fixed, PR #88' : 'finding bugs…') + '</span></div>';
+    RECENTS.forEach(function(r){ h += '<div class="recent"><span class="rd ' + r[0] + '"></span><span>' + r[1] + '</span></div>'; });
+    recents.innerHTML = h;
+  }
+  function home(){
+    col.innerHTML = '';
+    var h = document.createElement('div'); h.className = 'hello';
+    var sp = makeSprite(AG.mascot, 4); S.homeSp = sp; h.appendChild(sp.el);
+    var t = document.createElement('h2'); t.textContent = 'What should we try to break today?'; h.appendChild(t);
+    col.appendChild(h);
+    var s = document.createElement('div'); s.className = 'hello-sub'; s.textContent = 'Pick a repository, then describe what to check, or just say "find bugs".'; col.appendChild(s);
+  }
+  function shimmer(text, color){
+    var out = '', n = text.length, pos = (S.frame * 0.5) % (n + 10) - 5;
+    for (var i=0;i<n;i++){ var dd = Math.abs(i - pos); var st = dd < 1.5 ? 'color:' + color + ';font-weight:600' : (dd < 3.2 ? 'color:' + color : 'color:var(--muted)'); out += '<span style="' + st + '">' + esc(text[i]) + '</span>'; }
+    return out;
+  }
+  function start(id, detail){
+    var a = AG[id];
+    var el = document.createElement('div'); el.className = 'ag';
+    var s = document.createElement('div'); s.className = 'spr'; var sp = makeSprite(a, 3); s.appendChild(sp.el); el.appendChild(s);
+    var info = document.createElement('div'); info.className = 'info';
+    info.innerHTML = '<div class="top"><span class="nm" style="color:' + a.color + '">' + a.name + '</span> <span class="vb"></span> <span class="tm"></span></div><div class="det"></div>';
+    el.appendChild(info); col.appendChild(el); scroll();
+    S.active[id] = {el:el, sp:sp, spr:s, t0:S.t, detail:detail, a:a, seed:Math.random()*100};
+  }
+  function detail(id, d){ if (S.active[id]) S.active[id].detail = d; }
+  function done(id, summary, bad){
+    var r = S.active[id]; if (!r) return;
+    r.el.className = 'ag done';
+    r.el.innerHTML = '<span class="dotc" style="background:' + r.a.color + '"></span><span><span style="color:' + r.a.color + ';font-weight:600">' + r.a.name + '</span> ' + (bad ? '<span class="no">✗</span> ' : '<span class="ok">✓</span> ') + summary + '</span>';
+    delete S.active[id];
+  }
+  function estart(id, name){ S.engines[id] = {el:add('', 'eng'), t0:S.t, name:name, pct:0, label:''}; }
+  function eupd(id, label, pct){ var e = S.engines[id]; if (e){ e.label = label; e.pct = pct; } }
+  function edone(id, html){ var e = S.engines[id]; if (!e) return; e.el.innerHTML = '<span class="sq"></span><b>' + e.name + '</b> ' + html; delete S.engines[id]; }
+  function waitFor(card, yes, then){
+    var box = card.querySelector('.actions');
+    S.waiting = {box:box, held:0, then:then, yes:yes};
+    var b = box.querySelector('.btn.primary');
+    b.addEventListener('click', function(){ resolve(); });
+  }
+  function resolve(){
+    var w = S.waiting; if (!w) return; S.waiting = null;
+    w.box.innerHTML = '<span class="answered">✓ ' + esc(w.yes) + '</span>';
+    if (w.then) w.then();
+  }
+
+  // ---------- cards ----------
+  function rulesCard(){
+    var rules = [['Refunds never exceed amount paid','src/refunds.js · README'],['Stock never goes below 0','models/product.js'],['A cancelled order never ships','src/orders.js'],['A normal user never opens admin export','routes/admin.js']];
+    var h = '<div class="card-h"><span class="lbl">Rules · proposed by Lawmaker, reviewed by Rule Critic</span><span class="pill warn" id="rp">Needs your OK</span></div><div class="rows">';
+    rules.forEach(function(r){ h += '<div class="row"><span class="grow"><span>' + r[0] + '</span><span class="sub">' + r[1] + '</span></span><span class="pill good rs" style="display:none">Approved</span></div>'; });
+    h += '<div class="row struck"><span class="grow"><span>Order is never None</span><span class="sub">rejected: a code check, not a business rule</span></span><span class="pill bad">Rejected</span></div></div>';
+    h += '<div class="actions"><button class="btn primary" type="button">Approve 4 rules</button><button class="btn" type="button">Edit</button></div>';
+    var c = add(h, 'card');
+    waitFor(c, 'Approved 4 rules', function(){ c.querySelectorAll('.rs').forEach(function(p){ p.style.display = ''; }); var rp = c.querySelector('#rp'); rp.className = 'pill good'; rp.textContent = 'Approved'; });
+  }
+  function searchCard(){
+    var h = '<div class="card-h"><span class="lbl">Live search</span><span class="pill idle" id="sp">Running</span></div>';
+    h += '<div class="stats"><div class="stat"><span class="lbl">Sequences</span><div class="big" id="sn">0</div></div><div class="stat"><span class="lbl">Speed</span><div class="big">1,140<span style="font-size:12px;color:var(--faint)">/s</span></div></div><div class="stat"><span class="lbl">Broken</span><div class="big" id="sb" style="color:var(--good)">0<span style="font-size:12px;color:var(--faint)"> / 4</span></div></div></div>';
+    S.cards.search = add(h, 'card');
+  }
+  function cxCard(){
+    var h = '<div class="card-h"><span class="lbl" style="color:var(--bad)">Counterexample #001</span><span class="pill bad">Refunds ≤ paid · broken</span></div>';
+    h += '<div class="shrink" id="shr"></div><div id="cxbody"></div>';
+    S.cards.cx = add(h, 'card alert'); drawShrink(0);
+  }
+  function drawShrink(k){
+    var parts = ['12','8','5','3'], h = '';
+    parts.forEach(function(p, i){ h += (i ? '<span class="ar">→</span>' : '') + '<span class="s' + (i === k ? ' cur' : (i < k ? ' gone' : '')) + '">' + p + '</span>'; });
+    h += '<span style="color:var(--muted);font-size:13px;margin-left:4px">' + (k >= 3 ? 'steps · smallest found' : 'steps, shrinking…') + '</span>';
+    S.cards.cx.querySelector('#shr').innerHTML = h;
+    if (k >= 3){
+      S.cards.cx.querySelector('#cxbody').innerHTML = '<div style="display:flex;flex-direction:column;gap:10px"><ol class="steps"><li><b>1</b>buy(mug, ₹100)</li><li><b>2</b>refund(₹60)</li><li><b>3</b>refund(₹50)</li></ol><div class="duo"><div class="box"><span class="lbl">Paid</span><span class="big">₹100</span></div><div class="box redbox"><span class="lbl">Refunded</span><span class="big">₹110</span></div></div><div class="actions" style="justify-content:space-between"><span class="pill idle" id="repro">Reproducing…</span><span style="display:flex;gap:8px"><button class="btn" type="button">Replay</button><button class="btn" type="button">Download test</button></span></div></div>';
+      scroll();
+    }
+  }
+  function fixCard(){
+    var h = '<div class="card-h"><span class="lbl">Root cause and fix</span><span class="pill good">Reviewed</span></div>';
+    h += '<div style="font-family:var(--mono);font-size:13px">src/refunds.js : 42</div><div style="color:var(--muted)">Each refund is checked alone against the order total. Earlier refunds on the same order are ignored.</div>';
+    h += '<div class="diff"><span class="c">  export function refund(order, amount) {</span>\n<span class="r">-   if (amount &lt;= order.total) {</span>\n<span class="a">+   const already = sum(order.refunds);</span>\n<span class="a">+   if (already + amount &lt;= order.total) {</span>\n<span class="c">      approveRefund(order, amount);</span></div>';
+    h += '<div class="actions"><button class="btn primary" type="button">Apply fix and verify</button><button class="btn" type="button">Not now</button></div>';
+    var c = add(h, 'card');
+    waitFor(c, 'Applying fix', null);
+  }
+  function verifyCard(){
+    var h = '<div class="card-h"><span class="lbl">Verification by the engine</span><span class="pill warn" id="vp">Checking…</span></div>';
+    h += '<div class="duo"><div class="box redbox"><span class="lbl">Before</span><span class="big">₹110</span><span class="pill bad">Failed</span></div><div class="box" id="after"><span class="lbl">After</span><span class="big" id="afterv">…</span><span class="pill idle" id="afterp">Pending</span></div></div>';
+    h += '<div class="rows"><div class="row"><span class="grow">Replay counterexample #001</span><span class="pill idle" id="v1">Pending</span></div><div class="row"><span class="grow">18 existing tests</span><span class="pill idle" id="v2">Pending</span></div><div class="row"><span class="grow">Fresh search · 20,000 sequences</span><span class="pill idle" id="v3">Pending</span></div></div>';
+    h += '<div class="actions" id="prrow"></div>';
+    S.cards.ver = add(h, 'card');
+  }
+  function vset(id){ var p = S.cards.ver.querySelector('#' + id); p.className = 'pill good'; p.textContent = 'Passed'; }
+
+  // ---------- timeline ----------
+  var TL = [
+    [0.8, function(){ menu.hidden = false; }],
+    [1.6, function(){ menu.querySelector('[data-i="0"]').classList.add('hi'); }],
+    [2.4, function(){ menu.hidden = true; repotxt.textContent = 'aayush/shop-app'; repochip.classList.add('set'); }],
+    [2.8, function(){ S.typeTarget = 'find bugs in my app'; S.typing = ''; }],
+    [5.0, function(){ S.typeTarget = ''; S.typing = ''; col.innerHTML = ''; add('find bugs in my app', 'm-user'); S.live = 'run'; drawRecents(); }],
+    [5.5, function(){ start('coord', 'reading your request'); }],
+    [6.8, function(){ done('coord', 'plan: understand → start → rules → search'); start('scout', 'reading README.md'); }],
+    [8.0, function(){ detail('scout', 'reading src/refunds.js'); }],
+    [9.2, function(){ done('scout', 'Node.js · Express · Postgres · 7 endpoints'); start('mech', '$ docker compose up -d'); }],
+    [11.0, function(){ done('mech', 'app and database running in the sandbox'); start('map', 'reading src/routes/*.js'); start('law', 'reading models/order.js'); }],
+    [12.4, function(){ done('map', '6 actions: login buy refund cancel ship admin_export'); detail('law', 'reading src/refunds.js'); }],
+    [13.6, function(){ done('law', 'proposed 5 rules'); start('crit', 'checking 5 rules'); }],
+    [15.0, function(){ done('crit', 'rejected 1 rule, approved 4', false); rulesCard(); }],
+    [15.4, function(){ start('test', 'writing refund scenarios'); start('strat', 'ranking risky areas'); }],
+    [16.8, function(){ done('strat', 'focus on refunds and stock'); }],
+    [17.4, function(){ done('test', '8 targeted scenarios'); searchCard(); estart('run', 'Runner'); }],
+    [18.6, function(){ add('what are you doing right now?', 'm-user'); start('guide', 'reading live run data'); }],
+    [20.2, function(){ done('guide', 'Trying refund and stock sequences. All 4 rules holding so far.'); }],
+    [22.6, function(){ edone('run', '<span class="no">✗ Rule broken</span> <span style="color:var(--muted)">refunds ≤ paid · 3,412 sequences</span>');
+      var c = S.cards.search; c.querySelector('#sn').textContent = '3,412'; var sb = c.querySelector('#sb'); sb.style.color = 'var(--bad)'; sb.innerHTML = '1<span style="font-size:12px;color:var(--faint)"> / 4</span>'; var sp = c.querySelector('#sp'); sp.className = 'pill bad'; sp.textContent = 'Rule broken'; }],
+    [23.2, function(){ cxCard(); estart('shr', 'Shrinker'); eupd('shr', '12 steps', 0); }],
+    [24.0, function(){ drawShrink(1); eupd('shr', '8 steps', 35); }],
+    [24.8, function(){ drawShrink(2); eupd('shr', '5 steps', 70); }],
+    [25.6, function(){ drawShrink(3); edone('shr', '12 → 8 → 5 → <b>3 steps</b>'); estart('rep', 'Replayer'); }],
+    [27.0, function(){ edone('rep', '<span class="ok">✓</span> 10 / 10 reproduced'); var p = S.cards.cx.querySelector('#repro'); p.className = 'pill good'; p.textContent = 'Reproduced 10 / 10'; start('det', 'reading src/refunds.js'); }],
+    [28.4, function(){ detail('det', 'comparing state after each step'); }],
+    [29.6, function(){ done('det', 'src/refunds.js:42 · earlier refunds ignored'); start('drev', 'checking diagnosis against evidence'); }],
+    [30.8, function(){ done('drev', 'matches: refunded goes 60 → 110 at step 3'); start('surg', 'preparing the fix'); }],
+    [32.2, function(){ done('surg', '1 file changed'); start('frev', 'checking side effects'); }],
+    [33.4, function(){ done('frev', 'minimal change, no side effects'); fixCard(); }],
+    [33.8, function(){ verifyCard(); estart('ver', 'Verifier'); eupd('ver', 'replaying #001', 15); }],
+    [34.8, function(){ vset('v1'); eupd('ver', 'running 18 tests', 45); }],
+    [35.8, function(){ vset('v2'); eupd('ver', 'fresh search, 20,000 sequences', 70); }],
+    [37.8, function(){ vset('v3'); var c = S.cards.ver; c.querySelector('#after').className = 'box greenbox'; c.querySelector('#afterv').textContent = '₹60'; var ap = c.querySelector('#afterp'); ap.className = 'pill good'; ap.textContent = 'Verified'; var vp = c.querySelector('#vp'); vp.className = 'pill good'; vp.textContent = 'Fix verified';
+      edone('ver', '<span class="ok">✓ Fix verified</span> <span style="color:var(--muted)">0 rules broken</span>'); }],
+    [38.2, function(){ start('coord', 'opening pull request'); }],
+    [39.6, function(){ done('coord', 'PR #88 opened on aayush/shop-app'); S.cards.ver.querySelector('#prrow').innerHTML = '<span class="pill good">PR #88 opened</span><button class="btn" type="button">View pull request</button>'; S.live = 'done'; drawRecents(); scroll(); }],
+    [52.0, 'end']
+  ];
+
+  function reset(){
+    S = fresh(); menu.hidden = true; repotxt.textContent = 'Select repository…'; repochip.classList.remove('set');
+    menu.querySelectorAll('.mi').forEach(function(m){ m.classList.remove('hi'); });
+    home(); drawRecents();
+  }
+
+  function render(){
+    Object.keys(S.active).forEach(function(id){
+      var r = S.active[id];
+      r.el.querySelector('.vb').innerHTML = shimmer(r.a.verb + '…', r.a.color);
+      r.el.querySelector('.tm').textContent = (S.t - r.t0).toFixed(1) + 's';
+      r.el.querySelector('.det').textContent = '⎿ ' + r.detail;
+      var ph = S.frame + r.seed;
+      r.spr.classList.toggle('up', !reduce && Math.floor(ph / 9) % 2 === 0);
+      paint(r.sp, reduce ? 0 : [0,0,1,1,0,0,-1,-1][Math.floor(ph / 22) % 8], !reduce && (Math.floor(ph) % 70) < 4);
+    });
+    Object.keys(S.engines).forEach(function(id){
+      var e = S.engines[id], p, lbl;
+      if (id === 'run'){ var n = Math.min(3412, Math.round((S.t - e.t0) * 670)); p = n/34.12; lbl = n.toLocaleString('en-US') + ' sequences'; if (S.cards.search) S.cards.search.querySelector('#sn').textContent = n.toLocaleString('en-US'); }
+      else if (id === 'rep'){ var k = Math.min(10, Math.floor((S.t - e.t0) * 7.5)); p = k*10; lbl = k + ' / 10'; }
+      else { p = e.pct; lbl = e.label; }
+      e.el.innerHTML = '<span class="sq" style="opacity:' + (S.frame % 8 < 4 ? 1 : .35) + '"></span><b>' + e.name + '</b><span class="bar"><i style="width:' + p + '%"></i></span><span class="lbl">' + esc(lbl) + '</span>';
+    });
+    // typing into the composer
+    if (S.typeTarget && S.typing.length < S.typeTarget.length && S.frame % 5 === 0) S.typing = S.typeTarget.slice(0, S.typing.length + 1);
+    var working = Object.keys(S.active).length + Object.keys(S.engines).length;
+    txt.innerHTML = S.typing ? esc(S.typing) + '<span class="cursor"></span>'
+      : '<span class="ph">' + (S.waiting ? 'Waiting for your answer above…' : working ? 'Ask anything while the agents work…' : 'Describe what to check, or say "find bugs"') + '</span>';
+    // mascots idle
+    var ph2 = S.frame;
+    paint(mascotSp, reduce ? 0 : [0,1,0,-1][Math.floor(ph2 / 40) % 4], !reduce && ph2 % 110 < 4);
+    if (S.homeSp && S.homeSp.el.isConnected) paint(S.homeSp, reduce ? 0 : [0,1,0,-1][Math.floor(ph2 / 34) % 4], !reduce && (ph2 + 30) % 100 < 4);
+  }
+
+  var paused = false, last = performance.now();
+  function tick(now){
+    var dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!paused){
+      S.frame++;
+      if (S.waiting){ S.waiting.held += dt; if (S.waiting.held >= 3.2) resolve(); }
+      else {
+        S.t += dt;
+        while (!S.waiting && S.idx < TL.length && TL[S.idx][0] <= S.t){
+          if (TL[S.idx][1] === 'end'){ reset(); break; }
+          TL[S.idx][1](); S.idx++;
+        }
+      }
+    }
+    render();
+    requestAnimationFrame(tick);
+  }
+  document.getElementById('restart').addEventListener('click', function(){ reset(); paused = false; document.getElementById('pause').textContent = 'Pause'; });
+  document.getElementById('pause').addEventListener('click', function(e){ paused = !paused; e.currentTarget.textContent = paused ? 'Resume' : 'Pause'; });
+
+  reset();
+  if (reduce){
+    while (S.idx < TL.length && TL[S.idx][0] <= 28){ S.t = TL[S.idx][0]; TL[S.idx][1](); if (S.waiting) resolve(); S.idx++; }
+    paused = true; document.getElementById('pause').textContent = 'Resume';
+  }
+  requestAnimationFrame(tick);
+})();
+</script>

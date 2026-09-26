@@ -1,0 +1,694 @@
+<title>Counterexample Interface Walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F4F3; --surface:#FFFFFF; --ink:#141B19; --muted:#5A6662; --line:#D9DFDC;
+  --accent:#2F5BD3; --accent-soft:#E4EAFB;
+  --bad:#C2372F; --bad-soft:#FBE7E5; --good:#1C8A55; --good-soft:#E1F3E9;
+  --term-bg:#0E1316; --term-bar:#1A2126; --term-ink:#D5DEE2; --term-dim:#7C8A91;
+  --t-red:#FF7A70; --t-green:#62D69B; --t-yellow:#E9C46A; --t-cyan:#72C8E4; --t-blue:#8FA8FF;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0F1412; --surface:#171E1B; --ink:#E6ECE9; --muted:#95A29D; --line:#2A3430;
+    --accent:#8AA6FF; --accent-soft:#1E2742;
+    --bad:#FF8C83; --bad-soft:#3A1D1B; --good:#6BD9A0; --good-soft:#15301F;
+    --term-bg:#080B0D; --term-bar:#12181C;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0F1412; --surface:#171E1B; --ink:#E6ECE9; --muted:#95A29D; --line:#2A3430;
+  --accent:#8AA6FF; --accent-soft:#1E2742;
+  --bad:#FF8C83; --bad-soft:#3A1D1B; --good:#6BD9A0; --good-soft:#15301F;
+  --term-bg:#080B0D; --term-bar:#12181C;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1,h2,h3{text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,4.5vw,40px);font-weight:700;letter-spacing:-0.02em;line-height:1.15}
+h2{font-size:24px;font-weight:600;letter-spacing:-0.01em}
+h3{font-size:18px;font-weight:600}
+p{margin:0;max-width:62ch}
+.lede{color:var(--muted);font-size:17px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:500}
+header{display:flex;flex-direction:column;gap:14px}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.chip{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--muted)}
+.chip b{color:var(--ink);font-weight:600}
+
+/* flow */
+.flow{display:flex;flex-direction:column;gap:40px}
+.step{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:28px;align-items:start}
+.step-text{display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.num{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.who{display:inline-flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;font-weight:600;padding:2px 8px;border-radius:4px}
+.tag.you{background:var(--accent-soft);color:var(--accent)}
+.tag.bob{background:#EDE4FA;color:#6A3DB8}
+.tag.engine{background:var(--good-soft);color:var(--good)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tag.bob{background:#2C2140;color:#C3A6F2}}
+:root[data-theme="dark"] .tag.bob{background:#2C2140;color:#C3A6F2}
+.step-text p{color:var(--muted)}
+@media (max-width:760px){.step{grid-template-columns:1fr;gap:14px}}
+
+/* terminal */
+.term{background:var(--term-bg);border-radius:10px;overflow:hidden;box-shadow:0 1px 0 rgba(0,0,0,.04),0 8px 24px rgba(10,20,20,.12);min-width:0}
+.term-bar{background:var(--term-bar);display:flex;align-items:center;gap:7px;padding:9px 12px}
+.dot{width:10px;height:10px;border-radius:50%;background:#3A444A}
+.term-title{margin-left:8px;font-family:var(--mono);font-size:12px;color:var(--term-dim)}
+.term pre{margin:0;padding:16px 18px;font-family:var(--mono);font-size:13px;line-height:1.6;color:var(--term-ink);overflow-x:auto;white-space:pre}
+.p{color:var(--t-green)} .d{color:var(--term-dim)} .r{color:var(--t-red)} .g{color:var(--t-green)}
+.y{color:var(--t-yellow)} .c{color:var(--t-cyan)} .bl{color:var(--t-blue)} .bold{font-weight:600;color:#fff}
+.hl-bad{background:rgba(255,122,112,.14);color:var(--t-red)}
+.hl-good{background:rgba(98,214,155,.14);color:var(--t-green)}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none}}
+.replay{align-self:flex-start;font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:6px;cursor:pointer}
+.replay:hover{border-color:var(--accent);color:var(--accent)}
+.replay:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* divider */
+.part{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:32px}
+
+/* dashboard mock */
+.browser{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 8px 28px rgba(10,20,20,.08)}
+.browser-bar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--line);background:var(--bg)}
+.url{flex:1;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app{display:grid;grid-template-columns:190px minmax(0,1fr);min-height:520px}
+.side{border-right:1px solid var(--line);padding:16px 12px;display:flex;flex-direction:column;gap:4px;background:var(--bg)}
+.brand{font-weight:700;font-size:15px;padding:0 8px 12px;letter-spacing:-0.01em}
+.brand span{color:var(--bad)}
+.nav{font-size:14px;padding:7px 8px;border-radius:6px;color:var(--muted);display:flex;justify-content:space-between}
+.nav.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--line)}
+.nav .n{font-family:var(--mono);font-size:12px}
+.nav .n.red{color:var(--bad)}
+.main{padding:20px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.main-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.btn{font-family:var(--sans);font-weight:600;font-size:14px;border:none;border-radius:6px;padding:9px 16px;cursor:pointer}
+.btn.primary{background:var(--bad);color:#fff}
+.btn.ghost{background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{font-family:var(--mono);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.stat .v.red{color:var(--bad)} .stat .v.green{color:var(--good)}
+.cx{border:1px solid var(--bad);border-radius:10px;overflow:hidden}
+.cx-head{background:var(--bad-soft);padding:10px 14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.cx-head .id{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--bad)}
+.pill{font-size:12px;font-weight:600;padding:2px 9px;border-radius:999px}
+.pill.bad{background:var(--bad);color:#fff}
+.pill.good{background:var(--good);color:#fff}
+.pill.wait{background:var(--line);color:var(--muted)}
+.cx-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:0}
+.cx-col{padding:14px;display:flex;flex-direction:column;gap:10px}
+.cx-col+.cx-col{border-left:1px solid var(--line)}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.seq{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-family:var(--mono);font-size:14px}
+.seq li{display:flex;gap:10px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:6px}
+.seq li .i{color:var(--muted);font-size:12px;width:14px}
+.shrink{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:14px;flex-wrap:wrap}
+.shrink .s{padding:2px 8px;border-radius:4px;background:var(--bg);border:1px solid var(--line)}
+.shrink .s.final{background:var(--bad);color:#fff;border-color:var(--bad)}
+.shrink .ar{color:var(--muted)}
+.money{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.money div{border-radius:8px;padding:10px;text-align:center}
+.money .paid{background:var(--bg);border:1px solid var(--line)}
+.money .refd{background:var(--bad-soft);border:1px solid var(--bad)}
+.money .big{font-family:var(--mono);font-size:24px;font-weight:600;display:block}
+.money .refd .big{color:var(--bad)}
+.rules{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:8px}
+.rule{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;font-size:14px}
+.rule+.rule{border-top:1px solid var(--line)}
+.rule code{font-family:var(--mono);font-size:12px;color:var(--muted)}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{flex-direction:row;overflow-x:auto;border-right:none;border-bottom:1px solid var(--line);padding:10px}
+  .brand{padding:7px 8px}
+  .nav{white-space:nowrap;gap:8px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .cx-body{grid-template-columns:1fr}
+  .cx-col+.cx-col{border-left:none;border-top:1px solid var(--line)}
+}
+
+/* verify compare */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.card.before{border-top:4px solid var(--bad)}
+.card.after{border-top:4px solid var(--good)}
+.card .big{font-family:var(--mono);font-size:28px;font-weight:600}
+.card.before .big{color:var(--bad)} .card.after .big{color:var(--good)}
+.card p{color:var(--muted);font-size:14px}
+@media (max-width:600px){.compare{grid-template-columns:1fr}}
+
+/* pr */
+.pr{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pr-head{padding:10px 14px;border-bottom:1px solid var(--line);background:var(--bg);font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pr-head b{color:var(--ink)}
+.avatar{width:22px;height:22px;border-radius:50%;background:var(--bad);color:#fff;font-family:var(--mono);font-size:11px;display:grid;place-items:center;font-weight:600}
+.pr-body{padding:14px 16px;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.pr-body pre{margin:0;font-family:var(--mono);font-size:13px;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto}
+
+/* connect flow */
+.screens{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media (max-width:820px){.screens{grid-template-columns:1fr}}
+.screen{display:flex;flex-direction:column;gap:10px;min-width:0}
+.screen-cap{display:flex;flex-direction:column;gap:4px}
+.screen-cap p{color:var(--muted);font-size:14px}
+.win{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;box-shadow:0 6px 20px rgba(10,20,20,.06);display:flex;flex-direction:column}
+.win-body{padding:18px;display:flex;flex-direction:column;gap:12px}
+.center{align-items:center;text-align:center;padding-block:30px}
+.input{font-family:var(--mono);font-size:13px;border:1px solid var(--line);border-radius:6px;padding:8px 10px;background:var(--bg);color:var(--muted);width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.or{font-size:12px;color:var(--muted)}
+.list{border:1px solid var(--line);border-radius:8px}
+.row{display:flex;align-items:center;gap:10px;padding:9px 12px;font-size:14px}
+.row+.row{border-top:1px solid var(--line)}
+.row .grow{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .meta{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.box{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;font-size:11px;color:#fff}
+.box.on{background:var(--accent);border-color:var(--accent)}
+.vis{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.perm{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.perm div{display:flex;gap:8px}
+.perm .ok{color:var(--good);font-weight:700}
+.check{display:flex;flex-direction:column;gap:7px;font-size:14px}
+.check div{display:flex;gap:10px;align-items:baseline}
+.check .st{font-family:var(--mono);width:16px;flex:none;font-weight:600}
+.check .st.ok{color:var(--good)} .check .st.q{color:#B7791F}
+.check .src{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.ask{border:1px solid #E2B75A;background:rgba(233,196,106,.12);border-radius:8px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.api{font-family:var(--mono);font-size:13px}
+.api .row{gap:12px}
+.verb{font-size:11px;font-weight:600;width:44px;flex:none}
+.verb.post{color:var(--good)} .verb.get{color:var(--accent)} .verb.del{color:var(--bad)}
+.lang{display:flex;gap:8px;flex-wrap:wrap}
+.summary{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:12px}
+.summary ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.summary li{max-width:70ch}
+</style>
+
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Interface mockups</div>
+  <h1>What a developer sees when they use Counterexample</h1>
+  <p class="lede">The main tool runs in your terminal. You type a few commands and it does the work. A web dashboard shows the same results with better visuals. These screens use the demo shop app as the example.</p>
+  <div class="legend">
+    <span class="chip"><b>You</b> type or approve</span>
+    <span class="chip"><b>Bob</b> reads and reasons</span>
+    <span class="chip"><b>Engine</b> runs and proves</span>
+  </div>
+</header>
+
+<section class="part">
+  <div class="eyebrow">Part 1 · Terminal</div>
+  <h2>The daily workflow</h2>
+</section>
+
+<div class="flow">
+
+  <!-- 1 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 1</span>
+      <div class="who"><span class="tag you">You</span><span class="tag bob">Bob</span></div>
+      <h3>Set up the project once</h3>
+      <p>Open your project folder and run <code>cx init</code>. Bob reads the code, API routes, models, README and tests. It finds the actions your app supports.</p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~/shop-app</span></div>
+<pre><span class="p">~/shop-app $</span> cx init
+
+<span class="bold">Counterexample</span> <span class="d">v0.1</span>
+
+<span class="bl">◆ Bob</span> reading project…
+  <span class="g">✓</span> 42 files · FastAPI · SQLite
+  <span class="g">✓</span> 11 API routes
+  <span class="g">✓</span> 4 data models  <span class="d">Order, Payment, Refund, Product</span>
+  <span class="g">✓</span> 18 existing tests  <span class="d">(all passing)</span>
+
+<span class="bl">◆ Bob</span> found 6 actions:
+  signup  login  buy  refund  cancel_order  admin_export
+
+<span class="bl">◆ Bob</span> proposed 4 rules → review next</pre>
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 2</span>
+      <div class="who"><span class="tag you">You</span></div>
+      <h3>Approve the rules</h3>
+      <p>Bob shows each rule and where it came from. You press <b>y</b> to approve, <b>e</b> to edit, or <b>n</b> to reject. Nothing runs until you approve. Approved rules are saved as code in <code>counterexample/</code>.</p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~/shop-app · review rules</span></div>
+<pre><span class="bold">Rule 1 of 4</span>  <span class="d">confidence: high</span>
+┌──────────────────────────────────────────────┐
+│ Total refunds must never exceed amount paid  │
+│                                              │
+│ <span class="c">check:</span> refunded(order) &lt;= paid(order)         │
+│ <span class="d">why:   refund_service.py line 38 validates</span>  │
+│ <span class="d">       refund amount; README "Refunds"</span>       │
+└──────────────────────────────────────────────┘
+  <span class="y">[y]</span> approve   <span class="y">[e]</span> edit   <span class="y">[n]</span> reject  › <span class="g">y</span>
+
+  <span class="g">✓</span> Refunds ≤ paid
+  <span class="g">✓</span> Stock never below 0
+  <span class="g">✓</span> Cancelled order never ships
+  <span class="g">✓</span> Normal user never opens admin export
+
+<span class="g">Saved</span> counterexample/rules.py, actions.py, state.py</pre>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 3</span>
+      <div class="who"><span class="tag you">You</span><span class="tag engine">Engine</span></div>
+      <h3>Start the search</h3>
+      <p>Run <code>cx run</code>. The engine tries thousands of valid action sequences against your real app and checks every rule after every step. No AI decides pass or fail here.</p>
+      <button class="replay" id="play-run" type="button">▶ Play this screen</button>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~/shop-app · cx run</span></div>
+<pre id="run-pre"><span class="p">~/shop-app $</span> cx run
+
+Searching  4 rules · 6 actions · seed 81923
+
+  sequences tried   <span class="bold" id="run-count">3,412</span>
+  speed             <span id="run-speed">1,140</span> / sec
+  now trying        <span class="d" id="run-now">login → buy(100) → refund(60) → refund(50)</span>
+
+  Refunds ≤ paid                    <span class="r" id="r1">✗ BROKEN</span>
+  Stock never below 0               <span class="g" id="r2">✓ holding</span>
+  Cancelled order never ships       <span class="g" id="r3">✓ holding</span>
+  Normal user never opens export    <span class="g" id="r4">✓ holding</span></pre>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 4</span>
+      <div class="who"><span class="tag engine">Engine</span></div>
+      <h3>Bug found, then shrunk</h3>
+      <p>The first failing sequence was 12 steps long. The engine removes steps that don't matter until only the smallest failing sequence is left. Then it replays that sequence 10 times to prove the bug is real.</p>
+      <button class="replay" id="play-shrink" type="button">▶ Play shrinking</button>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~/shop-app · cx run</span></div>
+<pre><span class="r bold">✗ RULE BROKEN</span>  Total refunds must never exceed amount paid
+  found after 3,412 sequences · 12 steps long
+
+Shrinking  <span id="shrink-line"><span class="d">12 → 8 → 5 → 4 →</span> <span class="bold">3 steps</span></span>
+
+╭─ <span class="r bold">COUNTEREXAMPLE #001</span> ───────────────────────╮
+│                                             │
+│   1. buy(item=mug, price=₹100)              │
+│   2. refund(amount=₹60)                     │
+│   3. refund(amount=₹50)                     │
+│                                             │
+│   Paid      ₹100                            │
+│   Refunded  <span class="hl-bad">₹110</span>   <span class="r">✗ rule broken</span>              │
+│                                             │
+│   Replayed 10 / 10  <span class="g">✓ real bug</span>                │
+╰─────────────────────────────────────────────╯
+
+<span class="g">Saved</span> tests/counterexample/test_cx_001.py
+Next: <span class="c">cx explain 001</span></pre>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 5</span>
+      <div class="who"><span class="tag you">You</span><span class="tag bob">Bob</span></div>
+      <h3>Ask Bob why it broke</h3>
+      <p>Run <code>cx explain 001</code>. Bob gets the rule, the 3 steps, the logs and the code. It points to the exact line and proposes a fix. You decide whether to apply it.</p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~/shop-app · cx explain 001</span></div>
+<pre><span class="p">~/shop-app $</span> cx explain 001
+
+<span class="bl">◆ Bob</span> investigating counterexample #001…
+
+<span class="bold">Root cause</span>  app/refund_service.py : 42
+  Each refund is checked alone against the order total.
+  Earlier refunds on the same order are ignored.
+
+<span class="bold">Proposed fix</span>
+  <span class="r">- if amount &lt;= order.total:</span>
+  <span class="g">+ already = sum(r.amount for r in order.refunds)</span>
+  <span class="g">+ if already + amount &lt;= order.total:</span>
+        approve_refund(order, amount)
+
+  <span class="y">[a]</span> apply fix   <span class="y">[v]</span> view full diff   <span class="y">[s]</span> skip  › <span class="g">a</span>
+<span class="g">✓</span> Fix applied on branch cx/fix-001</pre>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 6</span>
+      <div class="who"><span class="tag engine">Engine</span></div>
+      <h3>Prove the fix works</h3>
+      <p>Run <code>cx verify 001</code>. It replays the exact 3 steps, runs your normal tests, then searches again with fresh sequences. Only then does it say "verified".</p>
+    </div>
+    <div class="term">
+      <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~/shop-app · cx verify 001</span></div>
+<pre><span class="p">~/shop-app $</span> cx verify 001
+
+  Replay counterexample #001
+    buy ₹100 → refund ₹60 → refund ₹50
+    second refund now <span class="g">rejected</span> · refunded <span class="hl-good">₹60</span>   <span class="g">✓</span>
+
+  Existing tests           18 / 18 passed     <span class="g">✓</span>
+  Counterexample tests      1 / 1  passed     <span class="g">✓</span>
+  Fresh search       20,000 sequences
+                     0 rules broken           <span class="g">✓</span>
+
+  <span class="g bold">✓ FIX VERIFIED</span></pre>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="step">
+    <div class="step-text">
+      <span class="num">Step 7</span>
+      <div class="who"><span class="tag engine">Engine</span></div>
+      <h3>Every pull request after that</h3>
+      <p>Counterexample runs in CI on every pull request. If a change breaks a rule, whether a person or an AI agent wrote it, the PR gets a comment with the minimal steps.</p>
+    </div>
+    <div class="pr">
+      <div class="pr-head"><span class="avatar">cx</span><b>counterexample</b> commented on PR #87 “Add express checkout”</div>
+      <div class="pr-body">
+        <div><span class="pill bad">1 rule broken</span></div>
+        <div><b>Stock never below 0</b> fails with this PR.</div>
+        <pre>1. set_stock(item=lamp, qty=1)
+2. express_checkout(item=lamp)
+3. buy(item=lamp)
+
+stock = -1   ✗</pre>
+        <div style="color:var(--muted)">Reproduce locally: <code>cx replay 002</code> · Test added: <code>test_cx_002.py</code></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<section class="part">
+  <div class="eyebrow">Part 2 · Connect a GitHub repo</div>
+  <h2>No project folder? Connect GitHub instead</h2>
+  <p class="lede">The developer gives Counterexample access to any repo, public or private. Counterexample runs the app in a sealed Docker box and talks to it through its API, so the language doesn't matter. Fixes come back as pull requests.</p>
+</section>
+
+<div class="screens">
+
+  <div class="screen">
+    <div class="screen-cap"><span class="num">Screen A</span><h3>Connect</h3><p>Click one button, or paste a repo link. The terminal works the same way: <code>cx init github.com/you/shop-app</code></p></div>
+    <div class="win">
+      <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:4700/new</span></div>
+      <div class="win-body center">
+        <div class="brand" style="padding:0">Counter<span style="color:var(--bad)">example</span></div>
+        <p style="color:var(--muted)">Find the smallest sequence that breaks your software.</p>
+        <button class="btn primary" type="button">Connect GitHub</button>
+        <span class="or">or paste a repo link</span>
+        <div class="input">https://github.com/aayush/shop-app</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-cap"><span class="num">Screen B</span><h3>Choose repos and allow access</h3><p>GitHub asks which repos to share. Private repos work. You can remove access any time.</p></div>
+    <div class="win">
+      <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">GitHub permission screen (simplified)</span></div>
+      <div class="win-body">
+        <b>Install Counterexample on your account</b>
+        <div class="list">
+          <div class="row"><span class="box on">✓</span><span class="grow">aayush/shop-app</span><span class="vis">Private</span></div>
+          <div class="row"><span class="box on">✓</span><span class="grow">aayush/billing-service</span><span class="vis">Private</span></div>
+          <div class="row"><span class="box"></span><span class="grow">aayush/portfolio-site</span><span class="vis">Public</span></div>
+        </div>
+        <div class="perm">
+          <div><span class="ok">✓</span>Read code</div>
+          <div><span class="ok">✓</span>Create branches and pull requests</div>
+          <div><span class="ok">✓</span>Comment on pull requests</div>
+        </div>
+        <button class="btn primary" type="button" style="align-self:flex-start">Install and allow</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-cap"><span class="num">Screen C</span><h3>Bob works out how to run the app</h3><p>Bob reads the setup files and starts the app plus its database in Docker. If something is missing, it asks once and remembers.</p></div>
+    <div class="win">
+      <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:4700/shop-app/setup</span></div>
+      <div class="win-body">
+        <div class="lang"><span class="chip"><b>Node.js</b> · Express</span><span class="chip"><b>Postgres</b></span><span class="chip">port 3000</span></div>
+        <div class="check">
+          <div><span class="st ok">✓</span><span>Found how to start <span class="src">package.json → npm start</span></span></div>
+          <div><span class="st ok">✓</span><span>Found database <span class="src">docker-compose.yml → postgres:16</span></span></div>
+          <div><span class="st ok">✓</span><span>Built sealed Docker box</span></div>
+          <div><span class="st q">?</span><span>One value is missing</span></div>
+        </div>
+        <div class="ask">
+          <b>Bob needs your help once</b>
+          <span>Your app reads <code>PAYMENT_API_KEY</code>. Paste a test key, or let Counterexample use a fake payment server.</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn ghost" type="button">Use fake server</button>
+            <button class="btn ghost" type="button">Paste test key</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-cap"><span class="num">Screen D</span><h3>Bob maps the API</h3><p>These become the actions the engine combines. The engine only sends HTTP requests, so the same engine works for Python, Node, Java or Go.</p></div>
+    <div class="win">
+      <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:4700/shop-app/actions</span></div>
+      <div class="win-body">
+        <div class="check"><div><span class="st ok">✓</span><span>App running · 7 endpoints found</span></div></div>
+        <div class="list api">
+          <div class="row"><span class="verb post">POST</span><span class="grow">/auth/login</span><span class="meta">login</span></div>
+          <div class="row"><span class="verb post">POST</span><span class="grow">/orders</span><span class="meta">buy</span></div>
+          <div class="row"><span class="verb post">POST</span><span class="grow">/orders/{id}/refunds</span><span class="meta">refund</span></div>
+          <div class="row"><span class="verb del">DEL</span><span class="grow">/orders/{id}</span><span class="meta">cancel_order</span></div>
+          <div class="row"><span class="verb get">GET</span><span class="grow">/orders/{id}</span><span class="meta">read state</span></div>
+          <div class="row"><span class="verb get">GET</span><span class="grow">/admin/export</span><span class="meta">admin_export</span></div>
+        </div>
+        <span style="color:var(--muted);font-size:14px">Next: Bob proposes rules, and you approve them (same as Step 2).</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="step">
+  <div class="step-text">
+    <span class="num">Screen E</span>
+    <div class="who"><span class="tag bob">Bob</span><span class="tag engine">Engine</span></div>
+    <h3>The fix arrives as a pull request</h3>
+    <p>Search, shrinking and Bob's diagnosis work exactly as in Part 1. Because the code lives on GitHub, Counterexample doesn't edit files directly. It opens a pull request with the evidence, the fix and a new test. You review and merge it.</p>
+  </div>
+  <div class="pr">
+    <div class="pr-head"><span class="avatar">cx</span><b>counterexample</b> opened PR #88 on aayush/shop-app · branch cx/fix-001</div>
+    <div class="pr-body">
+      <b style="font-size:16px">Fix: refunds can exceed amount paid (Counterexample #001)</b>
+      <div><span class="pill good">Verified</span> <span class="pill wait">Waiting for your review</span></div>
+      <div><b>Minimal steps that broke the rule</b></div>
+      <pre>1. POST /orders            price=100
+2. POST /orders/1/refunds  amount=60
+3. POST /orders/1/refunds  amount=50
+
+paid = 100   refunded = 110   ✗</pre>
+      <div><b>Root cause (Bob):</b> each refund was checked alone. Earlier refunds on the order were ignored.</div>
+      <div><b>After fix:</b> exact steps replayed ✓ · 20,000 fresh sequences, 0 rules broken ✓</div>
+      <div style="color:var(--muted)">Files: <code>src/refunds.js</code> · <code>tests/counterexample/cx_001.test.js</code></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="gap:12px">
+  <h3>What works and what doesn't</h3>
+  <div class="list">
+    <div class="row"><span class="grow">Backend or API apps in any language</span><span class="pill good">Yes</span></div>
+    <div class="row"><span class="grow">Apps with a database (Postgres, MySQL, Redis)</span><span class="pill good">Yes</span></div>
+    <div class="row"><span class="grow">Apps that need secret keys</span><span class="pill good">Asks once</span></div>
+    <div class="row"><span class="grow">Frontend-only sites, mobile apps, ML notebooks</span><span class="pill wait">Not the target</span></div>
+  </div>
+</div>
+
+<section class="part">
+  <div class="eyebrow">Part 3 · Web dashboard</div>
+  <h2>Same results, easier to see</h2>
+  <p class="lede">Run <code>cx dashboard</code> and your browser opens this page. It uses the same engine and the same data as the terminal. It's the view you'd share with your team and use in the demo video.</p>
+</section>
+
+<div class="browser">
+  <div class="browser-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="url">localhost:4700/counterexamples/001</span></div>
+  <div class="app">
+    <nav class="side" aria-label="Dashboard sections">
+      <div class="brand">Counter<span>example</span></div>
+      <div class="nav">Overview</div>
+      <div class="nav">Rules <span class="n">4</span></div>
+      <div class="nav">Runs <span class="n">7</span></div>
+      <div class="nav on">Counterexamples <span class="n red">1</span></div>
+      <div class="nav">Fixes <span class="n">0</span></div>
+    </nav>
+    <div class="main">
+      <div class="main-head">
+        <div>
+          <div class="eyebrow" style="color:var(--muted)">shop-app · main</div>
+          <h3>Counterexample #001</h3>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn ghost" type="button">Replay</button>
+          <button class="btn primary" type="button">Investigate with Bob</button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><span class="k">Sequences tried</span><span class="v">3,412</span></div>
+        <div class="stat"><span class="k">Rules broken</span><span class="v red">1 / 4</span></div>
+        <div class="stat"><span class="k">Shrunk to</span><span class="v">3 steps</span></div>
+        <div class="stat"><span class="k">Reproduced</span><span class="v green">10 / 10</span></div>
+      </div>
+
+      <div class="cx">
+        <div class="cx-head">
+          <span class="id">Total refunds must never exceed amount paid</span>
+          <span class="pill bad">Broken</span>
+        </div>
+        <div class="cx-body">
+          <div class="cx-col">
+            <span class="lbl">Shrinking</span>
+            <div class="shrink"><span class="s">12</span><span class="ar">→</span><span class="s">8</span><span class="ar">→</span><span class="s">5</span><span class="ar">→</span><span class="s">4</span><span class="ar">→</span><span class="s final">3</span></div>
+            <span class="lbl">Minimal steps</span>
+            <ol class="seq">
+              <li><span class="i">1</span>buy(mug, ₹100)</li>
+              <li><span class="i">2</span>refund(₹60)</li>
+              <li><span class="i">3</span>refund(₹50)</li>
+            </ol>
+          </div>
+          <div class="cx-col">
+            <span class="lbl">Result after step 3</span>
+            <div class="money">
+              <div class="paid"><span class="lbl">Paid</span><span class="big">₹100</span></div>
+              <div class="refd"><span class="lbl">Refunded</span><span class="big">₹110</span></div>
+            </div>
+            <span class="lbl">All rules</span>
+            <div class="rules">
+              <div class="rule"><span>Refunds ≤ paid</span><span class="pill bad">Broken</span></div>
+              <div class="rule"><span>Stock never below 0</span><span class="pill good">Holding</span></div>
+              <div class="rule"><span>Cancelled order never ships</span><span class="pill good">Holding</span></div>
+              <div class="rule"><span>User never opens admin export</span><span class="pill good">Holding</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section class="part" style="border-top:none;padding-top:0">
+  <h3>Verify screen, after Bob's fix</h3>
+</section>
+<div class="compare">
+  <div class="card before">
+    <span class="lbl">Before fix</span>
+    <span class="big">₹110 refunded</span>
+    <p>Paid ₹100. The 3 steps break the rule every time.</p>
+    <div><span class="pill bad">Failed</span></div>
+  </div>
+  <div class="card after">
+    <span class="lbl">After fix</span>
+    <span class="big">₹60 refunded</span>
+    <p>The second refund is rejected. 20,000 fresh sequences, 0 rules broken.</p>
+    <div><span class="pill good">Verified</span></div>
+  </div>
+</div>
+
+<div class="summary">
+  <h3>The whole flow</h3>
+  <ol>
+    <li><b>cx init</b> in a folder, or connect a GitHub repo: Bob reads the project, starts it in Docker and proposes rules.</li>
+    <li>You approve the rules. They're saved as code in your repo.</li>
+    <li><b>cx run</b>: the engine tries thousands of sequences and finds a broken rule.</li>
+    <li>The engine shrinks the failure to the smallest sequence and saves it as a test.</li>
+    <li><b>cx explain</b>: Bob finds the root cause and proposes a fix.</li>
+    <li><b>cx verify</b>: the engine replays the steps and searches again to prove the fix. For GitHub repos, the fix arrives as a pull request.</li>
+    <li>CI runs it on every pull request after that.</li>
+  </ol>
+</div>
+
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var seqs = [
+    'signup → login → buy(40)',
+    'login → buy(100) → cancel_order',
+    'login → admin_export',
+    'buy(20) → buy(20) → refund(20)',
+    'login → buy(100) → refund(30) → cancel_order',
+    'signup → buy(75) → refund(75)',
+    'login → buy(100) → refund(60) → refund(50)'
+  ];
+  function fmt(n){return n.toLocaleString('en-US');}
+  var runBtn = document.getElementById('play-run');
+  var running = false;
+  runBtn.addEventListener('click', function(){
+    if (running) return;
+    var count = document.getElementById('run-count');
+    var now = document.getElementById('run-now');
+    var r1 = document.getElementById('r1');
+    if (reduce){ return; }
+    running = true;
+    r1.className='g'; r1.textContent='✓ holding';
+    var n = 0, i = 0, target = 3412;
+    var t = setInterval(function(){
+      n = Math.min(target, n + 57 + Math.floor(Math.random()*40));
+      count.textContent = fmt(n);
+      if (n % 3 === 0 || n === target){ now.textContent = seqs[i % (seqs.length-1)]; i++; }
+      if (n >= target){
+        clearInterval(t);
+        now.textContent = seqs[seqs.length-1];
+        r1.className='r'; r1.textContent='✗ BROKEN';
+        running = false;
+      }
+    }, 40);
+  });
+
+  var shrinkBtn = document.getElementById('play-shrink');
+  var shrinking = false;
+  shrinkBtn.addEventListener('click', function(){
+    if (shrinking || reduce) return;
+    shrinking = true;
+    var el = document.getElementById('shrink-line');
+    var parts = ['12','8','5','4','3'];
+    var k = 0;
+    el.innerHTML = '<span class="d">12 steps</span>';
+    var t = setInterval(function(){
+      k++;
+      var html = '<span class="d">' + parts.slice(0,k).join(' → ') + ' →</span> ';
+      html += (k === parts.length-1) ? '<span class="bold">3 steps</span>' : '<span class="y">' + parts[k] + ' steps…</span>';
+      el.innerHTML = html;
+      if (k >= parts.length-1){ clearInterval(t); shrinking = false; }
+    }, 600);
+  });
+})();
+</script>

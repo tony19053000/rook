@@ -1,0 +1,37 @@
+# secrets
+.env
+.env.*
+!.env.example
+*.pem
+credentials.json
+*-key.env
+
+# rook local data
+.rook/
+recordings/
+!tests/fixtures/recordings/
+rook-report.json
+rook-report.md
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# node
+node_modules/
+.next/
+web/.vercel/
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/
+
+# scratch
+m.py

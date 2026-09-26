@@ -1,0 +1,351 @@
+<title>Counterexample Agent Team</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F2F4F3; --surface:#FFFFFF; --ink:#141B19; --muted:#5A6662; --line:#D9DFDC; --accent:#2F5BD3; --bad:#C2372F;
+  --term-bg:#0D1114; --term-bar:#171D21; --term-ink:#D5DEE2; --term-dim:#6B7880; --term-line:#252E33;
+  --t-red:#FF7A70; --t-green:#62D69B; --t-yellow:#E9C46A; --t-cyan:#72C8E4;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){color-scheme:dark;--bg:#0F1412;--surface:#171E1B;--ink:#E6ECE9;--muted:#95A29D;--line:#2A3430;--accent:#8AA6FF;--bad:#FF8C83;--term-bg:#070A0C;--term-bar:#11171A}
+}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0F1412;--surface:#171E1B;--ink:#E6ECE9;--muted:#95A29D;--line:#2A3430;--accent:#8AA6FF;--bad:#FF8C83;--term-bg:#070A0C;--term-bar:#11171A}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.55;padding-inline:16px;padding-block:32px 64px}
+.wrap{max-width:940px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1,h2,h3{margin:0;text-wrap:balance}
+h1{font-size:clamp(26px,4vw,36px);font-weight:700;letter-spacing:-0.02em;line-height:1.15}
+h2{font-size:20px;font-weight:600}
+p{margin:0;max-width:66ch}
+.lede{color:var(--muted);font-size:17px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:500}
+header{display:flex;flex-direction:column;gap:12px}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:7px 14px;border-radius:6px;cursor:pointer}
+.btn.main{background:var(--bad);border-color:var(--bad);color:#fff;font-weight:600}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.hint{font-size:13px;color:var(--muted)}
+
+.term{background:var(--term-bg);border-radius:10px;overflow:hidden;box-shadow:0 10px 30px rgba(10,20,20,.18)}
+.term-bar{background:var(--term-bar);display:flex;align-items:center;gap:7px;padding:9px 12px}
+.dot{width:10px;height:10px;border-radius:50%;background:#3A444A}
+.term-title{margin-left:8px;font-family:var(--mono);font-size:12px;color:#76848B}
+.screen{height:600px;overflow:auto;padding:16px 18px;font-family:var(--mono);font-size:13.5px;line-height:1.6;color:var(--term-ink);display:flex;flex-direction:column;gap:6px}
+.ln{white-space:pre-wrap;word-break:break-word}
+.user{color:var(--term-dim)} .user b{color:var(--term-ink);font-weight:500}
+.g{color:var(--t-green)} .r{color:var(--t-red)} .y{color:var(--t-yellow)} .d{color:var(--term-dim)} .c{color:var(--t-cyan)} .b{font-weight:600;color:#fff}
+.welcome{border:1px solid #3B2A2A;border-radius:6px;padding:8px 12px;align-self:flex-start}
+.welcome .r{font-weight:600}
+
+/* agent block */
+.ag{display:flex;gap:12px;align-items:flex-start;padding-block:4px}
+.ag .spr{flex:none;transition:transform .18s ease}
+.ag .spr.up{transform:translateY(-3px)}
+.ag .info{display:flex;flex-direction:column;min-width:0}
+.ag .top{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ag .nm{font-weight:600}
+.ag .tm{color:var(--term-dim)}
+.ag .det{color:var(--term-dim);white-space:pre-wrap;word-break:break-word}
+.ag.done{padding-block:0;gap:8px;align-items:baseline}
+.ag.done .spr{display:none}
+.mini{flex:none}
+.ag.done .det{color:var(--term-ink)}
+.eng{white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.bar .f{color:var(--t-green)} .bar .e{color:#39444A}
+
+.pix{display:grid;gap:0}
+.pix i{display:block;width:4px;height:4px}
+
+.inbox{border:1px solid var(--term-line);border-radius:6px;padding:6px 10px;margin:0 18px 8px;font-family:var(--mono);font-size:13.5px;color:var(--term-ink);white-space:pre}
+.inbox .ph{color:var(--term-dim)}
+.cursor{display:inline-block;width:8px;height:15px;background:var(--term-ink);vertical-align:-2px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.foot{padding:0 18px 12px;font-family:var(--mono);font-size:12px;color:var(--term-dim);white-space:pre;overflow-x:auto}
+
+/* character sheet */
+.sheet{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.sheet p{color:var(--muted);font-size:14px}
+.chars{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
+.ch{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px;border-radius:8px;background:#0D1114;text-align:center}
+.ch .n{font-family:var(--mono);font-size:12px;font-weight:600}
+.ch .j{font-size:11px;color:#8C99A0;line-height:1.35}
+@media (prefers-reduced-motion:reduce){.cursor{animation:none}.ag .spr{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Agent animation mockup · v2</div>
+    <h1>Agents pop into the chat only when they're needed</h1>
+    <p class="lede">The same Claude Code-style chat, with no agent list. When Bob's agents start working, each one appears as its own little character with a live status. When it finishes, it shrinks into one line, so the chat stays clean.</p>
+  </header>
+
+  <div class="controls">
+    <button class="btn main" id="restart" type="button">↻ Restart</button>
+    <button class="btn" id="pause" type="button">Pause</button>
+    <span class="hint">Plays automatically, about 50 seconds per loop.</span>
+  </div>
+
+  <div class="term">
+    <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-title">~ — cx</span></div>
+    <div class="screen" id="screen" aria-live="polite"></div>
+    <div class="inbox" id="inbox"></div>
+    <div class="foot" id="foot"></div>
+  </div>
+
+  <div class="sheet">
+    <h2>Character sheet</h2>
+    <p>This is only for you to see the characters. The app doesn't show this list. In the terminal, each character is drawn with colored half-block characters, so it works in any modern terminal.</p>
+    <div class="chars" id="chars"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W = 12, H = 10;
+
+  // ---------- sprite shapes ----------
+  function rot(dx, dy, deg){ var a = deg*Math.PI/180; return [dx*Math.cos(a)-dy*Math.sin(a), dx*Math.sin(a)+dy*Math.cos(a)]; }
+  var SHAPES = {
+    circle: function(x,y){ var dx=x-5.5, dy=y-4.8; return dx*dx+dy*dy <= 4.9*4.9; },
+    small: function(x,y){ var dx=x-5.5, dy=y-6; return dx*dx+dy*dy <= 3.6*3.6; },
+    roundsq: function(x,y){ var dx=Math.abs(x-5.5), dy=Math.abs(y-4.8); return dx<=5 && dy<=4.6 && dx+dy<=8.2; },
+    tilted: function(x,y){ var p=rot(x-5.5,y-4.8,-14); var dx=Math.abs(p[0]), dy=Math.abs(p[1]); return dx<=4.4 && dy<=4.1 && dx+dy<=7.4; },
+    triangle: function(x,y){ var dx=Math.abs(x-5.5); var hw=(y+0.6)*0.62; return y>=0 && dx<=hw && !(y>=9 && dx>4.6); },
+    cloud: function(x,y){
+      var c=[[3.4,5.6,3.1],[7.6,5.6,3.1],[5.5,3.4,3.1],[5.5,6.4,3.2]];
+      for (var i=0;i<c.length;i++){ var dx=x-c[i][0], dy=y-c[i][1]; if (dx*dx+dy*dy<=c[i][2]*c[i][2]) return true; }
+      return false;
+    },
+    blob: function(x,y){ var dx=(x-5.5)/5.6, dy=(y-5.2)/4.3; return dx*dx+dy*dy<=1; }
+  };
+  // eye positions (row) per shape
+  var EYE_ROW = {circle:3, small:5, roundsq:3, tilted:3, triangle:6, cloud:4, blob:4};
+
+  var AG = {
+    coord:{name:'Coordinator', color:'#FFC53D', shape:'circle',  eye:'#FFFFFF', verb:'Planning', job:'Decides who works next'},
+    scout:{name:'Scout',       color:'#10C9A8', shape:'roundsq', eye:'#FFFFFF', verb:'Scouting', job:'Understands the repo'},
+    mech: {name:'Mechanic',    color:'#FF9500', shape:'cloud',   eye:'#FFFFFF', verb:'Building', job:'Starts the app in Docker'},
+    map:  {name:'Mapper',      color:'#22B8F0', shape:'blob',    eye:'#FFFFFF', verb:'Mapping', job:'Finds the actions'},
+    law:  {name:'Lawmaker',    color:'#A020F0', shape:'tilted',  eye:'#FFFFFF', verb:'Drafting rules', job:'Proposes the rules'},
+    crit: {name:'Rule Critic', color:'#FF1493', shape:'triangle',eye:'#FFFFFF', verb:'Reviewing rules', job:'Challenges the rules'},
+    test: {name:'Test Designer',color:'#FF5A1F',shape:'blob',    eye:'#FFFFFF', verb:'Designing tests', job:'Writes smart scenarios'},
+    strat:{name:'Strategist',  color:'#A86B3C', shape:'circle',  eye:'#FFFFFF', verb:'Strategizing', job:'Points at risky areas'},
+    det:  {name:'Detective',   color:'#4F63FF', shape:'roundsq', eye:'#FFFFFF', verb:'Investigating', job:'Finds the root cause'},
+    drev: {name:'Diag. Reviewer',color:'#FF6FB5',shape:'triangle',eye:'#FFFFFF', verb:'Checking evidence', job:'Checks the diagnosis'},
+    surg: {name:'Surgeon',     color:'#2FCB76', shape:'tilted',  eye:'#FFFFFF', verb:'Operating', job:'Writes the fix'},
+    frev: {name:'Fix Reviewer',color:'#D6247A', shape:'triangle',eye:'#FFFFFF', verb:'Reviewing fix', job:'Checks the fix'},
+    guide:{name:'Guide',       color:'#E9ECEF', shape:'small',   eye:'#1B1F24', verb:'Answering', job:'Answers your questions'}
+  };
+
+  function makeSprite(a, px){
+    var g = document.createElement('div'); g.className = 'pix';
+    g.style.gridTemplateColumns = 'repeat(' + W + ',' + px + 'px)';
+    var cells = [];
+    for (var y=0;y<H;y++) for (var x=0;x<W;x++){
+      var i = document.createElement('i'); i.style.width = px+'px'; i.style.height = px+'px';
+      g.appendChild(i); cells.push(i);
+    }
+    var sp = {el:g, cells:cells, a:a};
+    paint(sp, 0, false);
+    return sp;
+  }
+  function paint(sp, look, blink){
+    var a = sp.a, f = SHAPES[a.shape], er = EYE_ROW[a.shape];
+    var ex1 = 4 + look, ex2 = 7 + look;
+    for (var y=0;y<H;y++) for (var x=0;x<W;x++){
+      var c = 'transparent';
+      if (f(x+0.5-0.5, y)) c = a.color;
+      if (c !== 'transparent' && (x === ex1 || x === ex2)){
+        if (!blink && (y === er || y === er+1)) c = a.eye;
+        if (blink && y === er+1) c = a.eye;
+      }
+      sp.cells[y*W+x].style.background = c;
+    }
+  }
+
+  // ---------- character sheet ----------
+  var chars = document.getElementById('chars');
+  var sheetSprites = [];
+  Object.keys(AG).forEach(function(k){
+    var a = AG[k];
+    var d = document.createElement('div'); d.className = 'ch';
+    var sp = makeSprite(a, 5); sheetSprites.push(sp);
+    d.appendChild(sp.el);
+    var n = document.createElement('div'); n.className = 'n'; n.style.color = a.color; n.textContent = a.name; d.appendChild(n);
+    var j = document.createElement('div'); j.className = 'j'; j.textContent = a.job; d.appendChild(j);
+    chars.appendChild(d);
+  });
+
+  // ---------- chat timeline ----------
+  var screen = document.getElementById('screen');
+  var inbox = document.getElementById('inbox');
+  var foot = document.getElementById('foot');
+  var active = {};   // id -> {el, sp, t0, detail}
+  var engines = {};  // id -> {el, t0, kind}
+  var t = 0, idx = 0, frame = 0, paused = false, last = performance.now(), coins = 0;
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function add(html, cls){ var d = document.createElement('div'); d.className = cls || 'ln'; d.innerHTML = html; screen.appendChild(d); screen.scrollTop = screen.scrollHeight; return d; }
+  function shimmer(text, color){
+    var out = '', n = text.length, pos = (frame * 0.5) % (n + 10) - 5;
+    for (var i=0;i<n;i++){
+      var dd = Math.abs(i - pos);
+      var c = dd < 1.5 ? '#FFFFFF' : (dd < 3.2 ? color : '#A3AFB5');
+      out += '<span style="color:' + c + '">' + esc(text[i]) + '</span>';
+    }
+    return out;
+  }
+  function bar(p){ var w = 12, f = Math.max(0, Math.min(w, Math.round(p/100*w))); return '<span class="bar"><span class="f">' + '█'.repeat(f) + '</span><span class="e">' + '░'.repeat(w-f) + '</span></span>'; }
+
+  function start(id, detail){
+    var a = AG[id];
+    var el = document.createElement('div'); el.className = 'ag work';
+    var s = document.createElement('div'); s.className = 'spr';
+    var sp = makeSprite(a, 4); s.appendChild(sp.el); el.appendChild(s);
+    var info = document.createElement('div'); info.className = 'info';
+    info.innerHTML = '<div class="top"><span class="nm" style="color:' + a.color + '">' + a.name + '</span>  <span class="verb"></span> <span class="tm"></span></div><div class="det"></div>';
+    el.appendChild(info);
+    screen.appendChild(el); screen.scrollTop = screen.scrollHeight;
+    active[id] = {el:el, sp:sp, spr:s, t0:t, detail:detail, a:a, seed:Math.random()*100};
+  }
+  function detail(id, d){ if (active[id]) active[id].detail = d; }
+  function done(id, summary, bad){
+    var r = active[id]; if (!r) return;
+    var a = r.a;
+    r.el.className = 'ag done';
+    r.el.innerHTML = '<span class="mini" style="color:' + a.color + '">●</span><span><span class="nm" style="color:' + a.color + ';font-weight:600">' + a.name + '</span>  ' + (bad ? '<span class="r">✗</span> ' : '<span class="g">✓</span> ') + '<span class="det">' + summary + '</span></span>';
+    delete active[id];
+    coins += 0.023 * (2 + Math.floor(Math.random()*3));
+  }
+  function estart(id, name){
+    var el = add('', 'eng');
+    engines[id] = {el:el, t0:t, name:name, label:'', pct:0};
+  }
+  function eupd(id, label, pct){ var e = engines[id]; if (e){ e.label = label; e.pct = pct; } }
+  function edone(id, html){ var e = engines[id]; if (!e) return; e.el.innerHTML = '<span class="b">■</span> <span class="b">' + e.name + '</span>  ' + html; delete engines[id]; }
+
+  var TL = [
+    [0.0, function(){ add('<span class="r">✻</span> <span class="b">Counterexample</span> <span class="d">· signed in as aayush · GitHub connected</span>', 'ln welcome'); }],
+    [1.0, function(){ add('&gt; <b>find bugs in aayush/shop-app</b>', 'ln user'); }],
+    [1.6, function(){ start('coord', 'reading your request'); }],
+    [3.0, function(){ done('coord', 'plan: understand → start app → rules → search'); }],
+    [3.0, function(){ start('scout', 'reading README.md'); }],
+    [4.2, function(){ detail('scout', 'reading src/routes/orders.js'); }],
+    [5.4, function(){ detail('scout', 'reading src/refunds.js'); }],
+    [6.6, function(){ done('scout', 'Node.js · Express · Postgres · 7 endpoints'); }],
+    [6.6, function(){ start('mech', 'reading docker-compose.yml'); }],
+    [8.0, function(){ detail('mech', '$ docker compose up -d'); }],
+    [9.6, function(){ done('mech', 'app and database running on :3000'); }],
+    [9.6, function(){ start('map', 'reading src/routes/*.js'); start('law', 'reading models/order.js'); }],
+    [11.2, function(){ detail('law', 'reading src/refunds.js'); }],
+    [11.8, function(){ done('map', '6 actions · login buy refund cancel ship admin_export'); }],
+    [13.0, function(){ done('law', 'proposed 5 rules'); }],
+    [13.0, function(){ start('crit', 'checking rule 1 of 5'); }],
+    [14.2, function(){ detail('crit', 'checking rule 4 of 5'); }],
+    [15.4, function(){ done('crit', 'rejected "order is not None": a code check, not a business rule', true); }],
+    [15.6, function(){ add('<span class="y">?</span> Approve these 4 rules?\n  1 Refunds never exceed amount paid\n  2 Stock never goes below 0\n  3 A cancelled order never ships\n  4 A normal user never opens admin export'); }],
+    [17.2, function(){ add('&gt; <b>y</b>', 'ln user'); }],
+    [17.6, function(){ start('test', 'writing refund scenarios'); start('strat', 'ranking risky areas'); }],
+    [19.2, function(){ done('strat', 'focus on refunds (no total limit) and stock'); }],
+    [19.8, function(){ done('test', '8 scenarios, e.g. "partial refund, then refund again"'); }],
+    [19.8, function(){ estart('run', 'Runner'); }],
+    [21.0, function(){ add('&gt; <b>what are you doing right now?</b>', 'ln user'); start('guide', 'reading live run data'); }],
+    [22.6, function(){ done('guide', 'Trying refund and stock sequences. All rules holding so far.'); }],
+    [25.0, function(){ edone('run', '<span class="r">✗ RULE BROKEN</span> refunds ≤ paid <span class="d">after 3,412 sequences · 12 steps</span>'); }],
+    [25.2, function(){ estart('shr', 'Shrinker'); eupd('shr', '12 steps', 0); }],
+    [26.0, function(){ eupd('shr', '8 steps', 35); }],
+    [26.8, function(){ eupd('shr', '5 steps', 65); }],
+    [27.6, function(){ eupd('shr', '3 steps', 100); }],
+    [28.0, function(){ edone('shr', '12 → 8 → 5 → <span class="b">3 steps</span>'); }],
+    [28.0, function(){ add('<span class="r">  COUNTEREXAMPLE #001</span>\n  1. buy(mug, ₹100)\n  2. refund(₹60)\n  3. refund(₹50)\n  <span class="d">Paid</span> ₹100   <span class="d">Refunded</span> <span class="r">₹110</span>'); }],
+    [28.4, function(){ estart('rep', 'Replayer'); }],
+    [29.8, function(){ edone('rep', '<span class="g">✓</span> 10 / 10 reproduced, real bug'); }],
+    [29.8, function(){ start('det', 'reading src/refunds.js'); }],
+    [31.2, function(){ detail('det', 'comparing state after each step'); }],
+    [32.6, function(){ done('det', 'src/refunds.js:42 checks each refund alone, earlier refunds ignored'); }],
+    [32.6, function(){ start('drev', 'checking diagnosis against evidence'); }],
+    [34.0, function(){ done('drev', 'matches: refunded goes 60 → 110 at step 3'); }],
+    [34.2, function(){ add('<span class="y">?</span> Let the Surgeon fix it?'); }],
+    [35.4, function(){ add('&gt; <b>y</b>', 'ln user'); }],
+    [35.6, function(){ start('surg', 'editing src/refunds.js'); }],
+    [37.4, function(){ done('surg', '1 file changed · <span class="g">+ already + amount &lt;= order.total</span>'); }],
+    [37.4, function(){ start('frev', 'checking side effects'); }],
+    [39.0, function(){ done('frev', 'minimal change, no side effects found'); }],
+    [39.0, function(){ estart('ver', 'Verifier'); eupd('ver', 'replaying #001', 15); }],
+    [40.0, function(){ eupd('ver', 'running 18 existing tests', 40); }],
+    [41.0, function(){ eupd('ver', 'fresh search, 20,000 sequences', 70); }],
+    [43.0, function(){ edone('ver', '<span class="g">✓ FIX VERIFIED</span> <span class="d">replay passes · 18/18 tests · 20,000 sequences, 0 broken</span>'); }],
+    [43.2, function(){ start('coord', 'opening pull request'); }],
+    [44.6, function(){ done('coord', 'PR #88 opened on aayush/shop-app'); }],
+    [50.0, 'end']
+  ];
+
+  function reset(){
+    t = 0; idx = 0; coins = 0; screen.innerHTML = ''; active = {}; engines = {};
+  }
+
+  function render(){
+    // working agents
+    Object.keys(active).forEach(function(id){
+      var r = active[id], a = r.a;
+      var el_s = t - r.t0;
+      r.el.querySelector('.verb').innerHTML = shimmer(a.verb + '…', a.color);
+      r.el.querySelector('.tm').textContent = '(' + el_s.toFixed(1) + 's)';
+      r.el.querySelector('.det').textContent = '⎿ ' + r.detail;
+      // bounce, blink, glance
+      var ph = frame + r.seed;
+      r.spr.classList.toggle('up', !reduce && Math.floor(ph / 9) % 2 === 0);
+      var blink = !reduce && (Math.floor(ph) % 70) < 4;
+      var look = reduce ? 0 : [0,0,1,1,0,0,-1,-1][Math.floor(ph / 22) % 8];
+      paint(r.sp, look, blink);
+    });
+    // engine workers
+    Object.keys(engines).forEach(function(id){
+      var e = engines[id], p, lbl;
+      if (id === 'run'){ var n = Math.min(3412, Math.round((t - e.t0) * 660)); p = n/34.12; lbl = n.toLocaleString('en-US') + ' sequences'; }
+      else if (id === 'rep'){ var k = Math.min(10, Math.floor((t - e.t0) * 7.5)); p = k*10; lbl = k + ' / 10'; }
+      else { p = e.pct; lbl = e.label; }
+      var pulse = frame % 8 < 4 ? '#FFFFFF' : '#5E6B72';
+      e.el.innerHTML = '<span style="color:' + pulse + '">■</span> <span class="b">' + e.name + '</span>  ' + bar(p) + ' <span class="d">' + esc(lbl) + '</span>';
+    });
+    // sheet idle animation
+    sheetSprites.forEach(function(sp, i){
+      var ph = frame + i * 17;
+      paint(sp, reduce ? 0 : [0,0,1,0,0,-1][Math.floor(ph / 30) % 6], !reduce && (ph % 90) < 4);
+    });
+    // input + footer
+    var n = Object.keys(active).length + Object.keys(engines).length;
+    inbox.innerHTML = '<span class="d">&gt; </span><span class="cursor"></span> <span class="ph">' + (n ? 'Ask anything while agents work…' : 'Try "keep searching" or /help') + '</span>';
+    foot.innerHTML = n
+      ? '<span class="y">●</span> ' + n + ' working · esc to interrupt · ' + coins.toFixed(2) + ' coins'
+      : '? for shortcuts · ' + coins.toFixed(2) + ' coins';
+  }
+
+  function tick(now){
+    var dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (!paused){
+      t += dt;
+      while (idx < TL.length && TL[idx][0] <= t){
+        if (TL[idx][1] === 'end'){ reset(); break; }
+        TL[idx][1](); idx++;
+      }
+      frame++;
+    }
+    render();
+    requestAnimationFrame(tick);
+  }
+
+  document.getElementById('restart').addEventListener('click', function(){ reset(); paused = false; document.getElementById('pause').textContent = 'Pause'; });
+  document.getElementById('pause').addEventListener('click', function(e){ paused = !paused; e.currentTarget.textContent = paused ? 'Resume' : 'Pause'; });
+
+  if (reduce){
+    while (idx < TL.length && TL[idx][0] <= 30.5){ t = TL[idx][0]; TL[idx][1](); idx++; }
+    paused = true; document.getElementById('pause').textContent = 'Resume';
+  }
+  requestAnimationFrame(tick);
+})();
+</script>
