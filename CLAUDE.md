@@ -40,6 +40,25 @@ For each ticket:
 
 Small doc fixes and status updates can be done directly without sub-agents.
 
+## 2a. When the user says "update handoff"
+
+This usually means the account is near its usage limit, so do it **immediately and quickly**:
+1. Stop starting new work. Don't launch new sub-agents.
+2. Check the real state: `git status --short` and `git log --oneline | head -5`.
+3. Update `HANDOFF.md` → "Next session starts here":
+   - the time (IST) and which account stopped
+   - which tickets are **DONE and committed**
+   - which work is **uncommitted** (ticket, its files, and whether it's coded, in review or partial), and exactly what to do with each
+   - the next tickets in order
+   - any lessons or gotchas from this session
+   Add a line to the session log.
+4. Update `STATUS.md`: ticket statuses, progress bars and "Last updated".
+5. Commit **only** the docs (`HANDOFF.md`, `STATUS.md`, other docs). Never commit unreviewed ticket code. Then push.
+6. Reply to the user with:
+   - a 3–5 line summary of where we stopped
+   - a warning to close this session before starting the other account, if background agents may still be writing files
+   - a **ready-to-paste prompt for the other account** in a code block, based on the "Goal prompt" template in `HANDOFF.md`, filled in with the current state and the exact next steps
+
 ## 3. Hard rules
 
 1. **Proof over prediction.** Only the engine (deterministic code) decides whether a rule is broken or a fix is verified. An LLM never decides pass or fail.
