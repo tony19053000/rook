@@ -2,21 +2,21 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 13:48 IST · **By:** Account 1 (Claude Code)
+**Last updated:** 2026-09-26 14:05 IST · **By:** Account 1 (Claude Code)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B1 (next: ROOK-002)
 
 ## Progress
 
 ```
-OVERALL   [███░░░░░░░░░░░░░░░░░░░░░░░░░░░]  12%   5 / 40 tickets
+OVERALL   [█████░░░░░░░░░░░░░░░░░░░░░░░░░]  17%   7 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~27h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
-M2  Engine            [█░░░░░░░░░]  12%   1 / 8    ROOK-005…012
+M2  Engine            [██░░░░░░░░]  25%   2 / 8    ROOK-005…012
 M3  Sandbox           [░░░░░░░░░░]   0%   0 / 2    ROOK-013…014
-M4  Bob agents        [░░░░░░░░░░]   0%   0 / 8    ROOK-015…022
+M4  Bob agents        [█░░░░░░░░░]  12%   1 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
 M6  CLI (hero)        [░░░░░░░░░░]   0%   0 / 5    ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
@@ -35,7 +35,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | Repo | https://github.com/tony19053000/rook (public) |
 | Hosted web | not deployed yet (Vercel) |
 | Hosted API | not deployed yet (Hugging Face Space) |
-| Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 0.07 |
+| Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 0.15 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
 
 ## Tickets
@@ -47,17 +47,17 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-003 | Model schema, loader, templating | P0 | DONE | reviewer PASS on round 2 (linear parser) |
 | ROOK-004 | Safe expression evaluator | P0 | DONE | reviewer PASS on round 2 (work budget added) |
 | ROOK-005 | Fixture app minishop | P0 | DONE | reviewer PASS (race test 10/10) |
-| ROOK-006 | HTTP executor | P0 | IN PROGRESS | |
-| ROOK-007 | Generator + Runner | P0 | TODO | |
-| ROOK-008 | Judge | P0 | TODO | |
+| ROOK-006 | HTTP executor | P0 | DONE | reviewer PASS on round 2; ~290 seq/s, tune in 007 |
+| ROOK-007 | Generator + Runner | P0 | IN PROGRESS | |
+| ROOK-008 | Judge | P0 | IN PROGRESS | |
 | ROOK-009 | Shrinker | P0 | TODO | |
 | ROOK-010 | Replayer | P0 | TODO | |
 | ROOK-011 | Export + Verifier + Test Runner | P0 | TODO | |
 | ROOK-012 | Parallel steps (race) | P1 | TODO | |
 | ROOK-013 | Sandbox + ProcessSandbox | P0 | TODO | |
 | ROOK-014 | DockerSandbox | P0 | TODO | |
-| ROOK-015 | BobClient + recorder | P0 | TODO | |
-| ROOK-016 | Agent registry, prompts, modes | P0 | TODO | |
+| ROOK-015 | BobClient + recorder | P0 | DONE | reviewer PASS on round 2 (env allowlist) |
+| ROOK-016 | Agent registry, prompts, modes | P0 | IN PROGRESS | |
 | ROOK-017 | Scout → Mechanic → Mapper | P0 | TODO | |
 | ROOK-018 | Lawmaker + Rule Critic | P0 | TODO | |
 | ROOK-019 | Test Designer + Strategist | P1 | TODO | |

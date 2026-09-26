@@ -6,8 +6,8 @@
 
 ## ▶ Next session starts here
 
-**State:** M1 is complete (ROOK-001 to 004) and ROOK-005 is done, all committed. ROOK-006 (HTTP executor) is being coded.
-**Do next:** review and commit ROOK-006, then ROOK-007 (Generator + Runner) → 008 → 009 → 010 → 011 → 012.
+**State:** DONE: ROOK-001 to 006 and 015. IN PROGRESS: ROOK-007+008 (Runner + Judge, one coder) and ROOK-016 (agent registry/prompts/modes).
+**Do next:** review and commit 007+008 and 016, then 009 (Shrinker) → 010 → 011 → 012, then 013/014 (sandbox), then 017–022 (agents).
 **How:** the orchestrator sends each ticket to the `coder` sub-agent, then the `reviewer` sub-agent (CLAUDE.md, section 2).
 **Watch out:**
 - Sub-agents: `coder` = Opus 5.5 at medium effort, `reviewer` = Sonnet 5 at medium effort (set in `.claude/agents/*.md`). They only load in a session started *after* the files existed. In the session that created them, run them as `general-purpose` agents told to read their `.md`, with the model override (opus / sonnet).
@@ -41,6 +41,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 14:05 | 1 | ROOK-006 (round 2: gather leak fixed) and ROOK-015 (round 2: env allowlist) PASS + committed | ROOK-006/015 |
 | 26 Sep 13:48 | 1 | ROOK-002, 004 (after a work-budget fix) and 005 PASS + committed; 003 in fix round | ROOK-002/004/005 |
 | 26 Sep 13:36 | 1 | ROOK-001 scaffold (coder → reviewer PASS) | ROOK-001 |
 | 26 Sep 13:25 | 1 | Design finalised with the user; wrote CLAUDE.md, the coder/reviewer sub-agents, docs 01–05, STATUS, HANDOFF and README; created the GitHub repo | (see git log) |
