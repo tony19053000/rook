@@ -6,30 +6,34 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 14:08 IST. Account 1 stopped at about 90% of its 5-hour limit.
+**Updated:** 26 Sep 15:30 IST. Account 2 stopped (user switching accounts). All background agents were stopped; Docker has no leftover `rook.sandbox` containers.
 
-**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015, 016, 022, 013, 007, 008, 012, 009, 010, 014, 017 (account 2). M1 is complete.
+**Committed and DONE (reviewer PASS):** ROOK-001–010, 012, 013, 014, 015, 016, 017, 022 (17 / 40). M1, M3 complete; M2 7/8; M4 4/8. Pushed to GitHub. Bob coins used ≈ 0.30 of 40.
 
-**UNCOMMITTED work in the working tree (verify it before anything else):**
-1. ~~ROOK-016~~ DONE and committed by account 2 (was: coded, and the review was in progress when the session ended.
-   Files: `src/rook/agents/schemas.py`, `registry.py`, `modes.py`, `prompts/__init__.py`, `prompts/*.md`, `tests/unit/test_agents_registry.py`.
-   **Review round 1 = FAIL** (374 tests pass; everything else verified). Send these fixes to the `coder` sub-agent, then re-review, then commit as `ROOK-016`:
-   - F1 (security): `registry.py` around line 154, `_check_path` compares path parts with `FORBIDDEN_DIRS {".bob", ".git"}` case-sensitively, so `A/.GIT/config` is accepted, which is the real .git on case-insensitive filesystems. Compare `part.lower()`.
-   - F2 (security): `_check_path` (around lines 144-153) accepts embedded control characters (`notes\n.git/config`), and `_escape` doesn't escape `\n`. Reject any character with `ord < 0x20` or `== 0x7f` in a path.
-   - Also: add explicit prose to `prompts/mapper.md` that every `{{ref.x}}` var must be listed in `requires` and produced by some action's `capture`; and in `prompts/__init__.py` also neutralise the HTML-entity form `&lt;/untrusted` (or add a banner line saying entity-encoded tags are data). Add tests for all of these.
-2. **ROOK-007 + ROOK-008 (Generator + Runner + Judge)**: that coder was **stopped mid-work at 14:11 IST** (the user asked to stop), so treat the files as PARTIAL and unreviewed:
-   `src/rook/engine/generator.py`, `judge.py`, `runner.py` and `tests/unit/test_generator.py`, `test_judge.py`, `test_runner.py` (possibly also small additive changes in `executor.py`).
-   Run `git status` and `uv run pytest -q`. If they're incomplete, send the ticket to the `coder` sub-agent to finish it (both tickets' ACs in `docs/05_FEATURE_TICKETS.md`, including ≥500 seq/s or an honest measured ceiling, zero violations on fixed minishop, and finding the refund bug for 5 seeds). Then review and commit.
-3. Docs wording (13 agents = Coordinator + 12 specialists) is committed.
+**UNCOMMITTED work in the working tree:**
+1. **ROOK-011 (Export + Verifier + Test Runner)** — coded, **review round 1 = FAIL**, the fix-round coder was stopped before (or while) making changes, so treat the files as round-1 code:
+   `src/rook/export/counterexample.py`, `src/rook/export/tests.py`, `src/rook/engine/verifier.py`, `src/rook/engine/testrunner.py`, `tests/unit/test_export.py`, `test_testrunner.py`, `test_verifier.py`, `tests/integration/test_verify_minishop.py`.
+   Everything else passed review (all ACs, AST-checked generated test, pytest isolation, env isolation). Send this to `coder` (round 2), then `reviewer`, commit as `ROOK-011`:
+   - F1 (security): `counterexample.py` ~248-256 `safe_dir` calls `mkdir(parents=True)` BEFORE the inside-root check, so a planted symlink `<root>/rook -> /outside` creates `/outside/counterexamples` (or `/outside/tests`) before PermissionError. Fix: walk components with dir fds (`os.open(name, O_DIRECTORY|O_NOFOLLOW, dir_fd=parent)`, `os.mkdir(name, dir_fd=parent)`), write the leaf via that fd. Extend `test_writes_refuse_symlinks_out_of_the_root` to assert NOTHING (not even a dir) is created outside, for both dirs and a deeper symlink (`rook/tests -> outside`).
+   - Cheap extras: check 4 (fresh_search) must fail if no step got a <400 response ("could not exercise the app"); depth/size cap on `observed` before JSON/AST.
+2. **ROOK-018 (Lawmaker + Rule Critic)** — coder was stopped at the very start; **no files were written**. Start it fresh (brief below).
 
-**Then continue in order:** 009 (Shrinker) → 010 (Replayer) → 011 (Export + Verifier) → 012 (parallel race) → 013/014 (sandbox) → 017–022 (agent pipelines) → 023 (Session) → M6 CLI.
-Independent tickets may run as parallel coders on separate files (this worked well for 002–005). Commit each on PASS, update the STATUS progress bars, and update this file after every ticket.
+**Then continue in order:** 011 (fix) → 018 → 020 (deps 011) → 019 → 021 → 023 (Session) → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
+Parallel pairs that worked: 011-fix ‖ 018; later 019 ‖ 020.
+
+**ROOK-018 brief (for the coder):** follow the ROOK-017 pattern (`src/rook/agents/understand.py`, `tests/unit/test_pipeline_understand.py`: recorded replay in the default suite + one `@pytest.mark.bob` live test + a secret scan of recordings). Reuse the recorded understand run (`tests/fixtures/recordings/understand_minishop/`) so only Lawmaker/Critic calls cost coins; budget ≤1.5 coins. The ENGINE sanity-checks each rule (parses with the safe evaluator + holds on a fresh app); the critic judges meaning only. AC: produces refund, stock, ship, admin rules; a rule that fails on a fresh app is auto-rejected with a reason. **Known issue:** ROOK-017's dry-run treats status ≥400 as failure — a response rule like `admin_export_forbidden` (expected 401/403 on a fixed app) must not be rejected for that.
+
+**Open decisions for the user:**
+- ROOK-007 throughput: 268 seq/s measured (target 500). Ceiling is minishop itself (sync `current_user` + O(n) user scans); engine alone ≈750/s. Recorded in STATUS as not met.
+- ROOK-014: sandboxed apps have NO internet at run time. Apps that need it would need a new `SandboxPlan.egress` field (contract change in 02 §8) — not added; ask the user if a demo app needs it.
+
+**Follow-ups noted (non-blocking, from reviews):** per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; `CostUpdate` ge=0 + monotonic cost in RunState; NFKC-normalise Surgeon paths; recordings contain local `/tmp/pytest-of-aayush` paths; document cx JSON shape in 02 §7.8.
 
 **Lessons from this session:**
-- The reviewer finds real bugs (O(n²) regexes, nested-loop DoS, gather task leaks, env leaks). Always review, and always give the reviewer attack ideas.
-- Per-ticket scope: tell each coder which files to stay in, and tell it not to edit pyproject.toml or uv.lock when others run in parallel.
-- Bob facts: `cwd` MUST be the workspace; stdin DEVNULL; child env allowlisted (done in bob.py). Coins used ≈ 0.15 of 40.
-- Performance note: the executor alone does about 290 seq/s in-process on minishop; 007 must optimise (touched-entity state reads, concurrency, caching the admin setup).
+- Always give the reviewer attack ideas — it found real bugs in 013 (LD_PRELOAD env), 014 (open egress, then compose hostname DNS hijack: 11/20 requests stolen), 011 (mkdir symlink escape).
+- Parallel coders on separate files work well; tell each which files NOT to touch. A reviewer may see transient failures from another coder's in-progress file — re-run before blaming.
+- `ROOK_SLOW=1` enables the slow 20k-sequence tests; Docker tests: `uv run pytest -q -m docker`.
+- Live Bob recordings live in `tests/fixtures/recordings/<name>/` (only that path is un-ignored). Re-record if prompts/templates change.
 
 ---
 
@@ -47,7 +51,7 @@ You are continuing the Rook project (IBM Bob hackathon) in /home/aayush/Desktop/
 Start now.
 ```
 
-**Current goal:** Verify and commit ROOK-016 and ROOK-007+008 (see "Next session starts here"), then finish M2 (ROOK-009 → 012), M3 (013, 014) and M4 (017 → 022).
+**Current goal:** Fix + commit ROOK-011 (review F1), build ROOK-018, then 020 → 019 → 021 → 023 → M6 CLI (see "Next session starts here").
 
 ---
 
@@ -55,6 +59,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 15:30 | 2 | Stopped for account switch: 011 review FAIL (fix not applied), 018 not started; agents stopped | (docs) |
 | 26 Sep 15:25 | 2 | ROOK-017 PASS + committed (first live Bob pipeline, 0.15 coins); 011 in review; 018 coding | ROOK-017 |
 | 26 Sep 15:06 | 2 | ROOK-014 PASS round 3 + committed (M3 done); 011 + 017 coding | ROOK-014 |
 | 26 Sep 15:05 | 2 | ROOK-010 PASS + committed; 011 coding; 014 round 3 in review | ROOK-010 |
