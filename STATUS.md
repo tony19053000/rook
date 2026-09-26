@@ -2,21 +2,21 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 15:06 IST · **By:** Account 2
+**Last updated:** 2026-09-26 15:25 IST · **By:** Account 2
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
 
 ## Progress
 
 ```
-OVERALL   [████████████░░░░░░░░░░░░░░░░░░]  40%  16 / 40 tickets
+OVERALL   [████████████░░░░░░░░░░░░░░░░░░]  42%  17 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~27h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
 M2  Engine            [████████░░]  87%   7 / 8    ROOK-005…012
 M3  Sandbox           [██████████] 100%   2 / 2    ROOK-013…014
-M4  Bob agents        [███░░░░░░░]  37%   3 / 8    ROOK-015…022
+M4  Bob agents        [█████░░░░░]  50%   4 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
 M6  CLI (hero)        [░░░░░░░░░░]   0%   0 / 5    ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
@@ -35,7 +35,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | Repo | https://github.com/tony19053000/rook (public) |
 | Hosted web | not deployed yet (Vercel) |
 | Hosted API | not deployed yet (Hugging Face Space) |
-| Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 0.15 |
+| Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 0.30 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
 
 ## Tickets
@@ -58,8 +58,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-014 | DockerSandbox | P0 | DONE | reviewer PASS on round 3 (internal run network + hardened 127.0.0.1 proxy; compose hostname/alias hijack closed). Proposal pending: SandboxPlan.egress field (contract change) for apps needing internet |
 | ROOK-015 | BobClient + recorder | P0 | DONE | reviewer PASS on round 2 (env allowlist) |
 | ROOK-016 | Agent registry, prompts, modes | P0 | DONE | reviewer PASS on round 2 (case-insensitive .git, control chars, entity tags); note: NFKC-normalise paths as hardening |
-| ROOK-017 | Scout → Mechanic → Mapper | P0 | IN PROGRESS | coder (account 2) |
-| ROOK-018 | Lawmaker + Rule Critic | P0 | TODO | |
+| ROOK-017 | Scout → Mechanic → Mapper | P0 | DONE | reviewer PASS; live run 0.15 coins, recorded replay in default suite. Note: dry-run treats ≥400 as fail (expected-forbidden actions need handling in 018/023) |
+| ROOK-018 | Lawmaker + Rule Critic | P0 | IN PROGRESS | coder (account 2) |
 | ROOK-019 | Test Designer + Strategist | P1 | TODO | |
 | ROOK-020 | Detective + Diagnosis Reviewer | P0 | TODO | |
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | TODO | |

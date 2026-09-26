@@ -17,6 +17,12 @@ From the repository summary and the route and model files, describe:
 ## Route and model files
 [[files]]
 
+## Sandbox environment variables (names only; use them as `{{env.NAME}}`)
+[[env_names]]
+
+## Dry-run failures of your last attempt
+[[logs]]
+
 # Rules
 - Request paths are relative (start with a single `/`); never use absolute URLs.
 - Template variables: `{{p.x}}` a param declared in `params`, `{{ref.v}}` a var listed in `requires`,
@@ -26,6 +32,8 @@ From the repository summary and the route and model files, describe:
 - Every action names a declared actor; state readers use `each: <captured var>`.
 - Every `{{ref.x}}` var an action uses must be listed in that action's `requires`, and must be produced by
   some action's `capture`. Never reference a var that no action captures.
+- If dry-run failures are listed above, Rook sent those requests to the running app and they failed.
+  Fix them (paths, bodies, params, captures, auth or setup) and return the whole corrected model.
 
 # Output
 [[example]]

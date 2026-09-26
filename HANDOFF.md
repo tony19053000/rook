@@ -8,7 +8,7 @@
 
 **Updated:** 26 Sep 14:08 IST. Account 1 stopped at about 90% of its 5-hour limit.
 
-**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015, 016, 022, 013, 007, 008, 012, 009, 010, 014 (account 2). M1 is complete.
+**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015, 016, 022, 013, 007, 008, 012, 009, 010, 014, 017 (account 2). M1 is complete.
 
 **UNCOMMITTED work in the working tree (verify it before anything else):**
 1. ~~ROOK-016~~ DONE and committed by account 2 (was: coded, and the review was in progress when the session ended.
@@ -55,6 +55,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 15:25 | 2 | ROOK-017 PASS + committed (first live Bob pipeline, 0.15 coins); 011 in review; 018 coding | ROOK-017 |
 | 26 Sep 15:06 | 2 | ROOK-014 PASS round 3 + committed (M3 done); 011 + 017 coding | ROOK-014 |
 | 26 Sep 15:05 | 2 | ROOK-010 PASS + committed; 011 coding; 014 round 3 in review | ROOK-010 |
 | 26 Sep 14:54 | 2 | ROOK-009 PASS + committed; 010 coding; 014 fix round 2 | ROOK-009 |

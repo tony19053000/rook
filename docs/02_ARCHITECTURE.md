@@ -60,9 +60,9 @@ rook/                           # repo root (github.com/tony19053000/rook)
 ├─ pyproject.toml               # package "rook-cli", entry point: rook = rook.cli.main:app
 ├─ src/rook/
 │  ├─ core/            session.py (Session, Conductor), phases.py, rails.py, events.py (bus + models), config.py
-│  ├─ agents/          bob.py (BobClient), registry.py (AgentSpec x12), prompts/*.md, schemas.py, modes.py (writes .bob/custom_modes.yaml), recorder.py
+│  ├─ agents/          bob.py (BobClient), registry.py (AgentSpec x12), prompts/*.md, schemas.py, modes.py (writes .bob/custom_modes.yaml), recorder.py, caller.py, coordinator.py, guide.py, understand.py (SCOUT → START_APP → MAP pipeline)
 │  ├─ model/           schema.py (rook.yaml pydantic), expr.py (safe evaluator), loader.py
-│  ├─ engine/          runner.py, generator.py, executor.py (HTTP), judge.py, shrinker.py, replayer.py, verifier.py, testrunner.py, isolation.py
+│  ├─ engine/          runner.py, generator.py, executor.py (HTTP), judge.py, shrinker.py, replayer.py, verifier.py, testrunner.py, isolation.py, dryrun.py (MAP dry-run)
 │  ├─ sandbox/         base.py, docker.py, process.py, allowlist.py
 │  ├─ store/           db.py (schema + migrations), repo.py (queries)
 │  ├─ github/          app.py (JWT, installation tokens), repos.py, pr.py
@@ -94,6 +94,7 @@ PREPARE      clone/copy repo into ~/.rook/workspaces/<run>/ (git worktree for lo
 SCOUT        agent scout        -> RepoSummary
 START_APP    agent mechanic     -> SandboxPlan; engine starts the sandbox + health check  (loop ≤3 on failure; may ASK setup value)
 MAP          agent mapper       -> actions + state (rook.yaml part); engine dry-runs each action once (loop ≤3)
+             (agents/understand.py runs SCOUT..MAP; engine/dryrun.py decides pass/fail; writes <workspace>/rook/rook.yaml)
 RULES        agent lawmaker     -> rules; engine sanity-checks (parse + holds on fresh app); agent rule_critic -> verdicts
 APPROVE      ASK approve_rules  (auto mode: accept critic-approved)
 DESIGN       agents test_designer + strategist (parallel) -> scenarios, weights
