@@ -8,7 +8,7 @@
 
 **Updated:** 26 Sep 14:08 IST. Account 1 stopped at about 90% of its 5-hour limit.
 
-**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015, 016, 022, 013, 007, 008, 012 (account 2). M1 is complete.
+**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015, 016, 022, 013, 007, 008, 012, 009 (account 2). M1 is complete.
 
 **UNCOMMITTED work in the working tree (verify it before anything else):**
 1. ~~ROOK-016~~ DONE and committed by account 2 (was: coded, and the review was in progress when the session ended.
@@ -55,6 +55,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 14:54 | 2 | ROOK-009 PASS + committed; 010 coding; 014 fix round 2 | ROOK-009 |
 | 26 Sep 14:52 | 2 | ROOK-012 PASS + committed; 014 fix round 2 (internal network); 009 in review | ROOK-012 |
 | 26 Sep 14:38 | 2 | ROOK-007+008 PASS + committed (268 seq/s, honest ceiling = minishop); 014, 009, 012 coding | ROOK-007/008 |
 | 26 Sep 14:32 | 2 | ROOK-013 PASS round 2 + committed; 007+008 in review (throughput ~270 seq/s, ceiling = minishop); 014 coding | ROOK-013 |
