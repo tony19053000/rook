@@ -1,0 +1,19 @@
+version: 1
+actors:
+  - name: customer
+actions:
+  - name: buy
+    actor: customer
+    request: {method: POST, path: /orders}
+    capture: {order_id: "$.id"}
+state:
+  - name: order
+    each: order_id
+    request: {method: GET, path: "/orders/{{order_id}}"}
+    fields: {paid: "$.paid"}
+rules:
+  - id: paid_positive
+    text: "Paid is positive"
+    kind: state
+    scope: invoice
+    check: "invoice.paid > 0"

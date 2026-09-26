@@ -1,0 +1,7 @@
+version: 1
+actors:
+  - name: customer
+actions:
+  - name: buy
+    actor: ghost
+    request: {method: POST, path: /orders}

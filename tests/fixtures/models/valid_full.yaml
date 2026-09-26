@@ -1,0 +1,65 @@
+# Mirrors docs/02_ARCHITECTURE.md section 6, plus the actions its rules refer to.
+version: 1
+app:
+  base_url: "{{sandbox.base_url}}"
+  health: {method: GET, path: /health, expect_status: 200}
+  isolation: fresh_entities
+actors:
+  - name: customer
+    setup:
+      - {method: POST, path: /auth/signup, json: {email: "{{fresh.email}}", password: "pw-{{fresh.id}}"}}
+      - {method: POST, path: /auth/login,  json: {email: "{{fresh.email}}", password: "pw-{{fresh.id}}"},
+         capture: {token: "$.token"}}
+    auth: {header: Authorization, value: "Bearer {{actor.token}}"}
+  - name: admin
+    setup: [{method: POST, path: /auth/login, json: {email: admin@demo.local, password: "{{env.ADMIN_PASSWORD}}"}, capture: {token: "$.token"}}]
+    auth: {header: Authorization, value: "Bearer {{actor.token}}"}
+actions:
+  - name: create_product
+    actor: admin
+    request: {method: POST, path: /products, json: {name: "{{p.name}}", stock: "{{p.stock}}", category: "{{p.category}}"}}
+    params:
+      name: {string: {pattern: "[a-z]{3,8}"}}
+      stock: {int: [0, 5], edges: [0, 1]}
+      category: {choice: [books, toys]}
+    capture: {product_id: "$.id"}
+    weight: 0.5
+  - name: buy
+    actor: customer
+    request: {method: POST, path: /orders, json: {product_id: "{{ref.product_id}}", price: "{{p.price}}"}}
+    params: {price: {int: [1, 500], edges: [1, 100, 500]}}
+    requires: [product_id]
+    capture: {order_id: "$.id"}
+    weight: 1.0
+  - name: refund
+    actor: customer
+    request: {method: POST, path: "/orders/{{ref.order_id}}/refunds", json: {amount: "{{p.amount}}"}}
+    params: {amount: {int: [1, 500], edges: [1, 50, 60, 100]}}
+    requires: [order_id]
+  - name: admin_export
+    actor: customer
+    request: {method: GET, path: /admin/export, query: {format: "{{p.format}}"}}
+    params: {format: {string: {values: [csv, json]}}}
+state:
+  - name: order
+    each: order_id
+    request: {method: GET, path: "/orders/{{order_id}}", actor: admin}
+    fields: {paid: "$.paid", refunded: "$.refunded_total", status: "$.status"}
+  - name: product
+    each: product_id
+    request: {method: GET, path: "/products/{{product_id}}", actor: admin}
+    fields: {stock: "$.stock"}
+rules:
+  - id: refund_le_paid
+    text: "Total refunds never exceed the amount paid"
+    kind: state
+    scope: order
+    check: "order.refunded <= order.paid"
+    evidence: ["src/refunds.js:42 validates each refund alone", "README: Refunds section"]
+    status: approved
+  - id: admin_export_forbidden
+    text: "A normal user never opens the admin export"
+    kind: response
+    when: {action: admin_export, actor: customer}
+    check: "response.status in (401, 403)"
+    status: approved
