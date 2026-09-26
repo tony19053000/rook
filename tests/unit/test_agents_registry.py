@@ -54,7 +54,7 @@ SAMPLE_INPUTS = {
     "scout": {"workspace_digest": "sha256:abc"},
     "strategist": {"rules": [{"id": "refund_le_paid"}], "actions": ["buy", "refund"], "search_stats": {"n": 3}},
     "detective": {"rule": {"id": "r"}, "steps": [{"action": "buy"}], "states": [{"order": {"paid": 1}}],
-                  "logs": "GET /x 200", "files": {"app.py": "def refund(): ..."}},
+                  "logs": "GET /x 200", "files": {"app.py": "def refund(): ..."}, "feedback": ""},
     "mechanic": {"summary": {"language": "python"}, "files": {"Dockerfile": "FROM python"}, "logs": ""},
     "mapper": {"summary": {"language": "python"}, "files": {"app.py": "..."}, "logs": "",
                "env_names": ["ADMIN_PASSWORD"]},
@@ -63,7 +63,7 @@ SAMPLE_INPUTS = {
     "surgeon": {"task": "Fix the bug.", "diagnosis": {"file": "app.py", "line": 3}, "counterexample": [],
                 "allowed_paths": ["app.py"], "files": {"app.py": "x = 1\n"}},
     "rule_critic": {"rules": [], "files": {}},
-    "diag_reviewer": {"diagnosis": {}, "steps": [], "states": [], "logs": "", "files": {}},
+    "diag_reviewer": {"rule": {"id": "r"}, "diagnosis": {}, "steps": [], "states": [], "logs": "", "files": {}},
     "fix_reviewer": {"diff": "--- a/app.py\n+++ b/app.py\n", "diagnosis": {}, "rules": []},
     "guide": {"snapshot": {"phase": "SEARCH"}, "question": "What are you doing?"},
 }

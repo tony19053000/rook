@@ -33,8 +33,9 @@ CONTRACT_LEAD = "End your reply with exactly one ```json block matching this sch
 # Inputs holding repository files: a mapping of workspace-relative path -> file content.
 FILE_INPUTS = frozenset({"files"})
 # Inputs holding raw output of the target app or of tools (logs, diffs, HTTP state), and rules proposed by
-# an agent (their text and evidence quote repository content).
-UNTRUSTED_INPUTS = frozenset({"logs", "diff", "states", "rules"})
+# an agent (their text and evidence quote repository content). Likewise a single rule, a diagnosis and the
+# feedback on earlier answers (they are Bob output that quotes repository content).
+UNTRUSTED_INPUTS = frozenset({"logs", "diff", "states", "rules", "rule", "diagnosis", "feedback"})
 
 _PLACEHOLDER = re.compile(r"\[\[([a-z_]+)\]\]")
 # An opening or closing untrusted tag, raw or HTML-entity encoded ("&lt;", "&#60;", "&#x3C;", "&sol;", ...).
