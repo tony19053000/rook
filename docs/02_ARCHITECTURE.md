@@ -451,13 +451,13 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 - `lib/events.ts` holds TS types that mirror section 9, and `lib/sse.ts` handles reconnecting to the SSE stream with `after`.
 - `lib/runStore.ts` is a reducer from events to UI state, the **same logic** as the TUI.
 - Components: `AgentSprite` (a canvas that ports the sprite shapes), `AgentRow`, `EngineRow`, `QuestionCard`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, `Sidebar`, `Composer`, `RepoPicker`.
-- The browser calls the API **same-origin** through a Vercel rewrite (`/api/v1/*` → the Hugging Face Space, a proxy, not a function), so the `rook_guest` cookie stays first-party (SameSite=Lax). `NEXT_PUBLIC_API_URL` is the base the client uses (the web origin itself in production, the server URL in local dev).
+- The browser calls the API **same-origin** through a Vercel rewrite (`/api/v1/*` → the Hugging Face Space, a proxy, not a function), so the `rook_guest` cookie stays first-party (SameSite=Lax). The rewrite target is `ROOK_API_PROXY_TARGET` (the Space origin, read at build time; no rewrite when unset). `NEXT_PUBLIC_API_URL` is the base the client uses: unset in production (the browser then calls same-origin `/api/v1`), the server URL in local dev without the proxy.
 
 ## 14. Deployment
 
 | Piece | Where | Notes |
 |---|---|---|
-| Web | Vercel project `rook` | env: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` |
+| Web | Vercel project `rook` | env (all public, none is a secret): `ROOK_API_PROXY_TARGET` = the HF Space origin, e.g. `https://<user>-rook.hf.space` (build-time: it sets the `/api/v1/*` rewrite, so set it before the build and redeploy after changing it; origin only, no path), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. `NEXT_PUBLIC_API_URL` stays **unset** on Vercel so the browser uses same-origin `/api/v1` through the rewrite. The Space's `ROOK_WEB_ORIGINS` must list the Vercel origin |
 | Server | Hugging Face Docker Space | image: Python 3.12, Node 22 + 24 (Bob), Go, the Bob Shell, and the 3 demo apps pre-built. `uvicorn rook.server.app:app --port 7860`. Secrets go in the Space settings: `BOB_API_KEY`, `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `ROOK_DAILY_COIN_CAP` |
 | Keep-alive | GitHub Actions cron hitting `/health` | only during judging |
 | CLI | PyPI `rook-cli` | `uv tool install rook-cli` |

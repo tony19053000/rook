@@ -2,8 +2,6 @@
 // Only the routes the web app calls are here; the CLI auth, device-code, GitHub token and webhook routes
 // are for other clients.
 
-import type { EventDataMap } from "./events";
-
 export const API_PREFIX = "/api/v1";
 
 export interface Health {
@@ -34,19 +32,59 @@ export interface CreateRunBody {
   options: { auto?: boolean };
 }
 
-/** 02 §11 doesn't fix the shape of `repo` or the `status` values here, so they stay loose. */
-export interface RunListItem {
-  id: string;
-  repo: unknown;
-  status: string;
-  created_at: string;
-  headline: string;
+/** Run status (02 §11 pinned shapes). */
+export type RunStatus = "queued" | "running" | "done" | "failed" | "cancelled";
+
+export const RUN_STATUSES: readonly RunStatus[] = ["queued", "running", "done", "failed", "cancelled"];
+
+export interface RunRepo {
+  kind: RepoKind;
+  ref: string;
+  name: string;
 }
 
-/** 02 §11 doesn't fix the shape of `run` or of the counterexample items. */
+/** `RunSummary` (02 §11): each item of `GET /runs` (newest first, at most 50) and `run` in `GET /runs/{id}`. */
+export interface RunSummary {
+  id: string;
+  repo: RunRepo;
+  status: RunStatus;
+  created_at: string;
+  finished_at: string | null;
+  /** The run's request (or the repo name when empty), at most 120 chars. */
+  headline: string;
+  /** `broken` while a counterexample is open, `fixed` when every one is fixed or verified. */
+  result: "broken" | "fixed" | null;
+  coins: number;
+  last_seq: number;
+}
+
+export type RunListItem = RunSummary;
+
+export type CounterexampleStatus = "open" | "fixed" | "verified";
+
+/** One item of `counterexamples[]` in `GET /runs/{id}`: the §7.8 export plus the stored status. */
+export interface CounterexampleRecord {
+  /** `<run_id>_<cx_id>`, the id `POST /counterexamples/{id}/replay` takes. */
+  id: string;
+  status: CounterexampleStatus;
+  rule_id: string;
+  rule_text: string;
+  cx_id: string;
+  rule: unknown;
+  steps: unknown[];
+  violated_at_step: number;
+  observed: unknown;
+  expected: unknown;
+  reproduced: unknown;
+  flaky: boolean;
+  seed: number | null;
+  model_hash: string;
+  created_at: string;
+}
+
 export interface RunDetail {
-  run: Record<string, unknown>;
-  counterexamples: Array<Partial<EventDataMap["counterexample.saved"]> & Record<string, unknown>>;
+  run: RunSummary;
+  counterexamples: CounterexampleRecord[];
 }
 
 export interface Ok {
@@ -57,6 +95,8 @@ export class ApiError extends Error {
   constructor(
     readonly status: number,
     message: string,
+    /** Seconds from the `Retry-After` header (a 429), when the server sent one. */
+    readonly retryAfter: number | null = null,
   ) {
     super(message);
     this.name = "ApiError";
@@ -64,7 +104,7 @@ export class ApiError extends Error {
 }
 
 export interface ApiClientOptions {
-  /** The API origin, e.g. NEXT_PUBLIC_API_URL ("https://…hf.space"). */
+  /** The API origin, e.g. NEXT_PUBLIC_API_URL; "" means same-origin (`/api/v1/…` through the proxy). */
   baseUrl: string;
   /** Returns the Supabase JWT, or null for a guest (the `rook_guest` cookie goes with credentials). */
   getToken?: () => string | null | Promise<string | null>;
@@ -79,6 +119,12 @@ export function runEventsUrl(baseUrl: string, runId: string, after: number): str
   return apiUrl(baseUrl, `/runs/${encodeURIComponent(runId)}/events?after=${after}`);
 }
 
+/** `Retry-After` in seconds (only the delta-seconds form; the server never sends a date). */
+export function retryAfterSeconds(value: string | null): number | null {
+  if (value === null || !/^\d{1,9}$/.test(value.trim())) return null;
+  return Number(value.trim());
+}
+
 /** FastAPI puts the reason in `detail`; fall back to the status text. Never echoes request headers. */
 async function errorMessage(response: Response): Promise<string> {
   try {
@@ -91,6 +137,67 @@ async function errorMessage(response: Response): Promise<string> {
     // not JSON
   }
   return response.statusText || `HTTP ${response.status}`;
+}
+
+// ---------------------------------------------------------------------------
+// Response guards: a malformed item is dropped instead of crashing a page
+// ---------------------------------------------------------------------------
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+const str = (value: unknown): string | null => (typeof value === "string" ? value : null);
+const num = (value: unknown): number => (typeof value === "number" && Number.isFinite(value) ? value : 0);
+
+export function toRepoOption(value: unknown): RepoOption | null {
+  if (!isRecord(value)) return null;
+  const kind = value.kind;
+  const ref = str(value.ref);
+  if ((kind !== "github" && kind !== "demo") || ref === null || ref === "") return null;
+  return {
+    kind,
+    ref,
+    name: str(value.name) || ref,
+    private: value.private === true,
+    language: str(value.language) ?? "",
+  };
+}
+
+export function toRunSummary(value: unknown): RunSummary | null {
+  if (!isRecord(value)) return null;
+  const id = str(value.id);
+  const repo = isRecord(value.repo) ? value.repo : null;
+  const status = value.status;
+  if (id === null || id === "" || repo === null || !RUN_STATUSES.includes(status as RunStatus)) return null;
+  const ref = str(repo.ref) ?? "";
+  const result = value.result === "broken" || value.result === "fixed" ? value.result : null;
+  return {
+    id,
+    repo: { kind: repo.kind === "github" ? "github" : "demo", ref, name: str(repo.name) || ref },
+    status: status as RunStatus,
+    created_at: str(value.created_at) ?? "",
+    finished_at: str(value.finished_at),
+    headline: str(value.headline) ?? "",
+    result,
+    coins: num(value.coins),
+    last_seq: num(value.last_seq),
+  };
+}
+
+function list<T>(value: unknown, guard: (item: unknown) => T | null): T[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(guard).filter((item): item is T => item !== null);
+}
+
+export function toRunDetail(value: unknown): RunDetail | null {
+  if (!isRecord(value)) return null;
+  const run = toRunSummary(value.run);
+  if (run === null) return null;
+  const counterexamples = list(value.counterexamples, (item) =>
+    isRecord(item) && typeof item.id === "string" ? (item as unknown as CounterexampleRecord) : null,
+  );
+  return { run, counterexamples };
 }
 
 export function createApiClient(options: ApiClientOptions) {
@@ -108,7 +215,9 @@ export function createApiClient(options: ApiClientOptions) {
       cache: "no-store",
       body: body === undefined ? undefined : JSON.stringify(body),
     });
-    if (!response.ok) throw new ApiError(response.status, await errorMessage(response));
+    if (!response.ok) {
+      throw new ApiError(response.status, await errorMessage(response), retryAfterSeconds(response.headers.get("Retry-After")));
+    }
     return (await response.json()) as T;
   }
 
@@ -117,10 +226,14 @@ export function createApiClient(options: ApiClientOptions) {
   return {
     health: () => request<Health>("GET", "/health"),
     me: () => request<Me>("GET", "/me"),
-    repos: () => request<RepoOption[]>("GET", "/repos"),
+    repos: async () => list(await request<unknown>("GET", "/repos"), toRepoOption),
     createRun: (body: CreateRunBody) => request<{ run_id: string }>("POST", "/runs", body),
-    listRuns: () => request<RunListItem[]>("GET", "/runs"),
-    getRun: (id: string) => request<RunDetail>("GET", run(id)),
+    listRuns: async () => list(await request<unknown>("GET", "/runs"), toRunSummary),
+    getRun: async (id: string) => {
+      const detail = toRunDetail(await request<unknown>("GET", run(id)));
+      if (detail === null) throw new ApiError(502, "The server sent a run in an unexpected shape.");
+      return detail;
+    },
     answer: (id: string, questionId: string, answer: unknown) =>
       request<Ok>("POST", `${run(id)}/answers`, { question_id: questionId, answer }),
     chat: (id: string, text: string) => request<Ok>("POST", `${run(id)}/chat`, { text }),

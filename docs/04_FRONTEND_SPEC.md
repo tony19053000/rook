@@ -198,6 +198,18 @@ Fonts: **Newsreader** (the greeting and wordmark only), **IBM Plex Sans** (UI) a
 ### 3.7 Accessibility
 Keyboard navigation for the composer, picker and buttons, with a visible focus ring. `aria-live="polite"` on the chat column. Color is never the only signal (there's always a ✓/✗/? plus text). Contrast is at least 4.5:1 for text.
 
+### 3.8 End-to-end checks (web + local server, Bob in replay mode, 0 coins)
+**Automated smoke test** (plain Node 22, no browser): `uv sync` once in the repo root, then `cd web && npm run test:e2e`. The script (`web/e2e/smoke.mjs`) sets up a temp dir with the minishop fixture as the allowlisted demo repo `rook-demo/minishop` and the committed recordings (`tests/fixtures/recordings/*_minishop`) as the replay folder, starts `uvicorn rook.server.app:app` with `ROOK_BOB_MODE=replay` (no `BOB_API_KEY`, no Bob binary, so a live call is impossible), runs `next build` with `ROOK_API_PROXY_TARGET` set to that server and `next start`, then, only through the Next origin: GETs `/`, `/runs`, `/login`, `/repositories` (200), lists the repos (the demo is there), starts a run on the demo, reads its SSE stream while answering questions until `run.finished`, and checks `/runs/<id>` renders and `GET /api/v1/runs` lists the run with the same status. It cleans up its processes and temp dir. Note: it rebuilds `web/.next` with a localhost proxy target, so run `npm run build` again before deploying from that folder.
+The run replays for real up to SAVE (the refund counterexample is found and saved), then ends `failed` at DIAGNOSE: the Detective's prompt includes the demo app's sandbox logs, which differ from those of the in-process run that was recorded, so that recording misses. The smoke test accepts any terminal status as long as the recents agree.
+
+**Manual in-browser check:**
+1. `cd web && ROOK_E2E_KEEP=1 npm run test:e2e`. After the checks pass it prints `servers kept up: open http://127.0.0.1:<port>`.
+2. Open that URL (use `127.0.0.1` so the guest cookie, which is `Secure`, is accepted on http). You are a guest: the home page shows the greeting and **Try the demo**.
+3. Click **Try the demo**. You land on `/runs/<id>`; agent rows and cards stream in (Scout, Mechanic, Mapper, the rules card, the search and counterexample cards).
+4. At **Approve rules**, answer the question (click a button, or let the guest countdown answer it). The card shows the answer and the run continues.
+5. When the run ends, the sidebar recents show the run with its status dot and word (e.g. `failed` in replay, see above); `/runs` lists it too. Reload the page: the run is replayed from the store.
+6. Ctrl-C in the terminal stops both servers and removes the temp dir.
+
 ---
 
 ## 4. Event → UI mapping (both surfaces)

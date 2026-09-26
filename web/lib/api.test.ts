@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, apiUrl, createApiClient, runEventsUrl } from "./api";
+import { ApiError, apiUrl, createApiClient, retryAfterSeconds, runEventsUrl, toRepoOption, toRunDetail, toRunSummary, type RunSummary } from "./api";
+
+const SUMMARY: RunSummary = {
+  id: "r_1",
+  repo: { kind: "demo", ref: "tony19053000/shop-app", name: "shop-app" },
+  status: "done",
+  created_at: "2026-09-26T09:00:00Z",
+  finished_at: "2026-09-26T09:02:00Z",
+  headline: "find bugs",
+  result: "broken",
+  coins: 0.12,
+  last_seq: 88,
+};
 
 interface Call {
   url: string;
@@ -34,7 +46,7 @@ describe("URLs", () => {
 
 describe("createApiClient", () => {
   it("calls every §11 route the web uses with the right method, path and body", async () => {
-    const m = mockFetch();
+    const m = mockFetch((call) => (call.url.endsWith("/runs/r_1") ? Response.json({ run: SUMMARY, counterexamples: [] }) : Response.json({ ok: true })));
     const api = createApiClient({ baseUrl: "https://api.test", fetch: m.fetch });
     await api.health();
     await api.me();
@@ -97,5 +109,74 @@ describe("createApiClient", () => {
     const m = mockFetch(() => new Response("oops", { status: 502, statusText: "Bad Gateway" }));
     const api = createApiClient({ baseUrl: "https://api.test", fetch: m.fetch });
     await expect(api.health()).rejects.toMatchObject({ status: 502, message: "Bad Gateway" });
+  });
+});
+
+describe("pinned §11 shapes", () => {
+  it("keeps a valid RunSummary as it is", () => {
+    expect(toRunSummary(SUMMARY)).toEqual(SUMMARY);
+  });
+
+  it("drops a run with no id, no repo or an unknown status", () => {
+    expect(toRunSummary({ ...SUMMARY, id: "" })).toBeNull();
+    expect(toRunSummary({ ...SUMMARY, repo: "shop-app" })).toBeNull();
+    expect(toRunSummary({ ...SUMMARY, status: "exploded" })).toBeNull();
+    expect(toRunSummary(null)).toBeNull();
+  });
+
+  it("normalises loose fields: result, coins, finished_at and the repo name", () => {
+    const run = toRunSummary({ ...SUMMARY, result: "maybe", coins: "lots", finished_at: 7, repo: { kind: "demo", ref: "x/y" } });
+    expect(run).toMatchObject({ result: null, coins: 0, finished_at: null, repo: { kind: "demo", ref: "x/y", name: "x/y" } });
+  });
+
+  it("filters GET /runs and GET /repos down to well-formed items", async () => {
+    const api = createApiClient({
+      baseUrl: "",
+      fetch: async (input) =>
+        String(input).endsWith("/repos")
+          ? Response.json([{ kind: "demo", ref: "a/shop", name: "shop", private: false, language: "Node.js" }, { kind: "svn", ref: "x" }, "junk"])
+          : Response.json([SUMMARY, { id: 1 }]),
+    });
+    await expect(api.listRuns()).resolves.toEqual([SUMMARY]);
+    await expect(api.repos()).resolves.toEqual([{ kind: "demo", ref: "a/shop", name: "shop", private: false, language: "Node.js" }]);
+  });
+
+  it("repo options default the name to the ref and never invent private", () => {
+    expect(toRepoOption({ kind: "github", ref: "me/app" })).toEqual({ kind: "github", ref: "me/app", name: "me/app", private: false, language: "" });
+    expect(toRepoOption({ kind: "demo", ref: "" })).toBeNull();
+  });
+
+  it("GET /runs/{id} returns {run, counterexamples} and rejects a malformed body", async () => {
+    const cx = { id: "r_1_cx_001", status: "open", rule_id: "refund_le_paid", rule_text: "refunds ≤ paid", cx_id: "cx_001", steps: [] };
+    expect(toRunDetail({ run: SUMMARY, counterexamples: [cx, { nope: 1 }] })).toEqual({ run: SUMMARY, counterexamples: [cx] });
+    const api = createApiClient({ baseUrl: "", fetch: async () => Response.json({ run: { id: "x" } }) });
+    await expect(api.getRun("x")).rejects.toMatchObject({ status: 502 });
+  });
+
+  it("same-origin: an empty base gives /api/v1 paths", () => {
+    expect(apiUrl("", "/runs")).toBe("/api/v1/runs");
+    expect(runEventsUrl("", "r_1", 3)).toBe("/api/v1/runs/r_1/events?after=3");
+  });
+});
+
+describe("Retry-After", () => {
+  it("reads delta seconds and ignores anything else", () => {
+    expect(retryAfterSeconds("60")).toBe(60);
+    expect(retryAfterSeconds(" 3600 ")).toBe(3600);
+    expect(retryAfterSeconds("Wed, 21 Oct 2026 07:28:00 GMT")).toBeNull();
+    expect(retryAfterSeconds("-5")).toBeNull();
+    expect(retryAfterSeconds(null)).toBeNull();
+  });
+
+  it("puts it on the ApiError of a 429", async () => {
+    const api = createApiClient({
+      baseUrl: "",
+      fetch: async () => Response.json({ detail: "The server is busy; try again in a few minutes" }, { status: 429, headers: { "Retry-After": "60" } }),
+    });
+    await expect(api.createRun({ repo: { kind: "demo", ref: "x" }, request: "", options: {} })).rejects.toMatchObject({
+      status: 429,
+      retryAfter: 60,
+      message: "The server is busy; try again in a few minutes",
+    });
   });
 });

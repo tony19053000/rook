@@ -194,7 +194,7 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 - **AC:** `docker build` works locally; the container serves `/health`; a guest demo run on shop-app completes in replay mode inside the container.
 
 **ROOK-038 · Vercel deploy** · P0 · deps: 036
-- A Vercel project, env vars, CSP headers (03 §8), the production URL in the README.
+- A Vercel project, env vars (`ROOK_API_PROXY_TARGET` = the Space origin at build time, `NEXT_PUBLIC_API_URL` unset; see 02 §14), CSP headers (03 §8), the production URL in the README.
 - **AC:** the public URL loads, a guest demo run streams from the Hugging Face server, and there are no console errors.
 
 **ROOK-039 · Demo apps integration & recordings** · P0 · deps: 023, 037, U5

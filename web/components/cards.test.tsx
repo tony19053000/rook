@@ -240,7 +240,10 @@ describe("untrusted text (XSS and control characters)", () => {
     expect(out).not.toContain("onerror=\"alert");
     expect(out).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
     expect(out).not.toMatch(/href="javascript:/i);
-    expect(out).not.toContain("<a ");
+    // The only links are the sidebar's own app paths; no payload ever becomes a link.
+    const anchors = out.match(/<a [^>]*>/g) ?? [];
+    expect(anchors.length).toBeGreaterThan(0);
+    for (const a of anchors) expect(a).toMatch(/href="\/(runs|counterexamples|rules|repositories|login)?"/);
   });
 
   it("drops every control character", () => {

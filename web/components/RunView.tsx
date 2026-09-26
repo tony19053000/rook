@@ -2,10 +2,10 @@
 
 // A live run (04 §3.2 `/runs/[id]`): the transcript with its cards, answers through POST /runs/{id}/answers
 // and the composer sending chat to POST /runs/{id}/chat (the Guide's reply, and the user's own line, come
-// back as chat.message events). The page that opens the stream (ROOK-036) renders this.
+// back as chat.message events). RunPage (`/runs/[id]`) opens the stream and renders this.
 
 import { useMemo, useState, type ReactNode } from "react";
-import { AppShell } from "./AppShell";
+import { AppShell, type AppShellProps } from "./AppShell";
 import { Composer } from "./Composer";
 import { Transcript } from "./Transcript";
 import { Note, RunActionsContext, type RunActions } from "./cards/ui";
@@ -23,13 +23,15 @@ export interface RunViewProps {
   autoSeconds?: number;
   banner?: ReactNode;
   header?: ReactNode;
+  /** Sidebar props from the page (recents, account, active entry). */
+  shell?: Omit<Partial<AppShellProps>, "children" | "composer" | "banner" | "coins">;
 }
 
 export function isLive(state: Pick<RunState, "status">): boolean {
   return state.status === "running" || state.status === "idle";
 }
 
-export function RunView({ state, runId, api, guest = false, autoSeconds = GUEST_AUTO_SECONDS, banner, header }: RunViewProps) {
+export function RunView({ state, runId, api, guest = false, autoSeconds = GUEST_AUTO_SECONDS, banner, header, shell }: RunViewProps) {
   const [chatNote, setChatNote] = useState<SendOutcome | null>(null);
   const [sending, setSending] = useState(false);
   const actions = useMemo<RunActions>(
@@ -64,7 +66,7 @@ export function RunView({ state, runId, api, guest = false, autoSeconds = GUEST_
 
   return (
     <RunActionsContext.Provider value={actions}>
-      <AppShell banner={banner} coins={state.coins} composer={composer}>
+      <AppShell {...shell} banner={banner} coins={state.coins} composer={composer}>
         {header}
         <Transcript state={state} />
         {state.summary !== null && (

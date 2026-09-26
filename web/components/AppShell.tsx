@@ -4,20 +4,17 @@
 // composer. Under 820px the sidebar becomes a drawer behind a hamburger button.
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Sidebar, type RecentRun } from "./Sidebar";
+import { Sidebar, type SidebarProps } from "./Sidebar";
 
-export interface AppShellProps {
+export interface AppShellProps extends Partial<SidebarProps> {
   children: ReactNode;
   /** Sticky at the bottom of the main column. */
   composer?: ReactNode;
   /** Shown above the chat column, e.g. the "Reconnecting…" banner. */
   banner?: ReactNode;
-  recents?: RecentRun[];
-  coins?: number;
-  userName?: string;
 }
 
-export function AppShell({ children, composer, banner, recents = [], coins = 0, userName = "guest" }: AppShellProps) {
+export function AppShell({ children, composer, banner, recents = [], coins = 0, userName = "guest", ...sidebar }: AppShellProps) {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -43,7 +40,7 @@ export function AppShell({ children, composer, banner, recents = [], coins = 0, 
         id="sidebar"
         className={`${drawerOpen ? "fixed inset-y-0 left-0 z-30 flex w-[260px]" : "hidden"} min-h-0 min-[820px]:static min-[820px]:flex`}
       >
-        <Sidebar recents={recents} coins={coins} userName={userName} />
+        <Sidebar {...sidebar} recents={recents} coins={coins} userName={userName} />
       </div>
 
       <section className="relative flex min-h-0 flex-col" aria-label="Run">

@@ -283,6 +283,8 @@ export function failureOutcome(error: unknown, kind: SendKind = "answer"): SendO
       return { status: "error", message: `That ${what} is too long.` };
     case 429:
       return { status: "error", message: "Too many requests. Wait a moment and try again." };
+    case 501:
+      return { status: "closed", message: "The server can't do this yet." };
     default:
       return { status: "error", message: `The server had a problem (HTTP ${error.status}). Try again.` };
   }
