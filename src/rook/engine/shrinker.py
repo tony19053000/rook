@@ -163,15 +163,7 @@ class Shrinker:
 
     async def _shrink(self, violation: Violation, trace: Sequence[TraceStep]) -> ShrinkResult:
         rule_id = violation.rule_id
-        original = [
-            _Unit(
-                uid=i,
-                subs=tuple(t.step.parallel if isinstance(t.step, ParallelStep) else [t.step]),
-                parallel=isinstance(t.step, ParallelStep),
-                pins=tuple(t.pinned_refs),
-            )
-            for i, t in enumerate(trace)
-        ]
+        original = _trace_units(trace)
         first = await self._execute(original, rule_id)
         if first is None:
             return ShrinkResult(
@@ -435,57 +427,97 @@ class Shrinker:
 
     async def _execute(self, units: list[_Unit], rule_id: str) -> _Outcome | None:
         """One real re-execution from a fresh context; the Judge checks after every step."""
-        ex = self._ex
-        assert ex is not None
+        assert self._ex is not None
         self._s.runs += 1
-        ctx = ex.new_context()
-        rng = random.Random(f"{self.seed}:shrink")  # only used if a param or ref was left unpinned
-        produced: dict[int, dict[str, tuple[int, int]]] = {}
-        trace: list[TraceStep] = []
-        ran: list[_Unit] = []
-        for unit in units:
-            pins = _resolve(unit, produced)
-            if pins is None:
-                continue  # repair: a ref's producer is gone or captured nothing
-            before = {var: len(values) for var, values in ctx.pool.items()}
-            step = unit.step()
-            outcome = await ex.run_step(ctx, step, rng, pins if unit.parallel else pins[0])
-            results = outcome if isinstance(outcome, list) else [outcome]
-            produced[unit.uid] = {
-                var: (before.get(var, 0), len(values) - before.get(var, 0))
-                for var, values in ctx.pool.items()
-                if len(values) > before.get(var, 0)
-            }
-            index = len(trace)
-            trace.append(TraceStep(step, results))
-            ran.append(unit)
-            violation = await self._check(ex, ctx, results, index)
-            if violation is not None:
-                if violation.rule_id != rule_id:
-                    return None  # another rule broke first: not the same violation
-                return _Outcome(violation, trace, ran, produced)
-        return None
-
-    async def _check(
-        self, ex: Executor, ctx: SequenceContext, results: list[StepResult], index: int
-    ) -> Violation | None:
-        for result in results:
-            violation = self.judge.check_response(result, index)
-            if violation is not None:
-                return violation
-        # The context is fresh, so every pooled entity belongs to this candidate: read them all.
-        if self.judge.needs_full_state:
-            state: StateSnapshot = await ex.read_state(ctx)
-        else:
-            snapshot: dict[str, dict[Any, dict[str, Any]]] = {}
-            for reader in sorted(self.judge.state_scopes):
-                snapshot.update(await ex.read_state(ctx, reader))
-            state = snapshot
-        return self.judge.check_state(state, index)
+        outcome = await _run_units(self._ex, self.judge, units, self.seed)
+        if outcome.violation is None or outcome.violation.rule_id != rule_id:
+            return None  # held, or another rule broke first: not the same violation
+        return _Outcome(outcome.violation, outcome.trace, outcome.units, outcome.produced)
 
     async def _publish(self, event_type: str, data: Any) -> None:
         if self.bus is not None:
             await self.bus.publish(self.run_id, event_type, data)
+
+
+# --- re-execution (shared with the Replayer) ---
+
+
+@dataclass
+class _Run:
+    violation: Violation | None  # the first violation of any rule, or None if every rule held
+    trace: list[TraceStep]
+    units: list[_Unit]  # the units that ran, up to and including the violating one
+    produced: dict[int, dict[str, tuple[int, int]]]
+
+
+async def replay_trace(
+    ex: Executor, judge: Judge, trace: Sequence[TraceStep], *, seed: int | str = 0
+) -> tuple[Violation | None, list[TraceStep]]:
+    """Re-execute a recorded trace exactly (concrete params, pinned refs) from a fresh context.
+
+    The Judge checks after every step; returns the first violation of any rule (or None) and the new
+    trace, which stops at the violating step.
+    """
+    run = await _run_units(ex, judge, _trace_units(trace), seed)
+    return run.violation, run.trace
+
+
+def _trace_units(trace: Sequence[TraceStep]) -> list[_Unit]:
+    return [
+        _Unit(
+            uid=i,
+            subs=tuple(t.step.parallel if isinstance(t.step, ParallelStep) else [t.step]),
+            parallel=isinstance(t.step, ParallelStep),
+            pins=tuple(t.pinned_refs),
+        )
+        for i, t in enumerate(trace)
+    ]
+
+
+async def _run_units(ex: Executor, judge: Judge, units: Sequence[_Unit], seed: int | str) -> _Run:
+    ctx = ex.new_context()
+    rng = random.Random(f"{seed}:shrink")  # only used if a param or ref was left unpinned
+    produced: dict[int, dict[str, tuple[int, int]]] = {}
+    trace: list[TraceStep] = []
+    ran: list[_Unit] = []
+    for unit in units:
+        pins = _resolve(unit, produced)
+        if pins is None:
+            continue  # repair: a ref's producer is gone or captured nothing
+        before = {var: len(values) for var, values in ctx.pool.items()}
+        step = unit.step()
+        outcome = await ex.run_step(ctx, step, rng, pins if unit.parallel else pins[0])
+        results = outcome if isinstance(outcome, list) else [outcome]
+        produced[unit.uid] = {
+            var: (before.get(var, 0), len(values) - before.get(var, 0))
+            for var, values in ctx.pool.items()
+            if len(values) > before.get(var, 0)
+        }
+        index = len(trace)
+        trace.append(TraceStep(step, results))
+        ran.append(unit)
+        violation = await _judge_step(ex, judge, ctx, results, index)
+        if violation is not None:
+            return _Run(violation, trace, ran, produced)
+    return _Run(None, trace, ran, produced)
+
+
+async def _judge_step(
+    ex: Executor, judge: Judge, ctx: SequenceContext, results: list[StepResult], index: int
+) -> Violation | None:
+    for result in results:
+        violation = judge.check_response(result, index)
+        if violation is not None:
+            return violation
+    # The context is fresh, so every pooled entity belongs to this run: read them all.
+    if judge.needs_full_state:
+        state: StateSnapshot = await ex.read_state(ctx)
+    else:
+        snapshot: dict[str, dict[Any, dict[str, Any]]] = {}
+        for reader in sorted(judge.state_scopes):
+            snapshot.update(await ex.read_state(ctx, reader))
+        state = snapshot
+    return judge.check_state(state, index)
 
 
 # --- helpers ---

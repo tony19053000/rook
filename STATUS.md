@@ -2,19 +2,19 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 14:54 IST · **By:** Account 2
+**Last updated:** 2026-09-26 15:05 IST · **By:** Account 2
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
 
 ## Progress
 
 ```
-OVERALL   [██████████░░░░░░░░░░░░░░░░░░░░]  35%  14 / 40 tickets
+OVERALL   [███████████░░░░░░░░░░░░░░░░░░░]  37%  15 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~27h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
-M2  Engine            [███████░░░]  75%   6 / 8    ROOK-005…012
+M2  Engine            [████████░░]  87%   7 / 8    ROOK-005…012
 M3  Sandbox           [█████░░░░░]  50%   1 / 2    ROOK-013…014
 M4  Bob agents        [███░░░░░░░]  37%   3 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
@@ -51,8 +51,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-007 | Generator + Runner | P0 | DONE | reviewer PASS; throughput 268 seq/s in-process (500 NOT met: ceiling is minishop sync current_user + O(n) user scans, engine alone ~750/s; verified by reviewer). Follow-ups: per-actor cookie jars on real-HTTP path; reject inf weights |
 | ROOK-008 | Judge | P0 | DONE | reviewer PASS; refund bug seeds 1-5 found at seq 8/4/3/53/26; fixed mode clean over 20k (ROOK_SLOW=1) |
 | ROOK-009 | Shrinker | P0 | DONE | reviewer PASS; shrinks to create_product, buy, refund, refund (values 1), 1-minimal tested |
-| ROOK-010 | Replayer | P0 | IN PROGRESS | coder (account 2) |
-| ROOK-011 | Export + Verifier + Test Runner | P0 | TODO | |
+| ROOK-010 | Replayer | P0 | DONE | reviewer PASS; refund 10/10, FlipApp 5/10 flaky; shared exec helper in shrinker.py |
+| ROOK-011 | Export + Verifier + Test Runner | P0 | IN PROGRESS | coder (account 2) |
 | ROOK-012 | Parallel steps (race) | P1 | DONE | reviewer PASS; stock race found seeds 1-10 (≤82 seqs); replay 10/10; flaky flag validated in 010 |
 | ROOK-013 | Sandbox + ProcessSandbox | P0 | DONE | reviewer PASS on round 2 (settable_env whitelist + env denylist, fullmatch SHA) |
 | ROOK-014 | DockerSandbox | P0 | IN PROGRESS | round 1 FAIL (run network not internal → egress open); fixing with proxy sidecar |
