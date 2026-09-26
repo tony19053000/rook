@@ -8,7 +8,7 @@
 
 **Updated:** 26 Sep 20:00 IST. Account 1 stopped ("update handoff"). All 4 background coders were STOPPED; no pytest/bob/minishop processes left (the node bob pids 70572/70580 are the user's interactive Bob from 12:18, so leave them). ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS), pushed:** ROOK-001–022, 026, 033 (24 / 40). HEAD 4705c23 before this docs commit. Bob coins ≈ 2.4 of 40 (the 023 recordings total 0.34).
+**Committed and DONE (reviewer PASS):** ROOK-001–022, 025 (7aa4b97, not pushed yet), 026, 033 (25 / 40). HEAD 4705c23 before this docs commit. Bob coins ≈ 2.4 of 40 (the 023 recordings total 0.34).
 
 **UNCOMMITTED work in the tree (do NOT commit before a reviewer PASS):**
 1. **ROOK-023 (Session + Conductor, incl. admin rule B)**: coded; review FAIL round 1 of 3; a fix round was stopped midway. Files: core/session.py, core/workspace.py, engine/sanity.py, agents/rules.py, diagnose.py, fix.py, guide.py, core/events.py, store/repo.py, docs/02_ARCHITECTURE.md; tests/unit/session_helpers.py, test_session.py, test_session_recorded.py, test_sanity.py, test_pipeline_rules.py, test_events.py, test_store.py; tests/fixtures/recordings/session_minishop/ (10 files, scrubbed). Findings to fix (send a coder):
@@ -70,6 +70,8 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 20:30 | 2 | ROOK-025 PASS round 3 + committed; 027 in review r1; 023 fix + 029 coding; 024 coding | ROOK-025 |
+| 26 Sep 20:15 | 2 | Resumed: suite 1137 passed / 0 failed. Coders started: 023 fix r1 findings, 025 round 3 (last), 029 server, 027 cards (all uncommitted) | (none) |
 | 26 Sep 20:00 | 1 | Update handoff: stopped all coders. 023 FAIL r1 (symlink escape, flaky cancel, mypy) fix partial; 025 FAIL r2, r3 partial; 027/029 not started (no files). 24/40 | (docs) |
 | 26 Sep 19:50 | 1 | ROOK-033 PASS round 1 + committed (web scaffold) | ROOK-033 |
 | 26 Sep 19:40 | 1 | ROOK-026 PASS round 2 + committed; 023 (+B) and 025 fix round coding; 033 in review | ROOK-026 |
