@@ -13,8 +13,10 @@
 **UNCOMMITTED work in the working tree (verify it before anything else):**
 1. **ROOK-016 (agent registry, schemas, prompts, modes)**: coded, and the review was in progress when the session ended.
    Files: `src/rook/agents/schemas.py`, `registry.py`, `modes.py`, `prompts/__init__.py`, `prompts/*.md`, `tests/unit/test_agents_registry.py`.
-   The coder reported 374 tests passing. Run the `reviewer` sub-agent on it again; on PASS, commit it as `ROOK-016`.
-   Reviewer focus: Surgeon fileRegex widening attacks, breaking out of the untrusted block, deterministic prompts, schema fields per 02 §5.3, and prompt quality.
+   **Review round 1 = FAIL** (374 tests pass; everything else verified). Send these fixes to the `coder` sub-agent, then re-review, then commit as `ROOK-016`:
+   - F1 (security): `registry.py` around line 154, `_check_path` compares path parts with `FORBIDDEN_DIRS {".bob", ".git"}` case-sensitively, so `A/.GIT/config` is accepted, which is the real .git on case-insensitive filesystems. Compare `part.lower()`.
+   - F2 (security): `_check_path` (around lines 144-153) accepts embedded control characters (`notes\n.git/config`), and `_escape` doesn't escape `\n`. Reject any character with `ord < 0x20` or `== 0x7f` in a path.
+   - Also: add explicit prose to `prompts/mapper.md` that every `{{ref.x}}` var must be listed in `requires` and produced by some action's `capture`; and in `prompts/__init__.py` also neutralise the HTML-entity form `&lt;/untrusted` (or add a banner line saying entity-encoded tags are data). Add tests for all of these.
 2. **ROOK-007 + ROOK-008 (Generator + Runner + Judge)**: one coder was building both when the session ended, so the files may be missing, partial or complete:
    `src/rook/engine/generator.py`, `judge.py`, `runner.py` and `tests/unit/test_generator.py`, `test_judge.py`, `test_runner.py` (possibly also small additive changes in `executor.py`).
    Run `git status` and `uv run pytest -q`. If they're incomplete, send the ticket to the `coder` sub-agent to finish it (both tickets' ACs in `docs/05_FEATURE_TICKETS.md`, including ≥500 seq/s or an honest measured ceiling, zero violations on fixed minishop, and finding the refund bug for 5 seeds). Then review and commit.

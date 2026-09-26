@@ -57,7 +57,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-013 | Sandbox + ProcessSandbox | P0 | TODO | |
 | ROOK-014 | DockerSandbox | P0 | TODO | |
 | ROOK-015 | BobClient + recorder | P0 | DONE | reviewer PASS on round 2 (env allowlist) |
-| ROOK-016 | Agent registry, prompts, modes | P0 | IN REVIEW | uncommitted; re-review, then commit |
+| ROOK-016 | Agent registry, prompts, modes | P0 | IN REVIEW | uncommitted; review round 1 FAIL (.GIT case, control chars): fix per HANDOFF |
 | ROOK-017 | Scout → Mechanic → Mapper | P0 | TODO | |
 | ROOK-018 | Lawmaker + Rule Critic | P0 | TODO | |
 | ROOK-019 | Test Designer + Strategist | P1 | TODO | |
