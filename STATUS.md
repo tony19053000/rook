@@ -2,21 +2,21 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 IST · **By:** Account 1 (011, 018, 020 done; 019 in review)
+**Last updated:** 2026-09-26 IST · **By:** Account 1 (011, 018, 019, 020 done; 021 coding)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
 
 ## Progress
 
 ```
-OVERALL   [███████████████░░░░░░░░░░░░░░░]  50%  20 / 40 tickets
+OVERALL   [███████████████░░░░░░░░░░░░░░░]  52%  21 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~29h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
 M2  Engine            [██████████] 100%   8 / 8    ROOK-005…012
 M3  Sandbox           [██████████] 100%   2 / 2    ROOK-013…014
-M4  Bob agents        [███████░░░]  75%   6 / 8    ROOK-015…022
+M4  Bob agents        [████████░░]  87%   7 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
 M6  CLI (hero)        [░░░░░░░░░░]   0%   0 / 5    ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
@@ -35,7 +35,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | Repo | https://github.com/tony19053000/rook (public) |
 | Hosted web | not deployed yet (Vercel) |
 | Hosted API | not deployed yet (Hugging Face Space) |
-| Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 0.55 |
+| Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 0.59 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
 
 ## Tickets
@@ -60,9 +60,9 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-016 | Agent registry, prompts, modes | P0 | DONE | reviewer PASS on round 2 (case-insensitive .git, control chars, entity tags); note: NFKC-normalise paths as hardening |
 | ROOK-017 | Scout → Mechanic → Mapper | P0 | DONE | reviewer PASS; live run 0.15 coins, recorded replay in default suite. Note: dry-run treats ≥400 as fail (expected-forbidden actions need handling in 018/023) |
 | ROOK-018 | Lawmaker + Rule Critic | P0 | DONE | reviewer PASS; 0.13 coins; 9/10 real rules accepted on fixed minishop; expected-403 rule judged by its check. OPEN DECISION: response rule broken on 1st request (buggy admin export) is rejected, see HANDOFF |
-| ROOK-019 | Test Designer + Strategist | P1 | IN REVIEW | coded (0.04 coins; designed 5 vs random 1903 seqs over 5 seeds); reviewer running |
+| ROOK-019 | Test Designer + Strategist | P1 | DONE | reviewer PASS; 0.04 coins; refund bug found in 5 seqs (designed) vs 1903 (random) over 5 seeds, median 1 vs 359. Note: adds ~30 s to default suite |
 | ROOK-020 | Detective + Diagnosis Reviewer | P0 | DONE | reviewer PASS round 2 (recording paths scrubbed); 0.08 coins; points to minishop app.py:214, approved round 1. Session calls DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=) |
-| ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | TODO | |
+| ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | IN PROGRESS | account 1 coding |
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
 | ROOK-023 | Session + Conductor end to end | P0 | TODO | |
 | ROOK-024 | Typer commands + CI mode | P0 | TODO | |

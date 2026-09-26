@@ -26,7 +26,8 @@ SAME_ACTION_SHARE = 0.5  # share of parallel partners that repeat the first acti
 
 class Generator:
     """`weights` are the strategist's per-action multipliers (on top of `action.weight`); an action
-    whose combined weight is 0 is never picked. `scenarios` are the Test Designer's sequences."""
+    whose combined weight is 0 is never picked. `scenarios` are the Test Designer's sequences (checked by
+    `engine/scenarios.py` first); `scenario_labels`, if given, names each one for the runner's events."""
 
     def __init__(
         self,
@@ -36,6 +37,7 @@ class Generator:
         weights: Mapping[str, float] | None = None,
         max_len: int = DEFAULT_MAX_LEN,
         scenarios: Sequence[Sequence[SequenceStep]] | None = None,
+        scenario_labels: Sequence[str] | None = None,
         parallel_prob: float = PARALLEL_PROB,
     ) -> None:
         if max_len < 1:
@@ -56,13 +58,19 @@ class Generator:
         self._by_name = {a.name: a for a in model.actions}
         self._weights = {a.name: a.weight * weights.get(a.name, 1.0) for a in model.actions}
         self._actions = [a for a in model.actions if self._weights[a.name] > 0]
+        scenarios = list(scenarios or [])
+        if scenario_labels is not None and len(scenario_labels) != len(scenarios):
+            raise ValueError("scenario_labels must name every scenario")
+        labels = list(scenario_labels) if scenario_labels is not None else [""] * len(scenarios)
         self.scenarios: list[list[SequenceStep]] = []
-        for scenario in scenarios or []:
+        self.scenario_labels: list[str] = []
+        for scenario, label in zip(scenarios, labels, strict=True):
             steps = list(scenario)
             for step in steps:
                 model.check_step(step)
             if steps:
                 self.scenarios.append([s.model_copy(deep=True) for s in steps])
+                self.scenario_labels.append(label or f"scenario {len(self.scenarios)}")
 
     def sequence(self, i: int) -> list[SequenceStep]:
         """The i-th sequence (deterministic for `(seed, i)`)."""

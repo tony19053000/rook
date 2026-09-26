@@ -7,6 +7,10 @@ stops the whole run; the other workers are cancelled and awaited, so no task out
 With `concurrency=1` the outcome is fully reproducible for a seed; with more workers the sequence
 list is still the same, but which violating sequence finishes first can vary.
 
+Designed scenarios (the generator's first sequences) are dispatched before any random one. Each is
+announced with a `log` event when it starts, one more `log` marks the switch to random sequences, and
+if a violation is found the last `log` says which kind of sequence found it.
+
 The failing sequence's trace records every executed step with its concrete params and the pooled-ref
 indexes it used, which is enough to replay it exactly (`run_step(..., pinned_refs=entry.pinned_refs)`).
 """
@@ -112,7 +116,9 @@ class Runner:
         self._reset()
         self._start = time.monotonic()
         rules = len(self.judge.rules)
-        await self._publish("engine.started", EngineStarted(worker="runner", label=f"seed {self.seed}"))
+        designed = len(self.generator.scenarios)
+        label = f"seed {self.seed}" + (f", {designed} designed scenarios first" if designed else "")
+        await self._publish("engine.started", EngineStarted(worker="runner", label=label))
         await self._publish("engine.started", EngineStarted(worker="judge", label=f"{rules} approved rules"))
         try:
             if isinstance(self._executor_source, Executor):
@@ -154,6 +160,7 @@ class Runner:
         while self._budget_left():
             i = self._next
             self._next += 1
+            await self._announce(i)
             found = await self._run_sequence(executor, i)
             self._done += 1
             if found is not None and self._found is None:
@@ -223,6 +230,22 @@ class Runner:
         if self.bus is not None:
             await self.bus.publish(self.run_id, event_type, data)
 
+    async def _announce(self, i: int) -> None:
+        """Make the designed-scenarios-first order visible in the event stream."""
+        labels = self.generator.scenario_labels
+        if i < len(labels):
+            await self._publish("log", Log(level="info", text=f"Designed scenario {i + 1}/{len(labels)}: "
+                                                               f"{labels[i]}"))
+        elif i == len(labels) and labels:
+            await self._publish("log", Log(level="info", text=f"All {len(labels)} designed scenarios started; "
+                                                               "random sequences follow"))
+
+    def _found_by(self, i: int) -> str:
+        labels = self.generator.scenario_labels
+        if i < len(labels):
+            return f"Found by designed scenario {i + 1}/{len(labels)}: {labels[i]}"
+        return f"Found by generated sequence {i + 1} (after the {len(labels)} designed scenarios)"
+
     async def _report_rule_errors(self) -> None:
         for _, message in self.judge.pop_new_errors():
             await self._publish("log", Log(level="warn", text=f"rule error (not a violation): {message}"))
@@ -270,6 +293,8 @@ class Runner:
         found = self._found
         rate = f"{self._done} sequences in {elapsed:.1f}s ({self._done / max(elapsed, 1e-9):.0f}/s)"
         if found is not None:
+            if self.generator.scenario_labels:
+                await self._publish("log", Log(level="info", text=self._found_by(found.sequence_index)))
             if self.bus is not None:
                 await self.judge.publish_violation(self.bus, self.run_id, found.violation, len(found.trace))
             judge_summary = f"rule {found.violation.rule_id} broken at step {found.violation.step_index + 1}"
