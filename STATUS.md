@@ -2,19 +2,19 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 15:30 IST · **By:** Account 2 (stopped for account switch; Account 1 continues)
+**Last updated:** 2026-09-26 IST · **By:** Account 1 (resumed; 011 done, 018 coding)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B1 (M2 engine + M4 agents in parallel; ahead of the roadmap)
 
 ## Progress
 
 ```
-OVERALL   [████████████░░░░░░░░░░░░░░░░░░]  42%  17 / 40 tickets
+OVERALL   [█████████████░░░░░░░░░░░░░░░░░]  45%  18 / 40 tickets
 TIME      [████░░░░░░░░░░░░░░░░░░░░░░░░░░]  13%   ~29h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
-M2  Engine            [████████░░]  87%   7 / 8    ROOK-005…012
+M2  Engine            [██████████] 100%   8 / 8    ROOK-005…012
 M3  Sandbox           [██████████] 100%   2 / 2    ROOK-013…014
 M4  Bob agents        [█████░░░░░]  50%   4 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
@@ -52,14 +52,14 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-008 | Judge | P0 | DONE | reviewer PASS; refund bug seeds 1-5 found at seq 8/4/3/53/26; fixed mode clean over 20k (ROOK_SLOW=1) |
 | ROOK-009 | Shrinker | P0 | DONE | reviewer PASS; shrinks to create_product, buy, refund, refund (values 1), 1-minimal tested |
 | ROOK-010 | Replayer | P0 | DONE | reviewer PASS; refund 10/10, FlipApp 5/10 flaky; shared exec helper in shrinker.py |
-| ROOK-011 | Export + Verifier + Test Runner | P0 | IN PROGRESS | uncommitted; review round 1 FAIL (safe_dir mkdir symlink escape); fix per HANDOFF |
+| ROOK-011 | Export + Verifier + Test Runner | P0 | DONE | reviewer PASS on round 2 (fd-walk writes with O_NOFOLLOW, nothing created outside root; fresh_search needs a <400 response; observed capped depth 8 / 64 KB) |
 | ROOK-012 | Parallel steps (race) | P1 | DONE | reviewer PASS; stock race found seeds 1-10 (≤82 seqs); replay 10/10; flaky flag validated in 010 |
 | ROOK-013 | Sandbox + ProcessSandbox | P0 | DONE | reviewer PASS on round 2 (settable_env whitelist + env denylist, fullmatch SHA) |
 | ROOK-014 | DockerSandbox | P0 | DONE | reviewer PASS on round 3 (internal run network + hardened 127.0.0.1 proxy; compose hostname/alias hijack closed). Proposal pending: SandboxPlan.egress field (contract change) for apps needing internet |
 | ROOK-015 | BobClient + recorder | P0 | DONE | reviewer PASS on round 2 (env allowlist) |
 | ROOK-016 | Agent registry, prompts, modes | P0 | DONE | reviewer PASS on round 2 (case-insensitive .git, control chars, entity tags); note: NFKC-normalise paths as hardening |
 | ROOK-017 | Scout → Mechanic → Mapper | P0 | DONE | reviewer PASS; live run 0.15 coins, recorded replay in default suite. Note: dry-run treats ≥400 as fail (expected-forbidden actions need handling in 018/023) |
-| ROOK-018 | Lawmaker + Rule Critic | P0 | TODO | coder stopped before writing files; start fresh per HANDOFF brief |
+| ROOK-018 | Lawmaker + Rule Critic | P0 | IN PROGRESS | account 1 coding (fresh start) |
 | ROOK-019 | Test Designer + Strategist | P1 | TODO | |
 | ROOK-020 | Detective + Diagnosis Reviewer | P0 | TODO | |
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | TODO | |

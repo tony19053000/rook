@@ -11,7 +11,7 @@
 **Committed and DONE (reviewer PASS):** ROOK-001–010, 012, 013, 014, 015, 016, 017, 022 (17 / 40). M1, M3 complete; M2 7/8; M4 4/8. Pushed to GitHub. Bob coins used ≈ 0.30 of 40.
 
 **UNCOMMITTED work in the working tree:**
-1. **ROOK-011 (Export + Verifier + Test Runner)** — coded, **review round 1 = FAIL**, the fix-round coder was stopped before (or while) making changes, so treat the files as round-1 code:
+1. ~~ROOK-011~~ **DONE + committed by account 1 (round 2 PASS).** Old notes: — coded, **review round 1 = FAIL**, the fix-round coder was stopped before (or while) making changes, so treat the files as round-1 code:
    `src/rook/export/counterexample.py`, `src/rook/export/tests.py`, `src/rook/engine/verifier.py`, `src/rook/engine/testrunner.py`, `tests/unit/test_export.py`, `test_testrunner.py`, `test_verifier.py`, `tests/integration/test_verify_minishop.py`.
    Everything else passed review (all ACs, AST-checked generated test, pytest isolation, env isolation). Send this to `coder` (round 2), then `reviewer`, commit as `ROOK-011`:
    - F1 (security): `counterexample.py` ~248-256 `safe_dir` calls `mkdir(parents=True)` BEFORE the inside-root check, so a planted symlink `<root>/rook -> /outside` creates `/outside/counterexamples` (or `/outside/tests`) before PermissionError. Fix: walk components with dir fds (`os.open(name, O_DIRECTORY|O_NOFOLLOW, dir_fd=parent)`, `os.mkdir(name, dir_fd=parent)`), write the leaf via that fd. Extend `test_writes_refuse_symlinks_out_of_the_root` to assert NOTHING (not even a dir) is created outside, for both dirs and a deeper symlink (`rook/tests -> outside`).
@@ -59,6 +59,8 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep | 1 | ROOK-011 PASS round 2 + committed (M2 done); 018 coding | ROOK-011 |
+| 26 Sep (resume) | 1 | Resumed: suite green (825 passed); 011 fix round 2 + 018 coding in parallel | (none) |
 | 26 Sep 15:30 | 2 | Stopped for account switch: 011 review FAIL (fix not applied), 018 not started; agents stopped | (docs) |
 | 26 Sep 15:25 | 2 | ROOK-017 PASS + committed (first live Bob pipeline, 0.15 coins); 011 in review; 018 coding | ROOK-017 |
 | 26 Sep 15:06 | 2 | ROOK-014 PASS round 3 + committed (M3 done); 011 + 017 coding | ROOK-014 |
