@@ -6,10 +6,11 @@
 
 ## ▶ Next session starts here
 
-**State:** Docs, rules and sub-agents are done and committed. No product code exists yet.
-**Do next:** start the ticket loop at **ROOK-001 (Project scaffold)**, then 002 → 003 → 004 → 005 … in order (see `STATUS.md`).
+**State:** ROOK-001 is done (scaffold; `uv run pytest -q` passes; Python pinned to 3.12).
+**Do next:** **ROOK-002 (Event bus, models, redaction, store)**, then 003 → 004 → 005 … in order (see `STATUS.md`).
 **How:** the orchestrator sends each ticket to the `coder` sub-agent, then the `reviewer` sub-agent (CLAUDE.md, section 2).
 **Watch out:**
+- Sub-agents: `coder` = Opus 5.5 at medium effort, `reviewer` = Sonnet 5 at medium effort (set in `.claude/agents/*.md`). They only load in a session started *after* the files existed. In the session that created them, run them as `general-purpose` agents told to read their `.md`, with the model override (opus / sonnet).
 - Bob calls need `source ~/.bob-key.env` and Node 24 on `PATH` (`~/.nvm/versions/node/v24.21.0/bin`). **Always use stdin=DEVNULL.**
 - Keep Bob spend low during development: use recorded NDJSON fixtures for tests and the `-m bob` marker only for manual live checks.
 - The mockups in `docs/mockups/` use the old name "Counterexample" / `cx`; treat that as Rook / `rook`.
@@ -40,6 +41,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 13:36 | 1 | ROOK-001 scaffold (coder → reviewer PASS) | ROOK-001 |
 | 26 Sep 13:50 | 1 | Design finalised with the user; wrote CLAUDE.md, the coder/reviewer sub-agents, docs 01–05, STATUS, HANDOFF and README; created the GitHub repo | (see git log) |
 | 26 Sep 12:20 | 1 | Verified Bob Shell 2.0.5: `bob run --format json/stream-json`, custom modes via `.bob/custom_modes.yaml`, about 0.023 coins per call; the Lawmaker test found the refund invariant from code | (none) |
 

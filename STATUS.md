@@ -2,18 +2,18 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 13:50 IST · **By:** Account 1 (Claude Code)
+**Last updated:** 2026-09-26 13:36 IST · **By:** Account 1 (Claude Code)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
-**Current block:** B0 → B1 (next: ROOK-001)
+**Current block:** B1 (next: ROOK-002)
 
 ## Progress
 
 ```
-OVERALL   [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%   0 / 40 tickets
+OVERALL   [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   2%   1 / 40 tickets
 TIME      [██░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   6%   ~31h left (26 Sep 13:50 → 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
-M1  Foundation        [░░░░░░░░░░]   0%   0 / 4    ROOK-001…004
+M1  Foundation        [██░░░░░░░░]  25%   1 / 4    ROOK-001…004
 M2  Engine            [░░░░░░░░░░]   0%   0 / 8    ROOK-005…012
 M3  Sandbox           [░░░░░░░░░░]   0%   0 / 2    ROOK-013…014
 M4  Bob agents        [░░░░░░░░░░]   0%   0 / 8    ROOK-015…022
@@ -42,7 +42,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 
 | ID | Title | Pri | Status | Notes |
 |---|---|---|---|---|
-| ROOK-001 | Project scaffold | P0 | TODO | |
+| ROOK-001 | Project scaffold | P0 | DONE | reviewer PASS; Python pinned to 3.12 |
 | ROOK-002 | Event bus, models, redaction, store | P0 | TODO | |
 | ROOK-003 | Model schema, loader, templating | P0 | TODO | |
 | ROOK-004 | Safe expression evaluator | P0 | TODO | |

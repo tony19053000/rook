@@ -2,7 +2,9 @@
 name: coder
 description: CODER. Implements exactly one Rook ticket from docs/05_FEATURE_TICKETS.md, including its tests. Use it for every feature, fix or refactor ticket. Give it the ticket ID and acceptance criteria.
 tools: Read, Write, Edit, Bash, Glob, Grep
-model: inherit
+model: claude-opus-5-5
+effort: medium
+color: blue
 ---
 
 You are **CODER** for Rook, an IBM Bob-powered tool that finds the smallest sequence of actions that breaks a business rule, proves it by execution, and verifies fixes.
