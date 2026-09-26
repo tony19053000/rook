@@ -1,0 +1,92 @@
+# Rook model for the minishop fixture (format: docs/02_ARCHITECTURE.md section 6).
+version: 1
+app:
+  base_url: "{{sandbox.base_url}}"
+  health: {method: GET, path: /health, expect_status: 200}
+  isolation: fresh_entities
+actors:
+  - name: customer
+    setup:
+      - {method: POST, path: /auth/signup, json: {email: "{{fresh.email}}", password: "pw-{{fresh.id}}"}}
+      - {method: POST, path: /auth/login, json: {email: "{{fresh.email}}", password: "pw-{{fresh.id}}"},
+         capture: {token: "$.token"}}
+    auth: {header: Authorization, value: "Bearer {{actor.token}}"}
+  - name: admin
+    setup:
+      - {method: POST, path: /auth/login, json: {email: admin@demo.local, password: "{{env.MINISHOP_ADMIN_PASSWORD}}"},
+         capture: {token: "$.token"}}
+    auth: {header: Authorization, value: "Bearer {{actor.token}}"}
+actions:
+  - name: create_product
+    actor: admin
+    request: {method: POST, path: /products, json: {name: "item-{{fresh.id}}", price: "{{p.price}}", stock: "{{p.stock}}"}}
+    params:
+      price: {int: [1, 500], edges: [1, 100, 500]}
+      stock: {int: [0, 5], edges: [0, 1]}
+    capture: {product_id: "$.id"}
+    weight: 0.5
+  - name: buy
+    actor: customer
+    request: {method: POST, path: /orders, json: {product_id: "{{ref.product_id}}", quantity: "{{p.quantity}}"}}
+    params: {quantity: {int: [1, 3], edges: [1]}}
+    requires: [product_id]
+    capture: {order_id: "$.id"}
+    weight: 1.0
+  - name: refund
+    actor: customer
+    request: {method: POST, path: "/orders/{{ref.order_id}}/refunds", json: {amount: "{{p.amount}}"}}
+    params: {amount: {int: [1, 500], edges: [1, 50, 60, 100]}}
+    requires: [order_id]
+    weight: 1.0
+  - name: cancel
+    actor: customer
+    request: {method: POST, path: "/orders/{{ref.order_id}}/cancel"}
+    requires: [order_id]
+    weight: 0.5
+  - name: ship
+    actor: customer
+    request: {method: POST, path: "/orders/{{ref.order_id}}/ship"}
+    requires: [order_id]
+    weight: 0.5
+  - name: admin_export
+    actor: customer
+    request: {method: GET, path: /admin/export}
+    weight: 0.3
+state:
+  - name: order
+    each: order_id
+    request: {method: GET, path: "/orders/{{order_id}}", actor: admin}
+    fields: {paid: "$.paid", refunded: "$.refunded_total", status: "$.status", shipped: "$.shipped"}
+  - name: product
+    each: product_id
+    request: {method: GET, path: "/products/{{product_id}}", actor: admin}
+    fields: {stock: "$.stock"}
+rules:
+  - id: refund_le_paid
+    text: "Total refunds never exceed the amount paid"
+    kind: state
+    scope: order
+    check: "order.refunded <= order.paid"
+    evidence: ["tests/fixtures/minishop/app.py: refund() compares each refund with paid on its own"]
+    status: approved
+  - id: stock_non_negative
+    text: "Product stock never goes below zero"
+    kind: state
+    scope: product
+    check: "product.stock >= 0"
+    evidence: ["tests/fixtures/minishop/app.py: buy() awaits between the stock check and the decrement"]
+    status: approved
+  - id: cancelled_never_ships
+    text: "A cancelled order is never shipped"
+    kind: state
+    scope: order
+    check: 'not (order.status == "cancelled" and order.shipped)'
+    evidence: ["tests/fixtures/minishop/app.py: ship() does not check for a cancelled order"]
+    status: approved
+  - id: admin_export_forbidden
+    text: "A normal user never opens the admin export"
+    kind: response
+    when: {action: admin_export, actor: customer}
+    check: "response.status in (401, 403)"
+    evidence: ["tests/fixtures/minishop/app.py: admin_export() only requires a login"]
+    status: approved
