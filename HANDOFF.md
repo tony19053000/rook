@@ -8,10 +8,10 @@
 
 **Updated:** 26 Sep 14:08 IST. Account 1 stopped at about 90% of its 5-hour limit.
 
-**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015. M1 is complete.
+**Committed and DONE (reviewer PASS):** ROOK-001, 002, 003, 004, 005, 006, 015, 016 (account 2, 14:19). M1 is complete.
 
 **UNCOMMITTED work in the working tree (verify it before anything else):**
-1. **ROOK-016 (agent registry, schemas, prompts, modes)**: coded, and the review was in progress when the session ended.
+1. ~~ROOK-016~~ DONE and committed by account 2 (was: coded, and the review was in progress when the session ended.
    Files: `src/rook/agents/schemas.py`, `registry.py`, `modes.py`, `prompts/__init__.py`, `prompts/*.md`, `tests/unit/test_agents_registry.py`.
    **Review round 1 = FAIL** (374 tests pass; everything else verified). Send these fixes to the `coder` sub-agent, then re-review, then commit as `ROOK-016`:
    - F1 (security): `registry.py` around line 154, `_check_path` compares path parts with `FORBIDDEN_DIRS {".bob", ".git"}` case-sensitively, so `A/.GIT/config` is accepted, which is the real .git on case-insensitive filesystems. Compare `part.lower()`.
@@ -55,6 +55,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 14:19 | 2 | ROOK-016 fix round → reviewer PASS + committed; 007+008 coder finishing | ROOK-016 |
 | 26 Sep 14:08 | 1 | ROOK-016 coded (in review), 007+008 coding; docs say 13 agents; session ended at the 90% limit | (docs) |
 | 26 Sep 14:05 | 1 | ROOK-006 (round 2: gather leak fixed) and ROOK-015 (round 2: env allowlist) PASS + committed | ROOK-006/015 |
 | 26 Sep 13:48 | 1 | ROOK-002, 004 (after a work-budget fix) and 005 PASS + committed; 003 in fix round | ROOK-002/004/005 |
