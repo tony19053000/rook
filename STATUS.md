@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 20:40 IST · **By:** Account 2 (029 PASS awaiting 023; 023 in review r2; 024 coding)
+**Last updated:** 2026-09-26 21:00 IST · **By:** Account 2 (034 committed; 023 review r2, 024 review r1, 029 PASS waiting on 023)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B2 (M5 Session → M6 CLI)
 
 ## Progress
 
 ```
-OVERALL   [███████████████████░░░░░░░░░░░]  65%  26 / 40 tickets
+OVERALL   [████████████████████░░░░░░░░░░]  67%  27 / 40 tickets
 TIME      [████████░░░░░░░░░░░░░░░░░░░░░░]  27%   ~24h left   (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
@@ -21,7 +21,7 @@ M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
 M6  CLI (hero)        [██████░░░░]  60%   3 / 5     ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
 M8  Auth & GitHub     [░░░░░░░░░░]   0%   0 / 3    ROOK-030…032
-M9  Web               [██░░░░░░░░]  25%   1 / 4     ROOK-033…036
+M9  Web               [█████░░░░░]  50%   2 / 4     ROOK-033…036
 M10 Deploy & demo     [░░░░░░░░░░]   0%   0 / 4    ROOK-037…040
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
@@ -65,7 +65,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | DONE | reviewer PASS (3 review rounds: code, recording delta, tape-after-guard fix). Live run verified 4/4 (Bob test fails on buggy, 1-line fix, 1500-seq fresh search clean). 1.42 coins. Found + fixed: Bob matches fileRegex on ABSOLUTE paths. Edit tapes store only guard-approved files |
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
 | ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | review FAIL round 1: workspace copy keeps escaping symlinks (security) + flaky cancel-at-PREPARE test + mypy; fixing. Recordings 0.34 coins total |
-| ROOK-024 | Typer commands + CI mode | P0 | IN PROGRESS | coding; must wire prompts.register(app), Backend.answer Any |
+| ROOK-024 | Typer commands + CI mode | P0 | IN REVIEW | coded (1299 passed); review r1. Note: 02 §12 should say call_soon_threadsafe (not call_from_thread) |
 | ROOK-025 | TUI shell | P0 | DONE | reviewer PASS round 3 (clean_multiline keeps \n for cards; control chars stripped). Follow-ups: sprite.py:150 mypy override (026); clean_data has no depth cap; bidi/zero-width pass through |
 , breaks the diff card); round-3 fix partial (clean_multiline). LAST round |
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
@@ -76,8 +76,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | TODO | |
 | ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
-| ROOK-034 | Web sprite + rows | P0 | TODO | |
-| ROOK-035 | Web cards + answers + chat | P0 | TODO | |
+| ROOK-034 | Web sprite + rows | P0 | DONE | reviewer PASS round 1 (91 vitest; /dev/* 404 in prod verified). Follow-ups: 035 must clean() DevStream card text; bidi/zero-width pass through; one shared ticker for many rows |
+| ROOK-035 | Web cards + answers + chat | P0 | IN PROGRESS | coding |
 | ROOK-036 | Web pages, picker, guest | P0 | TODO | |
 | ROOK-037 | Hugging Face Space image | P0 | TODO | needs U3 |
 | ROOK-038 | Vercel deploy | P0 | TODO | needs U4 |

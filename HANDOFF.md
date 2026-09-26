@@ -8,7 +8,7 @@
 
 **Updated:** 26 Sep 20:00 IST. Account 1 stopped ("update handoff"). All 4 background coders were STOPPED; no pytest/bob/minishop processes left (the node bob pids 70572/70580 are the user's interactive Bob from 12:18, so leave them). ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–022, 025, 026, 027, 033 (26 / 40). HEAD 4705c23 before this docs commit. Bob coins ≈ 2.4 of 40 (the 023 recordings total 0.34).
+**Committed and DONE (reviewer PASS):** ROOK-001–022, 025, 026, 027, 033, 034 (27 / 40). HEAD 4705c23 before this docs commit. Bob coins ≈ 2.4 of 40 (the 023 recordings total 0.34).
 
 **UNCOMMITTED work in the tree (do NOT commit before a reviewer PASS):**
 1. **ROOK-023 (Session + Conductor, incl. admin rule B)**: coded; review FAIL round 1 of 3; a fix round was stopped midway. Files: core/session.py, core/workspace.py, engine/sanity.py, agents/rules.py, diagnose.py, fix.py, guide.py, core/events.py, store/repo.py, docs/02_ARCHITECTURE.md; tests/unit/session_helpers.py, test_session.py, test_session_recorded.py, test_sanity.py, test_pipeline_rules.py, test_events.py, test_store.py; tests/fixtures/recordings/session_minishop/ (10 files, scrubbed). Findings to fix (send a coder):
@@ -70,6 +70,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 21:00 | 2 | ROOK-034 PASS round 1 + committed | ROOK-034 |
 | 26 Sep 20:40 | 2 | ROOK-029 reviewer PASS (uncommitted: depends on uncommitted session.py → commit right after 023; 02/03 doc hunks are mixed: 023 = 02 §5/§9/§10 + 03 §4.1, 029 = 02 §11/§13 + 03 §8). 023 review r2; 024 coding | (none) |
 | 26 Sep 20:35 | 2 | ROOK-027 PASS round 1 + committed; 029 in review r1 (replay 501 declared gap); 023 fixing; 024 coding | ROOK-027 |
 | 26 Sep 20:30 | 2 | ROOK-025 PASS round 3 + committed; 027 in review r1; 023 fix + 029 coding; 024 coding | ROOK-025 |
