@@ -6,8 +6,8 @@
 
 ## ▶ Next session starts here
 
-**State:** ROOK-001 is done (scaffold; `uv run pytest -q` passes; Python pinned to 3.12).
-**Do next:** **ROOK-002 (Event bus, models, redaction, store)**, then 003 → 004 → 005 … in order (see `STATUS.md`).
+**State:** ROOK-001, 002, 004 and 005 are DONE and committed. ROOK-003 is coded and failed review round 1 (O(n²) template regex, a DoS); the coder is fixing it and it needs re-review before commit.
+**Do next:** finish ROOK-003 (re-review, then commit), then the engine: ROOK-006 (HTTP executor) → 007 → 008 → 009 → 010 → 011 → 012. Tickets with no dependency on each other can run as parallel coders on separate files (as was done for 002–005).
 **How:** the orchestrator sends each ticket to the `coder` sub-agent, then the `reviewer` sub-agent (CLAUDE.md, section 2).
 **Watch out:**
 - Sub-agents: `coder` = Opus 5.5 at medium effort, `reviewer` = Sonnet 5 at medium effort (set in `.claude/agents/*.md`). They only load in a session started *after* the files existed. In the session that created them, run them as `general-purpose` agents told to read their `.md`, with the model override (opus / sonnet).
@@ -41,8 +41,9 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 13:48 | 1 | ROOK-002, 004 (after a work-budget fix) and 005 PASS + committed; 003 in fix round | ROOK-002/004/005 |
 | 26 Sep 13:36 | 1 | ROOK-001 scaffold (coder → reviewer PASS) | ROOK-001 |
-| 26 Sep 13:50 | 1 | Design finalised with the user; wrote CLAUDE.md, the coder/reviewer sub-agents, docs 01–05, STATUS, HANDOFF and README; created the GitHub repo | (see git log) |
+| 26 Sep 13:25 | 1 | Design finalised with the user; wrote CLAUDE.md, the coder/reviewer sub-agents, docs 01–05, STATUS, HANDOFF and README; created the GitHub repo | (see git log) |
 | 26 Sep 12:20 | 1 | Verified Bob Shell 2.0.5: `bob run --format json/stream-json`, custom modes via `.bob/custom_modes.yaml`, about 0.023 coins per call; the Lawmaker test found the refund invariant from code | (none) |
 
 ## Useful facts
