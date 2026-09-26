@@ -398,6 +398,39 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 
 **Auth:** `Authorization: Bearer <Supabase JWT>` (the web app and the CLI), or a `rook_guest` signed cookie. Every run route checks the owner.
 
+**Pinned shapes and behaviour (ROOK-029, `server/`):**
+- **Callers.** A bearer token that fails verification is a 401, even with a guest cookie. With no bearer token, a valid
+  `rook_guest` cookie makes the caller a guest; the "user or guest" routes issue a new cookie when it is missing
+  (httpOnly, SameSite=Lax, Secure, 30 days, value `<guest_id>.<HMAC-SHA256>`). `/me` and `/github/*` need a user
+  (401 for a guest).
+- **Repos and runs.** The hosted server runs **only allowlisted demo repos** (03 §3), for users and guests alike:
+  `POST /runs` takes `repo.kind: demo` with a `ref` from the demo catalog; `github` (and any unknown demo `ref`) is a
+  403 whose `detail` says to run arbitrary repos with the CLI. `request` is at most 2000 chars; `options` has only
+  `auto`. `GET /repos` lists the demo catalog, plus the user's GitHub repos once ROOK-031 is in.
+- **Run status:** `queued | running | done | failed | cancelled`. At most 3 runs execute at once; later runs wait as
+  `queued` (a bounded queue; when it is full, 429).
+- **`RunSummary`** (each item of `GET /runs`, newest first, at most 50, and `run` in `GET /runs/{id}`):
+  `{id, repo:{kind, ref, name}, status, created_at, finished_at: str|null, headline, result: broken|fixed|null,
+  coins, last_seq}`. `headline` is the run's request (or the repo name when empty), at most 120 chars; `result` is
+  `broken` when a counterexample is still open, `fixed` when every one is fixed or verified, else `null`.
+- **`counterexamples[]`** in `GET /runs/{id}`: the stored counterexample JSON (§7.8 export: `cx_id, rule, steps,
+  violated_at_step, observed, expected, reproduced, flaky, seed, model_hash, created_at`) plus `{id, status:
+  open|fixed|verified, rule_id, rule_text}`; `id` is `<run_id>_<cx_id>`, the id `POST /counterexamples/{id}/replay`
+  takes.
+- **`{ok}`** is `{ok: true}` when accepted and `{ok: false}` when not: the question is not open or the answer has the
+  wrong shape, chat on a run that is not live, cancel on a finished run. `answers` body: `{question_id: str (≤100),
+  answer: any}`; `chat` body: `{text: str (1-2000)}`.
+- **`POST /counterexamples/{id}/replay`** answers 501 until the Session supports a replay-only run.
+- **SSE** (`/runs/{id}/events?after=N`, `N` an integer ≥ 0, default 0): each message is `id: <seq>` plus one
+  `data: <envelope JSON>` line (§9); a `: ping` comment every 15 s; the stream ends after `run.finished`. For a
+  finished run it sends the stored events after `N` and ends. The owner is re-checked on every connect.
+- **Errors** are `{detail: str}` and never echo the request: 400 invalid input, 401 bad or missing auth, 403 not
+  allowed (guest or non-demo repo), 404 missing run **or not the owner**, 413 body over 64 KB, 429 rate limit /
+  guest quota / queue full / daily coin cap (with `Retry-After`), 501 not available yet.
+- **Web access** goes through a same-origin Vercel rewrite (`/api/v1/*` → the Space), so the guest cookie is
+  first-party. CORS still allows only the configured web origins (never `*`), with credentials and the
+  `Authorization` and `Content-Type` headers.
+
 ## 12. CLI architecture
 
 - `rook` (no args) starts the **Textual app**. Other subcommands come from Typer.
@@ -418,7 +451,7 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 - `lib/events.ts` holds TS types that mirror section 9, and `lib/sse.ts` handles reconnecting to the SSE stream with `after`.
 - `lib/runStore.ts` is a reducer from events to UI state, the **same logic** as the TUI.
 - Components: `AgentSprite` (a canvas that ports the sprite shapes), `AgentRow`, `EngineRow`, `QuestionCard`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, `Sidebar`, `Composer`, `RepoPicker`.
-- The browser talks **directly** to the Hugging Face API (`NEXT_PUBLIC_API_URL`). Vercel only serves the UI (to avoid function timeouts).
+- The browser calls the API **same-origin** through a Vercel rewrite (`/api/v1/*` → the Hugging Face Space, a proxy, not a function), so the `rook_guest` cookie stays first-party (SameSite=Lax). `NEXT_PUBLIC_API_URL` is the base the client uses (the web origin itself in production, the server URL in local dev).
 
 ## 14. Deployment
 

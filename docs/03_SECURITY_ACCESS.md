@@ -98,8 +98,10 @@ Rules:
 
 ## 8. Web and server hardening
 
-- CORS allows only the Vercel origin(s) and `http://localhost:3000`.
-- Rate limits: 60 requests per minute per IP on the API, and 10 per minute on `POST /runs`.
+- CORS allows only the Vercel origin(s) and `http://localhost:3000` (`ROOK_WEB_ORIGINS`; `*` is refused at startup), with credentials and only the `Authorization`, `Content-Type` and `Accept` headers.
+- **Same-origin proxy.** The web app calls `/api/v1/*` on its own origin, and a Vercel rewrite proxies it to the Space. So the `rook_guest` cookie is first-party and can stay `SameSite=Lax` (a cross-site cookie would need `SameSite=None` and is blocked by browsers that drop third-party cookies). CORS only matters for local development or direct calls. Behind the proxy the socket peer is the proxy, so the client IP for rate limits and guest quotas is read from `X-Forwarded-For`, counting `ROOK_TRUSTED_PROXY_HOPS` entries from the right (0 = use the socket peer). Never trust the left-most entry: the client can set it.
+- Rate limits: 60 requests per minute per IP on the API (`/health` is exempt for the keep-alive), and 10 per minute on `POST /runs`. Over the limit: 429 with `Retry-After`.
+- Guest quota: 3 runs per day per guest cookie **and** per client IP (clearing the cookie doesn't reset it). At most 3 runs execute at once (the rest queue); past the daily coin cap, new runs get a 429.
 - Every body is validated with pydantic, with a 64 KB request size limit.
 - User-rendered text (repo files, Bob output, diffs) is rendered as text or with escaping in the web app. No `dangerouslySetInnerHTML` with untrusted content.
 - Security headers on Vercel: CSP (script-src 'self', connect-src API origin + Supabase), frame-ancestors 'none', and referrer-policy.
