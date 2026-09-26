@@ -1,0 +1,71 @@
+diag_reviewer · Diagnosis Reviewer · triangle · body #F05FAA · eyes #FFFFFF
+pixels (rest):
+  ............
+  ............
+  .....##.....
+  ....####....
+  ....####....
+  ...######...
+  ...######...
+  ..##o##o##..
+  .###o##o###.
+  .##########.
+  .##########.
+  ............
+half-blocks (rest):
+ 0|            |
+ 1|    ▄▀▀▄    |
+  [4:5] ▄ #f05faa
+  [5:7] ▀▀ #f05faa on #f05faa
+  [7:8] ▄ #f05faa
+ 2|   ▄▀▀▀▀▄   |
+  [3:4] ▄ #f05faa
+  [4:8] ▀▀▀▀ #f05faa on #f05faa
+  [8:9] ▄ #f05faa
+ 3|  ▄▀▀▀▀▀▀▄  |
+  [2:3] ▄ #f05faa
+  [3:4] ▀ #f05faa on #f05faa
+  [4:5] ▀ #f05faa on #ffffff
+  [5:7] ▀▀ #f05faa on #f05faa
+  [7:8] ▀ #f05faa on #ffffff
+  [8:9] ▀ #f05faa on #f05faa
+  [9:10] ▄ #f05faa
+ 4| ▀▀▀▀▀▀▀▀▀▀ |
+  [1:4] ▀▀▀ #f05faa on #f05faa
+  [4:5] ▀ #ffffff on #f05faa
+  [5:7] ▀▀ #f05faa on #f05faa
+  [7:8] ▀ #ffffff on #f05faa
+  [8:11] ▀▀▀ #f05faa on #f05faa
+ 5| ▀▀▀▀▀▀▀▀▀▀ |
+  [1:11] ▀▀▀▀▀▀▀▀▀▀ #f05faa
+pixels (bounce up, blink, look +1):
+  ............
+  .....##.....
+  ....####....
+  ....####....
+  ...######...
+  ...######...
+  ..########..
+  .####o##o##.
+  .##########.
+  .##########.
+  ............
+  ............
+half-blocks (bounce up, blink, look +1):
+ 0|     ▄▄     |
+  [5:7] ▄▄ #f05faa
+ 1|    ▀▀▀▀    |
+  [4:8] ▀▀▀▀ #f05faa on #f05faa
+ 2|   ▀▀▀▀▀▀   |
+  [3:9] ▀▀▀▀▀▀ #f05faa on #f05faa
+ 3| ▄▀▀▀▀▀▀▀▀▄ |
+  [1:2] ▄ #f05faa
+  [2:5] ▀▀▀ #f05faa on #f05faa
+  [5:6] ▀ #f05faa on #ffffff
+  [6:8] ▀▀ #f05faa on #f05faa
+  [8:9] ▀ #f05faa on #ffffff
+  [9:10] ▀ #f05faa on #f05faa
+  [10:11] ▄ #f05faa
+ 4| ▀▀▀▀▀▀▀▀▀▀ |
+  [1:11] ▀▀▀▀▀▀▀▀▀▀ #f05faa on #f05faa
+ 5|            |

@@ -2,15 +2,15 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 18:25 IST · **By:** Account 2 (update handoff; 023 coding, uncommitted)
+**Last updated:** 2026-09-26 19:40 IST · **By:** Account 1 (026 DONE; 023/025 coding, 033 in review)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B2 (M5 Session → M6 CLI)
 
 ## Progress
 
 ```
-OVERALL   [████████████████░░░░░░░░░░░░░░]  55%  22 / 40 tickets
-TIME      [██████░░░░░░░░░░░░░░░░░░░░░░░░]  21%   ~26h left (to 27 Sep 20:30 IST)
+OVERALL   [█████████████████░░░░░░░░░░░░░]  57%  23 / 40 tickets
+TIME      [███████░░░░░░░░░░░░░░░░░░░░░░░]  24%   ~25h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -18,7 +18,7 @@ M2  Engine            [██████████] 100%   8 / 8    ROOK-005�
 M3  Sandbox           [██████████] 100%   2 / 2    ROOK-013…014
 M4  Bob agents        [██████████] 100%   8 / 8    ROOK-015…022
 M5  Session           [░░░░░░░░░░]   0%   0 / 1    ROOK-023
-M6  CLI (hero)        [░░░░░░░░░░]   0%   0 / 5    ROOK-024…028
+M6  CLI (hero)        [██░░░░░░░░]  20%   1 / 5     ROOK-024…028
 M7  Server            [░░░░░░░░░░]   0%   0 / 1    ROOK-029
 M8  Auth & GitHub     [░░░░░░░░░░]   0%   0 / 3    ROOK-030…032
 M9  Web               [░░░░░░░░░░]   0%   0 / 4    ROOK-033…036
@@ -66,15 +66,15 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
 | ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | partially coded, uncommitted, unreviewed (see HANDOFF) |
 | ROOK-024 | Typer commands + CI mode | P0 | TODO | |
-| ROOK-025 | TUI shell | P0 | TODO | |
-| ROOK-026 | Sprite + row widgets | P0 | TODO | |
+| ROOK-025 | TUI shell | P0 | IN REVIEW | coded (29 pilot tests), in review; 024 must call run_tui() |
+| ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
 | ROOK-027 | Question prompts + cards | P0 | TODO | |
 | ROOK-028 | Background run + chat | P0 | TODO | |
 | ROOK-029 | FastAPI server | P0 | TODO | |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | TODO | |
-| ROOK-033 | Web scaffold + event client | P0 | TODO | |
+| ROOK-033 | Web scaffold + event client | P0 | IN PROGRESS | parallel, built on the 02 contract (029 not built yet) |
 | ROOK-034 | Web sprite + rows | P0 | TODO | |
 | ROOK-035 | Web cards + answers + chat | P0 | TODO | |
 | ROOK-036 | Web pages, picker, guest | P0 | TODO | |
