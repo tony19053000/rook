@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 21:17 IST · **By:** Account 2 (035 committed; 028 + 036 coding)
+**Last updated:** 2026-09-26 23:16 IST · **By:** Account 2 (update handoff: 036 coded awaiting review, 028 partial)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
@@ -10,7 +10,7 @@
 
 ```
 OVERALL   [███████████████████████░░░░░░░]  77%  31 / 40 tickets
-TIME      [█████████░░░░░░░░░░░░░░░░░░░░░]  30%   ~23h left   (to 27 Sep 20:30 IST)
+TIME      [███████████░░░░░░░░░░░░░░░░░░░]  37%   ~21h left   (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -70,7 +70,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 , breaks the diff card); round-3 fix partial (clean_multiline). LAST round |
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
 | ROOK-027 | Question prompts + cards | P0 | DONE | reviewer PASS round 1. Follow-up: 'e to edit one rule' not implemented (no Session answer shape; 04 §3.4). 024 wires prompts.register(app) + Backend.answer Any |
-| ROOK-028 | Background run + chat | P0 | IN PROGRESS | coding (SessionBackend from 024 already has the worker thread + chat) |
+| ROOK-028 | Background run + chat | P0 | IN PROGRESS | partial, uncommitted: 3 pilot tests green; fixing teardown-focus LookupError (prompts.py/session_backend.py) + regression test; then review |
 | ROOK-029 | FastAPI server | P0 | DONE | reviewer PASS round 1. Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify the Vercel rewrite streams SSE |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
@@ -78,7 +78,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
 | ROOK-034 | Web sprite + rows | P0 | DONE | reviewer PASS round 1 (91 vitest; /dev/* 404 in prod verified). Follow-ups: 035 must clean() DevStream card text; bidi/zero-width pass through; one shared ticker for many rows |
 | ROOK-035 | Web cards + answers + chat | P0 | DONE | reviewer PASS round 1 (132 vitest). Not built (no backend yet): Edit-rule, Replay, Download-test buttons. Follow-ups: DOM tests for double-submit/countdown; gate /dev/* before 038 |
-| ROOK-036 | Web pages, picker, guest | P0 | IN PROGRESS | coding |
+| ROOK-036 | Web pages, picker, guest | P0 | IN REVIEW | coded (194 vitest, build OK), uncommitted; review r1 not done yet (account limit). E2E proof only via uncommitted Playwright smoke |
 | ROOK-037 | Hugging Face Space image | P0 | TODO | needs U3 |
 | ROOK-038 | Vercel deploy | P0 | TODO | needs U4 |
 | ROOK-039 | Demo apps integration + recordings | P0 | TODO | needs U5 |

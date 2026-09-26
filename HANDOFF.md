@@ -6,19 +6,22 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 21:10 IST, Account 2. ONLY ONE orchestrator session at a time.
+**Updated:** 26 Sep 23:16 IST. Account 2 stopped ("update handoff", session limit hit; its agents died with 429). No agents or servers are left running. ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–027, 029, 033–035 (31 / 40). Bob coins ≈ 2.4 of 40.
+**Committed and DONE (reviewer PASS), pushed:** ROOK-001–027, 029, 033–035 (31 / 40). HEAD 32d6a8d before this docs commit. Bob coins ≈ 2.4 of 40. Full suite on HEAD: 1299 passed.
 
-**In flight (uncommitted):**
-- ROOK-036 (web pages, picker, guest): coding, web/ only. RunView (035) is ready for /runs/[id] with useRunStream + createApiClient.
-- ROOK-028 (background run + chat): coding. The 024 SessionBackend already has the worker thread + chat-to-Guide; 028 may be mostly tests + /bg-style details per 04.
+**UNCOMMITTED work in the tree (do NOT commit before a reviewer PASS):**
+1. **ROOK-036 (web pages, picker, guest)**: CODED, review round 1 NOT done (the reviewer died at the limit). All files in web/: new app/{runs,runs/[id],login,repositories,counterexamples,rules}/, components/{HomeView,RepoPicker,RunPage,RunsList,SimpleViews,ErrorCard,PageClients}.tsx, lib/{pages,config,session,useShell}.ts + tests (pages.test.ts, config.test.ts, pages.test.tsx); changed lib/api.ts(+test), questions.ts, Sidebar, AppShell, Composer, RunView, cards.test.tsx (one assertion: anchors only to the sidebar's fixed paths), app/page.tsx, app/dev/*/page.tsx, next.config.ts. Coder: 194 vitest, tsc clean, build OK, /dev/* 404 in prod. **Action:** send to reviewer round 1. Key question for the reviewer: the E2E AC ("happy path against a local server in replay mode") was proven only with an UNcommitted Playwright smoke test (coder's scratchpad, now lost); if the AC needs a committed repeatable test, send back to a coder to add one (web/e2e script, no heavy deps). Doc follow-up to do in the same commit: add `ROOK_API_PROXY_TARGET` (Space origin, not a secret) to 02 §14 and deploy docs; NEXT_PUBLIC_API_URL stays unset on Vercel.
+2. **ROOK-028 (background run + chat)**: PARTIAL, not reviewed. tests/unit/test_tui_background.py (3 pilot tests, were green 8/8) + docstring-only changes to cli/tui/app.py, backend.py. Then I asked for a fix of a real bug the coder found: a `question.asked` arriving while the shell quits → focus during Textual teardown raises `LookupError: active_app`. The coder had started editing cli/tui/widgets/prompts.py and session_backend.py (guard in QuestionPrompt.focus_prompt / SessionBackend._show_now) and was about to add the regression test when it died. **Action:** send a coder to finish: check the prompts.py/session_backend.py diff, add a regression test (question/second run just before quit), run it 20x green, full suite + ruff + mypy (sprite.py:150 is known). Then reviewer, then commit `ROOK-028: Background run + chat`.
 
-**Next steps in order:** 028 + 035 → review → commit. Then 036 (web pages, picker, guest). 030/031/032 need U1/U2 (ask the user). 037–040 deploy need U3/U4/U5.
+**Next steps in order:** review 036 + finish 028 (parallel, separate files) → commit each → push. Then everything left needs the user: 030 (U1 Supabase + Google), 031 (U2 GitHub App), 032 (GitHub Action, can start without U-tasks), 037 (U3 HF Space), 038 (U4 Vercel), 039 (U5 demo apps), 040 polish. Start 032 while waiting on the user.
+
+**Wiring notes from 036 for later tickets:** 030 → replace currentSession()/getToken() in web/lib/session.ts, SIGN_IN_AVAILABLE=true, OAuth handler in LoginView (SimpleViews.tsx). 031 → fill githubConnected from /me, pass onConnectGithub to RepoPicker (api.githubInstallUrl()). 037/038 → ROOK_API_PROXY_TARGET=https://<space>.hf.space at Vercel build time; CSP (connect-src 'self' + Supabase); verify SSE streams unbuffered through the rewrite; ROOK_TRUSTED_PROXY_HOPS on the Space.
 
 **Follow-ups noted (non-blocking):**
 - Replay: `POST /counterexamples/{id}/replay` answers 501 until Session gets a replay-only mode (pass `create_app(replay_factory=...)`).
 - Deploy (037): set ROOK_TRUSTED_PROXY_HOPS (probably 2), ROOK_GUEST_SECRET (≥32 chars), ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS, ROOK_ALLOWLIST, ROOK_DAILY_COIN_CAP, ROOK_DB_PATH; check that the Vercel rewrite streams SSE unbuffered.
+- 028: teardown-focus LookupError fix in progress (see above).
 - 035: Edit-rule / Replay / Download-test buttons not built (no API); /dev/* must be gated before 038.
 - 027: "e to edit one rule" not implemented (no Session answer shape; 04 §3.4).
 - sprite.py:150 mypy override (026); scaffold mkdir through a symlinked .github (024); cancel latency per copy entry (023); bidi/zero-width chars pass through clean() (TUI + web).
@@ -48,7 +51,7 @@ You are continuing the Rook project (IBM Bob hackathon) in /home/aayush/Desktop/
 Start now.
 ```
 
-**Current goal:** Finish 028 (background run + chat) and 035 (web cards), then 036 web pages → 030–032 (need U1/U2) → 037–040 deploy (need U3–U5).
+**Current goal:** Review + commit ROOK-036 (coded, uncommitted) and finish + review + commit ROOK-028 (partial), then 032, then 030/031/037–040 as the user finishes U1–U5.
 
 ---
 
@@ -56,6 +59,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 23:16 | 2 | Update handoff (session limit): 036 coded, review not done; 028 partial (teardown-focus bug fix mid-way). 31/40 | (docs) |
 | 26 Sep 21:17 | 2 | ROOK-035 PASS round 1 + committed; 036 coding; 028 coding | ROOK-035 |
 | 26 Sep 21:10 | 2 | ROOK-023 PASS round 2 + committed, then 029 and 024 committed (doc hunks split per ticket). 30/40. 028 + 035 coding | ROOK-023/029/024 |
 | 26 Sep 21:01 | 2 | ROOK-024 reviewer PASS (uncommitted; commit order: 023 → 029 → 024). 035 coding; 023 review r2 | (none) |
