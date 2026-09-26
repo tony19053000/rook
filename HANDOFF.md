@@ -6,30 +6,29 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 15:30 IST. Account 2 stopped (user switching accounts). All background agents were stopped; Docker has no leftover `rook.sandbox` containers.
+**Updated:** 26 Sep ~21:00 IST. Account 1 hit its limit mid-023; the other account continues in the same orchestrator session.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–010, 012, 013, 014, 015, 016, 017, 022 (17 / 40). M1, M3 complete; M2 7/8; M4 4/8. Pushed to GitHub. Bob coins used ≈ 0.30 of 40.
+**Committed and DONE (reviewer PASS):** ROOK-001–022 (22 / 40). M1–M4 complete. Pushed to GitHub (HEAD 8b7b8f2). Bob coins used ≈ 2.0 of 40.
 
 **UNCOMMITTED work in the working tree:**
-1. ~~ROOK-011~~ **DONE + committed by account 1 (round 2 PASS).** Old notes: — coded, **review round 1 = FAIL**, the fix-round coder was stopped before (or while) making changes, so treat the files as round-1 code:
-   `src/rook/export/counterexample.py`, `src/rook/export/tests.py`, `src/rook/engine/verifier.py`, `src/rook/engine/testrunner.py`, `tests/unit/test_export.py`, `test_testrunner.py`, `test_verifier.py`, `tests/integration/test_verify_minishop.py`.
-   Everything else passed review (all ACs, AST-checked generated test, pytest isolation, env isolation). Send this to `coder` (round 2), then `reviewer`, commit as `ROOK-011`:
-   - F1 (security): `counterexample.py` ~248-256 `safe_dir` calls `mkdir(parents=True)` BEFORE the inside-root check, so a planted symlink `<root>/rook -> /outside` creates `/outside/counterexamples` (or `/outside/tests`) before PermissionError. Fix: walk components with dir fds (`os.open(name, O_DIRECTORY|O_NOFOLLOW, dir_fd=parent)`, `os.mkdir(name, dir_fd=parent)`), write the leaf via that fd. Extend `test_writes_refuse_symlinks_out_of_the_root` to assert NOTHING (not even a dir) is created outside, for both dirs and a deeper symlink (`rook/tests -> outside`).
-   - Cheap extras: check 4 (fresh_search) must fail if no step got a <400 response ("could not exercise the app"); depth/size cap on `observed` before JSON/AST.
-2. ~~ROOK-018~~ **DONE + committed by account 1.** OPEN DECISION for user: a response rule that fails on the 1st request on the buggy app (admin_export as customer) is rejected, so the admin bug is never searched. Proposed option B: flag it as 'possibly already broken' for the human instead of rejecting (do in 023, doc change). Old notes: — coder was stopped at the very start; **no files were written**. Start it fresh (brief below).
+- **ROOK-023 (Session + Conductor)**: partially coded (coder resumed after the account limit). Files: `src/rook/core/session.py`, `core/workspace.py`, `tests/unit/session_helpers.py`, `test_session.py`, `test_session_recorded.py`, plus edits to `agents/diagnose.py`, `agents/fix.py`, `agents/guide.py`, `core/events.py`, `store/repo.py`, `tests/unit/test_events.py`, `test_store.py`. Not reviewed yet. If a new session finds it unfinished: resume a coder with the 023 brief (recorded full run PREPARE→SHIP on minishop chaining the 5 committed recordings; questions/--auto; budget; persistence; cancel with no orphans; SHIP = local branch `rook/fix-cx-001`), then reviewer, then commit.
 
-**Then continue in order:** 011 (fix) → 018 → 020 (deps 011) → 019 → 021 → 023 (Session) → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
-Parallel pairs that worked: 011-fix ‖ 018; later 019 ‖ 020.
+**Then continue in order:** 023 → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
 
-**ROOK-018 brief (for the coder):** follow the ROOK-017 pattern (`src/rook/agents/understand.py`, `tests/unit/test_pipeline_understand.py`: recorded replay in the default suite + one `@pytest.mark.bob` live test + a secret scan of recordings). Reuse the recorded understand run (`tests/fixtures/recordings/understand_minishop/`) so only Lawmaker/Critic calls cost coins; budget ≤1.5 coins. The ENGINE sanity-checks each rule (parses with the safe evaluator + holds on a fresh app); the critic judges meaning only. AC: produces refund, stock, ship, admin rules; a rule that fails on a fresh app is auto-rejected with a reason. **Known issue:** ROOK-017's dry-run treats status ≥400 as failure — a response rule like `admin_export_forbidden` (expected 401/403 on a fixed app) must not be rejected for that.
+**Session API notes for 024/029:** DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=); FixPipeline gated by rails fix approval; edit tapes store only guard-approved files.
 
 **Open decisions for the user:**
+- ADMIN RULE (A/B): ROOK-018 rejects a response rule broken on the 1st request on the buggy app (admin_export as customer → 200), so the admin bug is never searched. A = keep (spec). B (recommended) = flag as 'possibly already broken' for human approval. 023 is built for A without blocking B.
+- Start TUI (025/026) early on fake events while 023 finishes? (recommended yes)
 - ROOK-007 throughput: 268 seq/s measured (target 500). Ceiling is minishop itself (sync `current_user` + O(n) user scans); engine alone ≈750/s. Recorded in STATUS as not met.
 - ROOK-014: sandboxed apps have NO internet at run time. Apps that need it would need a new `SandboxPlan.egress` field (contract change in 02 §8) — not added; ask the user if a demo app needs it.
 
-**Follow-ups noted (non-blocking, from reviews):** Mechanic fileRegex `^\.rook-sandbox/` (registry.py:26) never matches (Bob matches ABSOLUTE paths): fix like surgeon_edit_regex or drop the unused edit group; per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; `CostUpdate` ge=0 + monotonic cost in RunState; NFKC-normalise Surgeon paths; recordings contain local `/tmp/pytest-of-aayush` paths; document cx JSON shape in 02 §7.8.
+**Follow-ups noted (non-blocking, from reviews):** Mechanic fileRegex `^\.rook-sandbox/` (registry.py:26) never matches (Bob matches ABSOLUTE paths): fix like surgeon_edit_regex or drop the unused edit group; per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; `CostUpdate` ge=0 + monotonic cost in RunState; NFKC-normalise Surgeon paths; understand_minishop recordings still contain local `/tmp/pytest-of-aayush` paths (018–021 recordings are scrubbed); document cx JSON shape in 02 §7.8.
 
 **Lessons from this session:**
+- Bob matches mode `fileRegex` against ABSOLUTE paths (found live in 021).
+- Recording edit tapes must be written only AFTER the path guard (021 review).
+- redact_text heuristics can alter app source ("missing bearer token") — never redact file contents that must replay byte-exact.
 - Always give the reviewer attack ideas — it found real bugs in 013 (LD_PRELOAD env), 014 (open egress, then compose hostname DNS hijack: 11/20 requests stolen), 011 (mkdir symlink escape).
 - Parallel coders on separate files work well; tell each which files NOT to touch. A reviewer may see transient failures from another coder's in-progress file — re-run before blaming.
 - `ROOK_SLOW=1` enables the slow 20k-sequence tests; Docker tests: `uv run pytest -q -m docker`.
