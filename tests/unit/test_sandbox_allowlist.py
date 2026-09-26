@@ -112,6 +112,11 @@ DANGEROUS = [
     "HOME",
     "PERL5OPT",
     "HTTP_PROXY",
+    "OPENSSL_CONF",
+    "OPENSSL_ENGINES",
+    "GLIBC_TUNABLES",
+    "MALLOC_CHECK_",
+    "MALLOC_ARENA_MAX",
 ]
 
 

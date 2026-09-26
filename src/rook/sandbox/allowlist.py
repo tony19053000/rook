@@ -21,9 +21,22 @@ _SHA = re.compile(r"[0-9a-f]{40}")
 _ENV_NAME = re.compile(r"[A-Z_][A-Z0-9_]*")
 _PLACEHOLDERS = ("{python}", "{port}")
 
-# Env vars that change how the loader, an interpreter or a shell behaves (code injection), or that the
-# sandbox sets itself. Nobody may set them through an allowlist entry or a caller-supplied value.
-_DENIED_ENV_PREFIXES = ("LD_", "DYLD_", "PYTHON", "NODE_", "NPM_CONFIG_", "BASH_FUNC_", "GIT_", "UV_", "PIP_")
+# Env vars that change how the loader, an interpreter, a library or a shell behaves (code injection), or
+# that the sandbox sets itself. Nobody may set them through an allowlist entry or a caller-supplied value.
+# This denylist is defence in depth: the real gate is the allowlist (`settable_env` for ProcessSandbox,
+# the SandboxPlan's own names for DockerSandbox); a denylist can never be complete.
+_DENIED_ENV_PREFIXES = (
+    "LD_",
+    "DYLD_",
+    "PYTHON",
+    "NODE_",
+    "NPM_CONFIG_",
+    "BASH_FUNC_",
+    "GIT_",
+    "UV_",
+    "PIP_",
+    "MALLOC_",  # glibc malloc tunables (MALLOC_CHECK_, MALLOC_PERTURB_, ...)
+)
 _DENIED_ENV_NAMES = frozenset(
     {
         "PATH",
@@ -65,6 +78,9 @@ _DENIED_ENV_NAMES = frozenset(
         "HTTPS_PROXY",
         "ALL_PROXY",
         "NO_PROXY",
+        "OPENSSL_CONF",  # can load an arbitrary engine/provider library
+        "OPENSSL_ENGINES",
+        "GLIBC_TUNABLES",  # CVE-2023-4911 class of loader bugs
     }
 )
 
