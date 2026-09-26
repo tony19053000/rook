@@ -65,7 +65,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | DONE | reviewer PASS (3 review rounds: code, recording delta, tape-after-guard fix). Live run verified 4/4 (Bob test fails on buggy, 1-line fix, 1500-seq fresh search clean). 1.42 coins. Found + fixed: Bob matches fileRegex on ABSOLUTE paths. Edit tapes store only guard-approved files |
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
 | ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | review FAIL round 1: workspace copy keeps escaping symlinks (security) + flaky cancel-at-PREPARE test + mypy; fixing. Recordings 0.34 coins total |
-| ROOK-024 | Typer commands + CI mode | P0 | IN REVIEW | coded (1299 passed); review r1. Note: 02 §12 should say call_soon_threadsafe (not call_from_thread) |
+| ROOK-024 | Typer commands + CI mode | P0 | IN REVIEW | reviewer PASS round 1; commit AFTER 023 (imports core/session.py). Follow-ups: 02 §12 → call_soon_threadsafe; scaffold mkdir through a symlinked .github |
 | ROOK-025 | TUI shell | P0 | DONE | reviewer PASS round 3 (clean_multiline keeps \n for cards; control chars stripped). Follow-ups: sprite.py:150 mypy override (026); clean_data has no depth cap; bidi/zero-width pass through |
 , breaks the diff card); round-3 fix partial (clean_multiline). LAST round |
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |

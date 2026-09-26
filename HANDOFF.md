@@ -70,6 +70,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 21:01 | 2 | ROOK-024 reviewer PASS (uncommitted; commit order: 023 → 029 → 024). 035 coding; 023 review r2 | (none) |
 | 26 Sep 21:00 | 2 | ROOK-034 PASS round 1 + committed | ROOK-034 |
 | 26 Sep 20:40 | 2 | ROOK-029 reviewer PASS (uncommitted: depends on uncommitted session.py → commit right after 023; 02/03 doc hunks are mixed: 023 = 02 §5/§9/§10 + 03 §4.1, 029 = 02 §11/§13 + 03 §8). 023 review r2; 024 coding | (none) |
 | 26 Sep 20:35 | 2 | ROOK-027 PASS round 1 + committed; 029 in review r1 (replay 501 declared gap); 023 fixing; 024 coding | ROOK-027 |
