@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-26 19:50 IST · **By:** Account 1 (026, 033 DONE; 023/025 coding)
+**Last updated:** 2026-09-26 20:00 IST · **By:** Account 1 (update handoff; 023/025 in fix rounds, uncommitted)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B2 (M5 Session → M6 CLI)
 
@@ -10,7 +10,7 @@
 
 ```
 OVERALL   [██████████████████░░░░░░░░░░░░]  60%  24 / 40 tickets
-TIME      [███████░░░░░░░░░░░░░░░░░░░░░░░]  24%   ~25h left (to 27 Sep 20:30 IST)
+TIME      [███████░░░░░░░░░░░░░░░░░░░░░░░]  25%   ~24.5h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -64,13 +64,14 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-020 | Detective + Diagnosis Reviewer | P0 | DONE | reviewer PASS round 2 (recording paths scrubbed); 0.08 coins; points to minishop app.py:214, approved round 1. Session calls DiagnosePipeline(client, ws).run(model, cx, executor, sandbox=, summary=) |
 | ROOK-021 | Surgeon + path guard + Fix Reviewer | P0 | DONE | reviewer PASS (3 review rounds: code, recording delta, tape-after-guard fix). Live run verified 4/4 (Bob test fails on buggy, 1-line fix, 1500-seq fresh search clean). 1.42 coins. Found + fixed: Bob matches fileRegex on ABSOLUTE paths. Edit tapes store only guard-approved files |
 | ROOK-022 | Coordinator + rails + Guide | P0 | DONE | reviewer PASS; rails in core/rails.py. Follow-ups: wrap Guide snapshot as untrusted; CostUpdate ge=0 + monotonic cost in RunState |
-| ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | partially coded, uncommitted, unreviewed (see HANDOFF) |
+| ROOK-023 | Session + Conductor end to end | P0 | IN PROGRESS | review FAIL round 1: workspace copy keeps escaping symlinks (security) + flaky cancel-at-PREPARE test + mypy; fixing. Recordings 0.34 coins total |
 | ROOK-024 | Typer commands + CI mode | P0 | TODO | |
-| ROOK-025 | TUI shell | P0 | IN REVIEW | coded (29 pilot tests), in review; 024 must call run_tui() |
+| ROOK-025 | TUI shell | P0 | IN PROGRESS | review FAIL round 2 of 3 (clean_data flattens 
+, breaks the diff card); round-3 fix partial (clean_multiline). LAST round |
 | ROOK-026 | Sprite + row widgets | P0 | DONE | reviewer PASS round 2 (control chars stripped via cli/tui/safe_text.clean). Note: bidi/zero-width chars pass through; ✗ on reject guessed (no verdict field on agent.finished) |
-| ROOK-027 | Question prompts + cards | P0 | TODO | |
+| ROOK-027 | Question prompts + cards | P0 | TODO | started + stopped at handoff, no files; restart via 025 seams |
 | ROOK-028 | Background run + chat | P0 | TODO | |
-| ROOK-029 | FastAPI server | P0 | TODO | |
+| ROOK-029 | FastAPI server | P0 | TODO | started + stopped at handoff, no files. Decision: web→API via Vercel rewrite proxy (guest cookie stays Lax) |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | TODO | |
@@ -108,4 +109,5 @@ None.
 - 26 Sep: agents appear inline as blob characters while working (no roster panel).
 - 26 Sep: web = Claude Code web layout; Vercel (web) + Hugging Face Docker Space (API + demo apps via ProcessSandbox).
 - 26 Sep 18:40: admin rule = **B** (flag a rule broken on the 1st request as 'possibly already broken', human approval, never --auto). Done in 023.
+- 26 Sep 19:55: the web calls the API through a same-origin Vercel rewrite proxy, so the guest cookie stays first-party SameSite=Lax (03 unchanged in spirit; note to add in 029).
 - 26 Sep: Google sign-in (Supabase) + a separate GitHub App connect; guest demo mode on the web.

@@ -6,14 +6,23 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 19:45 IST by account 1. ONLY ONE orchestrator session at a time (a second session clobbered 023 at 18:45).
+**Updated:** 26 Sep 20:00 IST. Account 1 stopped ("update handoff"). All 4 background coders were STOPPED; no pytest/bob/minishop processes left (the node bob pids 70572/70580 are the user's interactive Bob from 12:18, so leave them). ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–022, 026, 033 (24 / 40). Bob coins used ≈ 2.0 + the 023 recordings (the coder reports the total).
+**Committed and DONE (reviewer PASS), pushed:** ROOK-001–022, 026, 033 (24 / 40). HEAD 4705c23 before this docs commit. Bob coins ≈ 2.4 of 40 (the 023 recordings total 0.34).
 
-**In flight (uncommitted, parallel coders on separate files):**
-- **ROOK-023 (Session)**: coder adding admin-rule **B** (sanity.py `already_broken`, flagged rules never auto-approved), 02 doc for `fix.committed`/SHIP/B, then re-records only the stale session_minishop recordings (cap 2 coins). Then review.
-- **ROOK-025 (TUI shell)**: review FAIL round 1 (ESC/C1 control chars unescaped in render.py/shell.py). Coder fixing with `cli/tui/safe_text.clean`.
-- **ROOK-033 DONE.** Its contract questions for 029: SSE via fetch + Bearer (CORS must allow Authorization), guest cookie needs SameSite=None;Secure cross-site (Vercel↔hf.space: 03 §5 decision), undefined §11 response shapes, engine.progress.pct = 0–100.
+**UNCOMMITTED work in the tree (do NOT commit before a reviewer PASS):**
+1. **ROOK-023 (Session + Conductor, incl. admin rule B)**: coded; review FAIL round 1 of 3; a fix round was stopped midway. Files: core/session.py, core/workspace.py, engine/sanity.py, agents/rules.py, diagnose.py, fix.py, guide.py, core/events.py, store/repo.py, docs/02_ARCHITECTURE.md; tests/unit/session_helpers.py, test_session.py, test_session_recorded.py, test_sanity.py, test_pipeline_rules.py, test_events.py, test_store.py; tests/fixtures/recordings/session_minishop/ (10 files, scrubbed). Findings to fix (send a coder):
+   a. SECURITY: workspace.py `_copy` uses copytree(symlinks=True). A symlink in an untrusted repo pointing outside (/etc/passwd, ~/.ssh, ~/.bob-key.env) is readable in the workspace where Bob runs on the host. Skip links that escape the source root (absolute, ../, chains, dir links) with a warn; the same for GitHub clones (core.symlinks=false or a post-clone scan). Tests for each case.
+   b. FLAKY: test_session.py::test_cancel_at_every_phase_leaves_no_process_behind[PREPARE] fails ~1/10 runs solo. Root-cause the race (cancel vs to_thread(prepare_workspace) / SandboxTracker) and prove 30x with 0 failures. (The coder was mid-debug: "a child process outlived the 10 s wait".)
+   c. mypy (`uv run --with mypy mypy`): events.py:416, fix.py:91, fix.py:488.
+   Then the reviewer (round 2), then commit `ROOK-023: Session + Conductor end to end`.
+2. **ROOK-025 (TUI shell)**: review FAIL round 2 of 3 (the LAST round). Control-char fix verified. Remaining: `clean_data` flattened \n, so the fix.ready diff loses its lines. The round-3 coder was stopped PARTWAY: `safe_text.clean_multiline` exists and render.py references it. Finish: clean_multiline keeps \n (\r\n/\r→\n, \t\v\f→space, strips other C0/DEL/C1); clean_data uses it for values; single-line chrome still uses clean; tests (`clean_data({"diff":"-a\r\n+b\n c"})["diff"]=="-a\n+b\n c"`, one-line rows stay one line). Files: cli/logo.py, cli/tui/{app,__main__,auth,backend,commands,history,render}.py, widgets/shell.py, safe_text.py (modified, additive), tests/unit/test_tui_app.py, test_tui_commands.py, tui_samples.py. If round 3 fails → BLOCKED per the rules (tell the user).
+3. **ROOK-027 (prompts + cards)** and **ROOK-029 (FastAPI server)**: were started, then stopped; NO files written. Restart from scratch (briefs below).
+
+**Next steps in order (run in parallel on separate files):** fix 023 + finish 025 → review both → commit. Start 029 (server) and 027 (cards) in parallel now (neither edits 023/025 files). After 025 passes: 024 (Typer commands, CI mode, bare `rook` → `run_tui()`, update test_smoke). Then 028 → 030/031/032 (need U1/U2) → 034–036 web → 037–040 deploy.
+
+**Brief notes for 029:** routes per 02 §11 except auth/GitHub (seam for 030/031); SSE `after` resume; owner checks (404); guest cookie + demo-only + quotas; CORS for the web origin with credentials + Authorization (never *); rate + size limits. Match web/lib/sse.ts + api.ts (fetch-streamed SSE with Bearer, envelope JSON with seq, fatal 400/401/403/404/410, pct 0–100). DECISION: the web calls the API through a same-origin Vercel rewrite proxy (/api/v1/* → HF Space), so the guest cookie stays first-party SameSite=Lax; note it in 03 and pin the open §11 response shapes in 02. Tests use a fake Session or the recorded run (0 coins, no Docker).
+**Brief notes for 027:** menu/confirm/setup-value prompts (mask secrets), rules/counterexample/diagnosis/fix-diff/verify/PR cards, the shrink line (04 §2.2). An `already_broken` rule is shown "possibly already broken" and NOT pre-selected. Plug in only via 025 seams (`app.views[type]`, `transcript.mount_item`, `backend.answer`); new files widgets/prompts.py and cards.py; clean all payload text; fits 80 cols.
 
 **Then continue in order:** 023 → M6 CLI (024–028) → 029 server → M8/M9 web → M10 deploy.
 
@@ -61,6 +70,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep 20:00 | 1 | Update handoff: stopped all coders. 023 FAIL r1 (symlink escape, flaky cancel, mypy) fix partial; 025 FAIL r2, r3 partial; 027/029 not started (no files). 24/40 | (docs) |
 | 26 Sep 19:50 | 1 | ROOK-033 PASS round 1 + committed (web scaffold) | ROOK-033 |
 | 26 Sep 19:40 | 1 | ROOK-026 PASS round 2 + committed; 023 (+B) and 025 fix round coding; 033 in review | ROOK-026 |
 | 26 Sep 19:01 | 2 | Stopped: killed this session's 023 coder at user request. Tree has 023 files + tests/fixtures/recordings/session_minishop/ (new, unreviewed; no local paths found) + 02_ARCHITECTURE edits, all uncommitted. Check that no two orchestrators run at once | (docs) |
