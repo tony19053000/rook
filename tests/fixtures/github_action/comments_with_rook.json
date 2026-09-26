@@ -1,0 +1,5 @@
+[
+  {"id": 101, "user": {"login": "octocat", "type": "User"}, "body": "<!-- rook-report -->\nnot really Rook"},
+  {"id": 102, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": "Some other bot comment"},
+  {"id": 103, "user": {"login": "github-actions[bot]", "type": "Bot"}, "body": "<!-- rook-report -->\n## Rook: old report"}
+]

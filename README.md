@@ -106,6 +106,53 @@ rook verify <cx-id>       # prove a fix
 
 **Web app:** the same experience in the browser, at the hosted URL (coming soon). Try the demo repos without signing in.
 
+## GitHub Action
+
+Rook can check every pull request: the action runs `rook run --ci --auto`, posts `rook-report.md` as a
+single PR comment (updated on each push, never duplicated) and fails the job when an approved rule is
+broken (exit 1) or the run does not finish (exit 2). The comment is posted before the job fails.
+
+```yaml
+# .github/workflows/rook.yml
+name: rook
+on:
+  pull_request:          # not pull_request_target: see "Forks and secrets" below
+permissions:
+  contents: read
+  pull-requests: write   # to post the Rook comment
+jobs:
+  rook:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: tony19053000/rook@<full-commit-sha>   # pin Rook to a commit SHA too
+        with:
+          bob-mode: live                              # falls back to replay when the key is missing
+          bob-api-key: ${{ secrets.BOB_API_KEY }}
+          bob-package: https://example.com/bobshell-2.0.5.tgz   # where you host the Bob Shell package
+          recordings: rook/recordings                 # used in replay mode (0 Bobcoins)
+```
+
+Inputs: `repo-path` (default `.`), `request`, `bob-mode` (`replay` | `live`, default `replay`),
+`bob-api-key`, `bob-package`, `recordings`, `auto` (default `true`), `budget`, `seconds`, `setup`
+(space-separated env var names your app needs, set with `env:` on the step), `report-dir`, `comment`
+(default `true`) and `github-token` (default `github.token`). Outputs: `exit-code`, `report`, `bob-mode`.
+
+**Forks and secrets.** Use the `pull_request` trigger. A PR from a fork gets no secrets and a read-only
+token, so the action uses recorded Bob instead of live Bob and cannot comment (it warns; the report is
+still in the job summary). **Never use `pull_request_target` with this action**: it runs with your
+secrets on the base repo while the checked-out code can come from the fork, which would hand your
+`BOB_API_KEY` to anyone who opens a PR. The key is masked in logs and given only to the Rook step.
+
+Try the comment step without GitHub (it prints the exact API requests, with the token redacted):
+
+```bash
+rook-pr-comment --dry-run --report rook-report.md \
+  --event tests/fixtures/github_action/pull_request.json --event-name pull_request
+```
+
 ## What gets added to your repo
 
 ```

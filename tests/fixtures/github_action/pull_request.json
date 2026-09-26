@@ -1,0 +1,12 @@
+{
+  "action": "synchronize",
+  "number": 7,
+  "pull_request": {
+    "number": 7,
+    "title": "Allow partial refunds",
+    "head": {"ref": "partial-refunds", "sha": "0123456789abcdef0123456789abcdef01234567"},
+    "base": {"ref": "main"}
+  },
+  "repository": {"full_name": "tony19053000/minishop-demo", "private": false},
+  "sender": {"login": "octocat", "type": "User"}
+}

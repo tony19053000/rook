@@ -1,0 +1,171 @@
+# Rook GitHub Action: runs `rook run --ci --auto` on the pull request and comments rook-report.md on it.
+# Security: inputs and event data reach the scripts only through env (never `${{ }}` inside `run:`), the
+# Bob key is masked and given only to the Rook step and only in live mode, and third-party actions are
+# pinned by full commit SHA.
+name: Rook
+description: Find the smallest sequence of actions that breaks a business rule, and comment the proof on the PR.
+author: tony19053000
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  repo-path:
+    description: The folder to check (Rook copies it and never changes it).
+    default: "."
+  request:
+    description: What to look for.
+    default: find bugs in my app
+  bob-mode:
+    description: "`replay` (recorded Bob answers, 0 coins; needs `recordings`) or `live` (needs `bob-api-key` and `bob-package`). Live falls back to replay when the key is empty, e.g. on a fork PR."
+    default: replay
+  bob-api-key:
+    description: The IBM Bob API key. Pass `secrets.BOB_API_KEY`, never a literal.
+    default: ""
+  bob-package:
+    description: "Live mode: the Bob Shell package to install with npm (a URL or path to bobshell-2.0.5.tgz)."
+    default: ""
+  recordings:
+    description: "Replay mode: a folder of Bob recordings (*.ndjson), copied to ~/.rook/recordings."
+    default: ""
+  auto:
+    description: "`true` runs `rook run --ci --auto` (Rook answers its own questions); `false` runs `--ci` only."
+    default: "true"
+  budget:
+    description: Bob coin budget for the run.
+    default: "1.5"
+  seconds:
+    description: Search budget in seconds.
+    default: "120"
+  setup:
+    description: Space-separated names of env vars your app needs (each is passed as `--setup NAME`).
+    default: ""
+  report-dir:
+    description: Where Rook writes rook-report.json and rook-report.md.
+    default: rook-report
+  comment:
+    description: "`true` posts (or updates) one Rook comment on the pull request."
+    default: "true"
+  github-token:
+    description: "Token used to comment (needs `pull-requests: write`)."
+    default: ${{ github.token }}
+
+outputs:
+  exit-code:
+    description: "Rook's exit code: 0 every approved rule held, 1 a rule is broken, 2 the run did not finish."
+    value: ${{ steps.rook.outputs.exit-code }}
+  report:
+    description: The path of rook-report.md.
+    value: ${{ steps.rook.outputs.report }}
+  bob-mode:
+    description: The Bob mode actually used (live or replay).
+    value: ${{ steps.mode.outputs.mode }}
+
+runs:
+  using: composite
+  steps:
+    - id: mode
+      name: Choose the Bob mode
+      shell: bash
+      env:
+        REQUESTED: ${{ inputs.bob-mode }}
+        BOB_API_KEY: ${{ inputs.bob-api-key }}
+      run: |
+        case "$REQUESTED" in
+          replay|live) ;;
+          *) echo "::error::bob-mode must be replay or live"; exit 2 ;;
+        esac
+        mode="$REQUESTED"
+        if [ "$GITHUB_EVENT_NAME" = pull_request_target ] && [ -n "$BOB_API_KEY" ]; then
+          echo "::warning::Rook got a Bob key on pull_request_target: fork code may read it. Use pull_request."
+        fi
+        if [ -n "$BOB_API_KEY" ]; then
+          echo "::add-mask::$BOB_API_KEY"
+        elif [ "$mode" = live ]; then
+          echo "::notice::No Bob API key (a fork PR has no secrets): using recorded Bob (replay)."
+          mode=replay
+        fi
+        echo "mode=$mode" >> "$GITHUB_OUTPUT"
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+
+    - name: Install Rook
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        uv tool install --python 3.12 "$ACTION_PATH"
+        uv tool dir --bin >> "$GITHUB_PATH"
+
+    - name: Set up Node 24 (Bob Shell)
+      if: steps.mode.outputs.mode == 'live'
+      uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      with:
+        node-version: "24"
+
+    - name: Install Bob Shell
+      if: steps.mode.outputs.mode == 'live'
+      shell: bash
+      env:
+        BOB_PACKAGE: ${{ inputs.bob-package }}
+      run: |
+        if [ -z "$BOB_PACKAGE" ]; then
+          echo "::error::bob-mode live needs bob-package (the bobshell .tgz URL or path)"; exit 2
+        fi
+        npm install --global -- "$BOB_PACKAGE"
+        bob --version < /dev/null
+
+    - name: Load Bob recordings
+      if: steps.mode.outputs.mode == 'replay' && inputs.recordings != ''
+      shell: bash
+      env:
+        RECORDINGS: ${{ inputs.recordings }}
+      run: |
+        mkdir -p "$HOME/.rook/recordings"
+        cp -R -- "$RECORDINGS/." "$HOME/.rook/recordings/"
+
+    - id: rook
+      name: Run Rook
+      shell: bash
+      env:
+        ROOK_BOB_MODE: ${{ steps.mode.outputs.mode }}
+        BOB_API_KEY: ${{ steps.mode.outputs.mode == 'live' && inputs.bob-api-key || '' }}
+        REPO_PATH: ${{ inputs.repo-path }}
+        REQUEST: ${{ inputs.request }}
+        AUTO: ${{ inputs.auto }}
+        BUDGET: ${{ inputs.budget }}
+        SECONDS_BUDGET: ${{ inputs.seconds }}
+        SETUP: ${{ inputs.setup }}
+        REPORT_DIR: ${{ inputs.report-dir }}
+      run: |
+        set -f  # SETUP is split on spaces below; never glob it
+        args=(run --ci --request "$REQUEST" --budget "$BUDGET" --seconds "$SECONDS_BUDGET" --report-dir "$REPORT_DIR")
+        if [ "$AUTO" = "true" ]; then args+=(--auto); fi
+        for name in $SETUP; do args+=(--setup "$name"); done
+        [ -n "$BOB_API_KEY" ] || unset BOB_API_KEY
+        code=0
+        rook "${args[@]}" -- "$REPO_PATH" || code=$?
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        echo "report=$REPORT_DIR/rook-report.md" >> "$GITHUB_OUTPUT"
+        if [ -f "$REPORT_DIR/rook-report.md" ]; then cat -- "$REPORT_DIR/rook-report.md" >> "$GITHUB_STEP_SUMMARY"; fi
+
+    - name: Comment on the pull request
+      if: always() && inputs.comment == 'true' && steps.rook.outcome != 'skipped'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        REPORT_DIR: ${{ inputs.report-dir }}
+      run: rook-pr-comment --report "$REPORT_DIR/rook-report.md"
+
+    - name: Fail when a rule is broken
+      if: always() && steps.rook.outcome == 'success'
+      shell: bash
+      env:
+        CODE: ${{ steps.rook.outputs.exit-code }}
+      run: |
+        case "$CODE" in
+          0) echo "Rook: every approved rule held." ;;
+          1) echo "::error::Rook: an approved business rule is broken (see the PR comment)."; exit 1 ;;
+          *) echo "::error::Rook: the run did not finish (exit $CODE)."; exit 2 ;;
+        esac

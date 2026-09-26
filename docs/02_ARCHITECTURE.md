@@ -57,7 +57,8 @@ rook/                           # repo root (github.com/tony19053000/rook)
 ├─ CLAUDE.md  README.md  HANDOFF.md  STATUS.md
 ├─ docs/01_PRD.md … 05_FEATURE_TICKETS.md, docs/mockups/*.html
 ├─ .claude/agents/coder.md, reviewer.md
-├─ pyproject.toml               # package "rook-cli", entry point: rook = rook.cli.main:app
+├─ pyproject.toml               # package "rook-cli", entry points: rook = rook.cli.main:app, rook-pr-comment (the Action's PR comment)
+├─ action.yml                   # GitHub Action (composite): rook run --ci --auto, then one upserted PR comment with rook-report.md
 ├─ src/rook/
 │  ├─ core/            session.py (Session, Conductor), workspace.py (PREPARE copy/clone/demo, SHIP git branch), rails.py, events.py (bus + models), config.py
 │  ├─ agents/          bob.py (BobClient), registry.py (AgentSpec x12), prompts/*.md, schemas.py, modes.py (writes .bob/custom_modes.yaml), recorder.py, caller.py, coordinator.py, guide.py, understand.py (SCOUT → START_APP → MAP pipeline)
@@ -65,7 +66,7 @@ rook/                           # repo root (github.com/tony19053000/rook)
 │  ├─ engine/          runner.py, generator.py, executor.py (HTTP), judge.py, shrinker.py, replayer.py, verifier.py, testrunner.py, isolation.py, dryrun.py (MAP dry-run)
 │  ├─ sandbox/         base.py, docker.py, process.py, allowlist.py
 │  ├─ store/           db.py (schema + migrations), repo.py (queries)
-│  ├─ github/          app.py (JWT, installation tokens), repos.py, pr.py
+│  ├─ github/          app.py (JWT, installation tokens), repos.py, pr.py, pr_comment.py (Action: rook-report.md → one marked PR comment)
 │  ├─ auth/            cli_login.py (localhost callback + device code), tokens.py, verify.py (Supabase JWT)
 │  ├─ export/          counterexample.py (JSON), tests.py (native test via Bob + validation, fallback HTTP pytest)
 │  ├─ server/          app.py (FastAPI), routes/*.py, sse.py, guest.py (quotas)

@@ -20,6 +20,7 @@ dependencies = [
 
 [project.scripts]
 rook = "rook.cli.main:app"
+rook-pr-comment = "rook.github.pr_comment:main"
 
 [dependency-groups]
 dev = [
