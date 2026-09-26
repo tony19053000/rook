@@ -6,18 +6,19 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 26 Sep 23:55 IST. Account 1 working. ONLY ONE orchestrator session at a time.
+**Updated:** 27 Sep 00:10 IST. Account 1 working. ONLY ONE orchestrator session at a time.
 
-**Committed and DONE (reviewer PASS):** ROOK-001–029, 033–035 (32 / 40). HEAD = ROOK-028 commit 8224852 (+ this docs commit). Not pushed yet. Bob coins ≈ 2.4 of 40. Full suite: 1309 passed.
+**Committed and DONE (reviewer PASS), pushed:** ROOK-001–029, 033–036 (33 / 40). Bob coins ≈ 2.4 of 40. Full suite: 1344 passed (incl. uncommitted 032 tests). Web: 194 vitest + `npm run test:e2e` (17 checks, replay, 0 coins; rebuild with `npm run build` after, it leaves a localhost proxy target in .next).
 
 **UNCOMMITTED work in the tree (do NOT commit before a reviewer PASS):**
-1. **ROOK-036 (web pages, picker, guest)**: review r1 FAIL (2 findings, rest good): (a) no committed E2E proof → coder adding `web/e2e/smoke.mjs` (plain Node, starts rook server in Bob replay mode + `next start` with ROOK_API_PROXY_TARGET, drives demo run through the proxy, 0 coins) + a documented manual browser check; (b) `ROOK_API_PROXY_TARGET` missing from 02 §14 → coder adding. **Action if the coder died:** check `git status web/ docs/`, finish those two, then reviewer round 2 (2 FAIL rounds left).
+1. **ROOK-032 (GitHub Action)**: CODED, review r1 running. Files: action.yml, src/rook/github/pr_comment.py, tests/unit/test_github_action.py, tests/fixtures/github_action/, pyproject.toml (rook-pr-comment script), README.md (GitHub Action section), docs/02 §3 layout. **Action if the reviewer died:** re-run reviewer r1. Open points for the user: where to host the Bob Shell tgz for live mode (`bob-package` input; license?); README pins `@<full-commit-sha>` placeholder → fill after commit; replay on real PRs will likely miss recordings (prompt-hash keys); `rook init` scaffold still writes an old unpinned workflow (follow-up); never run on a real runner yet.
 
-**Next steps in order:** 036 fix → reviewer r2 → commit → push. Then everything left needs the user: 030 (U1 Supabase + Google), 031 (U2 GitHub App), 032 (GitHub Action, can start without U-tasks), 037 (U3 HF Space), 038 (U4 Vercel), 039 (U5 demo apps), 040 polish. Start 032 while waiting on the user.
+**Next steps in order:** 032 review → commit → push. Then everything left needs the user: 030 (U1 Supabase + Google), 031 (U2 GitHub App), 032 (GitHub Action, can start without U-tasks), 037 (U3 HF Space), 038 (U4 Vercel), 039 (U5 demo apps), 040 polish. Start 032 while waiting on the user.
 
 **Wiring notes from 036 for later tickets:** 030 → replace currentSession()/getToken() in web/lib/session.ts, SIGN_IN_AVAILABLE=true, OAuth handler in LoginView (SimpleViews.tsx). 031 → fill githubConnected from /me, pass onConnectGithub to RepoPicker (api.githubInstallUrl()). 037/038 → ROOK_API_PROXY_TARGET=https://<space>.hf.space at Vercel build time; CSP (connect-src 'self' + Supabase); verify SSE streams unbuffered through the rewrite; ROOK_TRUSTED_PROXY_HOPS on the Space.
 
 **Follow-ups noted (non-blocking):**
+- 036 E2E replay ends `failed` at DIAGNOSE: Detective recording key includes sandbox logs (recorded with in-process LocalApp vs real uvicorn). Fix: normalise logs before hashing, or re-record via the process sandbox (coins). Could fold into 039.
 - Replay: `POST /counterexamples/{id}/replay` answers 501 until Session gets a replay-only mode (pass `create_app(replay_factory=...)`).
 - Deploy (037): set ROOK_TRUSTED_PROXY_HOPS (probably 2), ROOK_GUEST_SECRET (≥32 chars), ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS, ROOK_ALLOWLIST, ROOK_DAILY_COIN_CAP, ROOK_DB_PATH; check that the Vercel rewrite streams SSE unbuffered.
 - mypy is not in dev deps (`uv run --with mypy --with types-PyYAML mypy src`): 8 pre-existing errors (sprite.py:150 + schema.py, agents/schemas.py, bob.py, executor.py, compose.py, understand.py). Small cleanup ticket candidate.
@@ -58,6 +59,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep 00:10 | 1 | ROOK-036 PASS r2 + committed (e2e smoke, 02 §14 proxy target; 02 hunks split from 032). 032 coded, review r1. 33/40 | ROOK-036 |
 | 26 Sep 23:55 | 1 | ROOK-028 PASS r1 + committed (contextvars fix for teardown LookupError). 036 r1 FAIL (E2E proof, 02 §14) → coder fixing. 32/40 | ROOK-028 |
 | 26 Sep 23:16 | 2 | Update handoff (session limit): 036 coded, review not done; 028 partial (teardown-focus bug fix mid-way). 31/40 | (docs) |
 | 26 Sep 21:17 | 2 | ROOK-035 PASS round 1 + committed; 036 coding; 028 coding | ROOK-035 |
