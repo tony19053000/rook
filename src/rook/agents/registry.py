@@ -9,6 +9,7 @@ browser or mcp.
 from __future__ import annotations
 
 import copy
+import unicodedata
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 from typing import Any, Literal
@@ -147,13 +148,15 @@ def _is_control(c: str) -> bool:
 
 def _is_forbidden_dir(part: str) -> bool:
     # Case-insensitive filesystems and Windows (which drops trailing dots and spaces) resolve
-    # ".GIT", ".git." and ".git " to the real .git folder.
-    return part.rstrip(". ").casefold() in FORBIDDEN_DIRS
+    # ".GIT", ".git." and ".git " to the real .git folder; NFKC also catches full-width lookalikes.
+    return unicodedata.normalize("NFKC", part).rstrip(". ").casefold() in FORBIDDEN_DIRS
 
 
 def _check_path(path: str) -> str:
     if not path or path != path.strip() or "\\" in path or any(_is_control(c) for c in path):
         raise ValueError(f"invalid surgeon path {path!r}")
+    if unicodedata.normalize("NFKC", path) != path:  # one file, one spelling: no Unicode lookalikes
+        raise ValueError(f"surgeon paths must be NFKC-normalised: {path!r}")
     if ":" in path:  # drive letters and NTFS alternate streams (".git::$INDEX_ALLOCATION")
         raise ValueError(f"surgeon paths may not contain ':': {path!r}")
     if path.startswith("/"):
@@ -177,22 +180,37 @@ def _escape(path: str) -> str:
     return "".join("\\" + c if c in _REGEX_META else c for c in path)
 
 
-def surgeon_edit_regex(allowed_paths: list[str]) -> str:
-    """An anchored regex matching exactly the allowed workspace-relative files."""
+def _check_workspace(workspace: str) -> str:
+    ws = workspace.rstrip("/")
+    if not ws.startswith("/") or "\\" in workspace or any(_is_control(c) for c in workspace):
+        raise ValueError(f"the workspace must be an absolute POSIX path: {workspace!r}")
+    return ws
+
+
+def surgeon_edit_regex(allowed_paths: list[str], workspace: str | None = None) -> str:
+    """An anchored regex matching exactly the allowed files.
+
+    Bob checks the regex against the path its edit tool was given, and those tools take absolute paths,
+    so with `workspace` (the absolute workspace path Bob runs in) each file also matches as
+    `<workspace>/<path>`, and nothing else does."""
     paths = sorted({_check_path(p) for p in allowed_paths})
     if not paths:
         raise ValueError("the surgeon needs at least one allowed path")
-    return "^(?:" + "|".join(_escape(p) for p in paths) + ")$"
+    body = "(?:" + "|".join(_escape(p) for p in paths) + ")"
+    if workspace is None:
+        return f"^{body}$"
+    return f"^(?:{_escape(_check_workspace(workspace))}/)?{body}$"
 
 
-def surgeon_groups(allowed_paths: list[str]) -> list[Any]:
+def surgeon_groups(allowed_paths: list[str], workspace: str | None = None) -> list[Any]:
     """The Surgeon's tool groups for one call: read, plus edit limited to `allowed_paths`."""
-    regex = surgeon_edit_regex(allowed_paths)
+    regex = surgeon_edit_regex(allowed_paths, workspace)
     return ["read", ["edit", {"fileRegex": regex, "description": "approved fix files only"}]]
 
 
-def groups_for(agent_id: str, surgeon_paths: list[str] | None = None) -> list[Any]:
+def groups_for(agent_id: str, surgeon_paths: list[str] | None = None, workspace: str | None = None
+               ) -> list[Any]:
     """The tool groups for an agent's mode. The Surgeon is read-only unless paths are given."""
     if agent_id == "surgeon" and surgeon_paths:
-        return surgeon_groups(surgeon_paths)
+        return surgeon_groups(surgeon_paths, workspace)
     return copy.deepcopy(get(agent_id).tool_groups)

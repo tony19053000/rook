@@ -61,7 +61,7 @@ SAMPLE_INPUTS = {
     "lawmaker": {"model": {"actions": []}, "files": {"README.md": "Refunds"}},
     "test_designer": {"rules": [], "actions": []},
     "surgeon": {"task": "Fix the bug.", "diagnosis": {"file": "app.py", "line": 3}, "counterexample": [],
-                "allowed_paths": ["app.py"], "files": {"app.py": "x = 1\n"}},
+                "allowed_paths": ["app.py"], "files": {"app.py": "x = 1\n"}, "feedback": ""},
     "rule_critic": {"rules": [], "files": {}},
     "diag_reviewer": {"rule": {"id": "r"}, "diagnosis": {}, "steps": [], "states": [], "logs": "", "files": {}},
     "fix_reviewer": {"diff": "--- a/app.py\n+++ b/app.py\n", "diagnosis": {}, "rules": []},

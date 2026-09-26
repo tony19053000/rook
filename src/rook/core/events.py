@@ -45,6 +45,12 @@ def clear_secrets() -> None:
         _secrets.clear()
 
 
+def has_known_secret(text: str) -> bool:
+    """Whether `text` contains a registered secret value (exact match; no heuristic patterns)."""
+    with _secrets_lock:
+        return any(value in text for value in _secrets)
+
+
 def redact_text(text: str) -> str:
     with _secrets_lock:
         known = sorted(_secrets, key=len, reverse=True)

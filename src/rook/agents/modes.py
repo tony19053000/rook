@@ -17,7 +17,7 @@ from rook.agents.registry import AGENTS, groups_for
 EXCLUDE_LINE = ".bob/"
 
 
-def modes_document(surgeon_paths: list[str] | None = None) -> dict[str, Any]:
+def modes_document(surgeon_paths: list[str] | None = None, workspace: str | None = None) -> dict[str, Any]:
     modes = []
     for spec in AGENTS.values():
         modes.append({
@@ -27,7 +27,7 @@ def modes_document(surgeon_paths: list[str] | None = None) -> dict[str, Any]:
             "roleDefinition": spec.role_definition,
             "whenToUse": spec.when_to_use,
             "customInstructions": f"{spec.instructions}\n\n{json_contract(spec.id)}",
-            "groups": groups_for(spec.id, surgeon_paths),
+            "groups": groups_for(spec.id, surgeon_paths, workspace),
         })
     return {"customModes": modes}
 
@@ -37,7 +37,9 @@ def write_modes(workspace: str | Path, surgeon_paths: list[str] | None = None) -
     ws = Path(workspace)
     path = ws / ".bob" / "custom_modes.yaml"
     path.parent.mkdir(parents=True, exist_ok=True)
-    text = yaml.safe_dump(modes_document(surgeon_paths), sort_keys=False, allow_unicode=True, width=100)
+    # Bob's edit tools take absolute paths inside the workspace it runs in (BobClient resolves it).
+    document = modes_document(surgeon_paths, ws.resolve().as_posix() if surgeon_paths else None)
+    text = yaml.safe_dump(document, sort_keys=False, allow_unicode=True, width=100)
     path.write_text(text, encoding="utf-8")
     _exclude_bob(ws)
     return path

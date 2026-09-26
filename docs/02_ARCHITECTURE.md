@@ -137,6 +137,7 @@ subprocess: stdin=DEVNULL (MANDATORY, else it hangs), cwd=workspace (MANDATORY: 
   - `{"type":"result","status","stats":{"session_costs","duration_ms"}}` ends the call and gives its cost
 - **Output contract:** every agent must end with **one fenced ```json block** that matches its pydantic schema (`agents/schemas.py`). BobClient extracts the last JSON block and validates it. On an error, it re-prompts with the validation error, up to 3 times.
 - **Recorder:** every call is stored in `~/.rook/recordings/<sha256(slug + "\0" + prompt)>.ndjson`. Callers must build deterministic prompts that include every input (file contents or a digest), so the same inputs give the same key. `ROOK_BOB_MODE=live|record|replay` controls this. Replay emits the recorded stream with the original timing (max 3×) and marks `agent.finished.recorded=true`, and the UIs show a "recorded" tag.
+- **Edit tape (Surgeon):** a stream alone does not change files, so in record mode the files an edit-capable call changed are also saved as `<key>.edits.json` (`{"format":1,"files":{path: text|null},"withheld":{path: kind}}`, null = deleted). In replay they are written back (never through a symlink) before the path guard runs (`agents/edit_tape.py`). The tape is written **after** the path guard: `files` holds only the changes it allowed, verbatim, and `withheld` holds only the paths of the rejected ones, never their content (it may hold a target-app secret). Replay writes a placeholder at each withheld path, so the guard rejects the round again.
 - **Cost:** `cost.update` events come from the `session_costs` totals.
 
 ### 5.2 Modes file
@@ -151,6 +152,7 @@ customModes:
     customInstructions: …   # includes the JSON output contract
     groups: [read]          # surgeon: [read, [edit, {fileRegex: "<approved paths>", description: "fix files"}]]
 ```
+Bob checks `fileRegex` against the path its edit tool received, and those tools take **absolute** paths. So the Surgeon's regex is `^(?:<escaped absolute workspace>/)?(?:<escaped path>|…)$`: each approved file matches, relative or absolute, and nothing else does.
 Tool groups are the **real permission boundary**, because `bob run` pre-approves every tool call that's allowed.
 
 ### 5.3 The 13 agents (Coordinator + 12 specialists)
@@ -277,6 +279,8 @@ Verification passes only if all of these hold:
 
 ### 7.8 Regression test export
 It writes `rook/counterexamples/cx_NNN.json`, which holds the steps, rule, observed and expected values, the seed and the model hash. It asks the Surgeon (test-only edit scope) to write a **native** test in the repo's framework. The engine runs it **before the fix and it must fail**. If it can't validate the test, it falls back to a generated HTTP-level pytest file that replays the JSON.
+- (`agents/fix.py`, `engine/pathguard.py`) Rook picks the native test's path: next to the project's existing tests of the same language, or next to the diagnosed file for Go. The test-only call may create only that file. The engine runs it with the project's test command plus that path, and accepts it only on **exit code 1 with no errors**. If the test passes, errors, can't be run, or the call touched other paths, the test is removed and the fallback is used (`log` warn with the reason). The phase ends with `counterexample.saved{test_path}`.
+- The fix call may edit **only the diagnosed file**. The accepted regression test is frozen, because it proved the bug by failing. After every Surgeon call, the **path guard** compares the workspace with a snapshot taken just before the call (hash plus backup per file, walked without following symlinks). It reverts every added, modified or deleted path outside the allowlist, any symlink, any change under `.git/`, `.bob/` or `rook/`, and any NFKC/case-fold lookalike of an allowed path. The round is then rejected with the reason. A rejected round (by the guard or the Fix Reviewer) is fully reverted. Only a Fix Reviewer approval keeps the patch and emits `fix.ready`. The FIX phase refuses to start unless the rails allow `fix`.
 
 ## 8. Sandbox
 

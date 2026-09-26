@@ -27,7 +27,7 @@ Parallel pairs that worked: 011-fix ‖ 018; later 019 ‖ 020.
 - ROOK-007 throughput: 268 seq/s measured (target 500). Ceiling is minishop itself (sync `current_user` + O(n) user scans); engine alone ≈750/s. Recorded in STATUS as not met.
 - ROOK-014: sandboxed apps have NO internet at run time. Apps that need it would need a new `SandboxPlan.egress` field (contract change in 02 §8) — not added; ask the user if a demo app needs it.
 
-**Follow-ups noted (non-blocking, from reviews):** per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; `CostUpdate` ge=0 + monotonic cost in RunState; NFKC-normalise Surgeon paths; recordings contain local `/tmp/pytest-of-aayush` paths; document cx JSON shape in 02 §7.8.
+**Follow-ups noted (non-blocking, from reviews):** Mechanic fileRegex `^\.rook-sandbox/` (registry.py:26) never matches (Bob matches ABSOLUTE paths): fix like surgeon_edit_regex or drop the unused edit group; per-actor cookie jars on the real-HTTP executor path; reject `inf` generator weights; wrap Guide snapshot as `<untrusted>`; `CostUpdate` ge=0 + monotonic cost in RunState; NFKC-normalise Surgeon paths; recordings contain local `/tmp/pytest-of-aayush` paths; document cx JSON shape in 02 §7.8.
 
 **Lessons from this session:**
 - Always give the reviewer attack ideas — it found real bugs in 013 (LD_PRELOAD env), 014 (open egress, then compose hostname DNS hijack: 11/20 requests stolen), 011 (mkdir symlink escape).
@@ -59,6 +59,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 26 Sep | 1 | ROOK-021 PASS + committed (M4 done; 1.42 coins; fileRegex absolute-path bug fixed; tape-after-guard) | ROOK-021 |
 | 26 Sep | 1 | ROOK-019 PASS + committed (0.04 coins; 5 vs 1903 seqs); 021 coding | ROOK-019 |
 | 26 Sep | 1 | ROOK-020 PASS round 2 + committed (0.08 coins); 019 in review | ROOK-020 |
 | 26 Sep | 1 | ROOK-018 PASS + committed (0.13 coins); 020 coding | ROOK-018 |
