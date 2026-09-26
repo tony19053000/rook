@@ -247,7 +247,7 @@ STUB_UVX = textwrap.dedent("""\
     case "$1 $2" in
       "sts get-caller-identity") echo 123456789012 ;;
       "ec2 describe-vpcs") echo vpc-0stub ;;
-      "ssm get-parameters") echo ami-0stub ;;
+      "ec2 describe-images") echo ami-0stub ;;
       "ec2 describe-key-pairs") echo None ;;
       "ec2 describe-security-groups") echo None ;;
       "ec2 describe-instances") cat "$STUB_STATE/instance" 2>/dev/null || echo None ;;

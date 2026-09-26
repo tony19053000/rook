@@ -9,7 +9,8 @@ set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
 INSTANCE_TYPE=t3.small
-AMI_PARAM=/aws/service/canonical/ubuntu/server/24.04/stable/current/amd64/hvm/ebs-gp3/ami-id
+CANONICAL_OWNER=099720109477  # Canonical; looked up via EC2 so the IAM user needs no SSM access
+AMI_NAME='ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*'
 
 tags() { # tags <resource-type>
     echo "ResourceType=$1,Tags=[{Key=Project,Value=$PROJECT_TAG},{Key=Name,Value=$NAME_TAG}]"
@@ -46,7 +47,10 @@ sg_id=$(aws ec2 describe-security-groups --filters "Name=group-name,Values=$SG_N
 inst_id=$(instance_id)
 alloc_id=$(eip_allocation)
 ami_id=""
-[[ -n "$inst_id" ]] || ami_id=$(aws ssm get-parameters --names "$AMI_PARAM" --query 'Parameters[0].Value' --output text)
+[[ -n "$inst_id" ]] || ami_id=$(aws ec2 describe-images --owners "$CANONICAL_OWNER" \
+  --filters "Name=name,Values=$AMI_NAME" Name=state,Values=available \
+  --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text)
+[[ -n "$inst_id" || "$ami_id" == ami-* ]] || die "no Ubuntu 24.04 AMI found"
 
 say() { if [[ -n "$2" ]]; then echo "  exists:      $1 ($2)"; else echo "  WILL CREATE: $1"; fi; }
 echo
