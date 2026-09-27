@@ -32,7 +32,8 @@ deploy/aws/deploy.sh
 #    later, once the Vercel URL is known (CORS for direct calls):
 #    ROOK_WEB_ORIGINS=https://<project>.vercel.app deploy/aws/deploy.sh
 
-# 4. secrets (each one prompts with hidden input and restarts rook)
+# 4. secrets (each one prompts with hidden input and restarts rook). The name allowlist is checked on the
+#    host too, so after pulling a version that adds a secret name, run deploy.sh BEFORE set-secret.sh.
 deploy/aws/scripts/set-secret.sh ROOK_GUEST_SECRET   # optional: deploy.sh already made one on the host
 deploy/aws/scripts/set-secret.sh BOB_API_KEY         # only needed for live mode
 #    sign-in (ROOK-030): SUPABASE_URL (https://<ref>.supabase.co), SUPABASE_JWT_SECRET (legacy HS256 secret;
