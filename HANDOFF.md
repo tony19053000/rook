@@ -67,6 +67,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep 16:43 | 2 | Server live with ROOK-041 (Docker reachable; t3.small, free plan can't resize; swap 4G; coin cap 10). ROOK-042 web redesign (Claude-Code-style) PASS + committed 527c050, Vercel auto-deploys. Left: user live GitHub run test, Google OAuth publish (judges sign-in), ROOK-040 tag v0.1.0, video | ROOK-042 |
 | 27 Sep 15:16 | 2 | ROOK-041 web + server PASS + committed. 40/41. User next: resize EC2 to t3.medium, `ROOK_DAILY_COIN_CAP=10 ROOK_WEB_ORIGINS=https://rook-weld-six.vercel.app deploy/aws/deploy.sh`, smoke, sign in → connect GitHub → run shop-app live. Then ROOK-040 (skip PyPI, tag v0.1.0) + video | ROOK-041 |
 | 27 Sep ~14:50 | 2 | Auto-on-featured-demo fix committed 3746bbc (needs redeploy). USER DECISION: build ROOK-041 hosted runs of signed-in users' own GitHub repos (like Claude Code web); freeze moved to ~17:30. Two coders: server (routes/runs, session factory live Bob per run, DockerSandbox via docker.sock, host-path workspace volume, limits, docs/02+03) and web (picker starts GitHub runs when /me.can_run_github). Contract: /me.can_run_github; POST /runs repo.kind=github | (docs) |
 | 27 Sep 14:27 | 2 | User redeployed (after .dockerignore fix 520d8fa). LIVE smoke via Vercel: minishop + shop-app both 'Fixed and verified', 0 coins. Left: ROOK-040 (PyPI rook-cli taken → skip unless user decides; v0.1.0 tag), 031 live PR test, vitest-not-found in local Docker sandbox (Node), video build after freeze | (docs) |
