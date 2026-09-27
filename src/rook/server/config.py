@@ -36,6 +36,7 @@ class DemoRepo(BaseModel):
     commit: str
     name: str
     language: str = ""
+    featured_rule: str | None = None  # the rule id the web pre-selects for guests (02 §5 approve_rules)
 
     @field_validator("ref")
     @classmethod
@@ -53,7 +54,7 @@ class DemoRepo(BaseModel):
 
 
 def load_demo_repos(path: Path) -> list[DemoRepo]:
-    """`{repos: [{ref, commit, name, language}]}` (safe YAML)."""
+    """`{repos: [{ref, commit, name, language, featured_rule?}]}` (safe YAML)."""
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     return [DemoRepo.model_validate(raw) for raw in data.get("repos") or []]
 

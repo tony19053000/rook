@@ -58,14 +58,17 @@ class Guest:
 
 
 def answer_for(question: dict[str, Any], approve: str = "refund") -> Any:
-    """`approve`: "refund" approves the refund rule only (like the CLI demo), "all" every proposed rule (what
-    the web UI's approve button sends)."""
+    """`approve`: "refund" approves the demo's featured rule when the payload marks one, else the refund rule
+    only (like the CLI demo); "all" every proposed rule (what the web UI's approve button sends)."""
     kind = question.get("kind")
     options = question.get("options") or []
     if kind == "approve_rules":
         if approve == "all":
             return "all"
         rules = (question.get("payload") or {}).get("rules") or []
+        featured = [r["id"] for r in rules if r.get("accepted") and r.get("featured")]
+        if featured:
+            return featured
         refund = [r["id"] for r in rules if r.get("accepted") and "refund" in r.get("check", "")
                   and "paid" in r.get("check", "")]
         return refund or "all"

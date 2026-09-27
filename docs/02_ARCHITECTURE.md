@@ -134,8 +134,10 @@ DONE
   told what failed. If the rails end the loop, the last patch stays in the workspace, unshipped, and the summary
   says so.
 - approve_rules payload: `{rules:[{id, text, kind, check, accepted, reason, critic: approve|reject|revise|null,
-  already_broken: bool}]}` (every proposed rule, with its outcome; only `accepted` ones can be approved; a flagged
-  rule's `reason` ends with the engine's reason).
+  already_broken: bool, featured?: bool}]}` (every proposed rule, with its outcome; only `accepted` ones can be
+  approved; a flagged rule's `reason` ends with the engine's reason). `featured` is present on every rule only when
+  the run's demo catalog entry names a `featured_rule` (trusted server config, never a request): true for that rule
+  only. The web's guest default selects only the featured rule; auto answers and the CLI ignore it.
 - Auto answers: approve_rules = critic-approved rules, never one flagged `already_broken` (only a human may
   approve it); fix = yes only for a reviewed diagnosis; pr = yes (a branch,
   never the default branch); menu = the first allowed of retry/skip/extend/diagnose/report/stop. Setup values come
@@ -414,7 +416,8 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
   `POST /runs` takes `repo.kind: demo` with a `ref` from the demo catalog; `github` (and any unknown demo `ref`) is a
   403 whose `detail` says to run arbitrary repos with the CLI. `request` is at most 2000 chars; `options` has only
   `auto`. `GET /repos` lists the user's GitHub repos (those shared with the App, once connected) first, then the
-  demo catalog. The web picker shows them, but picking one gives the `rook run owner/name` CLI command instead of a
+  demo catalog (`deploy/demos/demos.yaml`: `{repos: [{ref, commit, name, language, featured_rule?}]}`;
+  `featured_rule` is the rule id whose recorded path verifies, marked `featured` in approve_rules, §4). The web picker shows them, but picking one gives the `rook run owner/name` CLI command instead of a
   run (the hosted server never runs them).
 - **Run status:** `queued | running | done | failed | cancelled`. At most 3 runs execute at once; later runs wait as
   `queued` (a bounded queue; when it is full, 429).

@@ -122,7 +122,8 @@ class Harness:
     """Builds a Session with a scripted Bob and in-process minishop; keeps the pieces for assertions."""
 
     def __init__(self, tmp_path: Path, script: dict[str, list[Any]], *, launcher: Any = None,
-                 store: Store | None = None, cost: float = 0.0, delay: float = 0.0, **options: Any) -> None:
+                 store: Store | None = None, cost: float = 0.0, delay: float = 0.0,
+                 featured_rule: str | None = None, **options: Any) -> None:
         self.src = minishop_source(tmp_path)
         self.before = tree(self.src)
         self.launcher = launcher or LocalLauncher()
@@ -135,7 +136,7 @@ class Harness:
         self.session = Session(RepoSpec(kind="local", ref=str(self.src)), "find bugs",
                                SessionOptions(**{**FAST, **options}), store=store,
                                workspaces_root=tmp_path / "workspaces", client_factory=client,
-                               launcher_factory=self.launcher)
+                               launcher_factory=self.launcher, featured_rule=featured_rule)
 
     @property
     def client(self) -> ScriptedClient:
@@ -164,6 +165,7 @@ async def test_auto_mode_runs_to_a_shipped_branch(tmp_path: Path) -> None:
     kinds = [q["kind"] for q in h.events("question.asked")]
     assert kinds == ["approve_rules", "fix", "pr"]
     assert answered[0]["answer"] == ["refund_le_paid"]  # critic-approved rules only
+    assert all("featured" not in r for r in h.events("question.asked")[0]["payload"]["rules"])
     (committed,) = h.events("fix.committed")
     ws = result.workspace
     assert ws is not None and committed["branch"] == "rook/fix-cx-001" == result.ship.branch  # type: ignore[union-attr]
@@ -244,6 +246,18 @@ async def test_auto_mode_never_approves_a_rule_flagged_already_broken(tmp_path: 
     assert "admin_export_forbidden" not in h.events("rules.approved")[0]["rule_ids"]
     assert any(log["text"].startswith("Auto mode does not approve admin_export_forbidden")
                for log in h.events("log"))
+
+
+async def test_the_featured_rule_is_marked_in_the_payload_and_auto_mode_ignores_it(tmp_path: Path) -> None:
+    h = Harness(tmp_path, replies(lawmaker=[{"rules": list(RULES.values())}],
+                                  rule_critic=[approve_all(*RULES)]), auto=True,
+                search_sequences=1, verify_sequences=1, featured_rule="refund_le_paid")
+    await h.session.run()
+    (asked, *_) = h.events("question.asked")
+    assert {r["id"]: r["featured"] for r in asked["payload"]["rules"]} == {
+        i: i == "refund_le_paid" for i in RULES}
+    (answered, *_) = h.events("question.answered")
+    assert set(answered["answer"]) == set(RULES) - {"admin_export_forbidden"}  # unchanged auto answer
 
 
 async def test_a_human_may_approve_a_flagged_rule(tmp_path: Path) -> None:

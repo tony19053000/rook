@@ -325,12 +325,15 @@ class Session:
         allowlist: Allowlist = DEFAULT_ALLOWLIST,
         github_url: str = GITHUB_URL,
         run_workspace: bool = False,
+        featured_rule: str | None = None,
     ) -> None:
         """`bus` should hold `store` when both are given (the server shares one bus); `token` is a GitHub
         installation token for a clone (never published or stored).
 
         `run_workspace` comes from trusted server config only (never a request): a demo app then runs from
-        the workspace copy. It takes effect only while the Bob client replays (`_runs_workspace`)."""
+        the workspace copy. It takes effect only while the Bob client replays (`_runs_workspace`).
+        `featured_rule` also comes from trusted server config (the demo catalog): the approve_rules payload
+        marks that rule `featured` (the web's guest default); auto answers ignore it."""
         self.repo = repo
         self.request = request
         self.options = options or SessionOptions()
@@ -346,6 +349,7 @@ class Session:
         self._allowlist = allowlist
         self._github_url = github_url
         self._run_workspace = run_workspace
+        self._featured_rule = featured_rule
         for value in self.options.setup_values.values():
             register_secret(value)
         self.state = RunState(auto=self.options.auto, budget=self.options.budget,
@@ -698,6 +702,7 @@ class Session:
             "reason": f"{o.reason}; engine: {o.engine.reason}" if o.already_broken else o.reason,
             "critic": o.critic.verdict if o.critic is not None else None,
             "already_broken": o.already_broken,
+            **({"featured": o.rule.id == self._featured_rule} if self._featured_rule else {}),
         }) for o in result.outcomes]}
         if not approvable:
             await self._log("warn", "No proposed rule passed the checks")

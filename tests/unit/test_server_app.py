@@ -56,6 +56,31 @@ def test_the_default_factory_builds_a_hosted_session(tmp_path: Path) -> None:
     store.close()
 
 
+def test_the_featured_rule_comes_from_the_trusted_demo_entry_only(tmp_path: Path) -> None:
+    featured = DEMO.model_copy(update={"featured_rule": "refund_le_paid"})
+    settings = ServerSettings(db_path=tmp_path / "s.db", workspaces_root=tmp_path / "ws", bob_mode="replay",
+                              demo_repos=[featured])
+    store = Store(settings.db_path)
+    make = default_session_factory(settings, Allowlist())
+    demo = RepoSpec(kind="demo", ref=DEMO.ref.upper(), commit=DEMO.commit)
+    other = RepoSpec(kind="demo", ref="rook-demo/other", commit=DEMO.commit)
+    sessions = [make(RunSpec(f"r_{i:012d}", repo, "", SessionOptions(hosted=True), "u_alice", EventBus(store), store))
+                for i, repo in enumerate((demo, other))]
+    assert [s._featured_rule for s in sessions] == ["refund_le_paid", None]  # type: ignore[attr-defined]
+    store.close()
+
+
+def test_a_request_cannot_set_the_featured_rule(tmp_path: Path) -> None:
+    factory = Factory()
+    app = make_app(tmp_path, factory)
+    with TestClient(app, base_url=BASE) as client:
+        for body in ({**NEW_RUN, "featured_rule": "x"},
+                     {**NEW_RUN, "repo": {**NEW_RUN["repo"], "featured_rule": "x"}},
+                     {**NEW_RUN, "options": {"auto": False, "featured_rule": "x"}}):
+            assert client.post(f"{API}/runs", json=body, headers=ALICE).status_code == 400
+    assert factory.sessions == {}
+
+
 def test_module_app_is_built_from_the_environment_on_first_access(tmp_path: Path,
                                                                   monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("ROOK_DB_PATH", str(tmp_path / "env.db"))

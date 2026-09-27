@@ -120,6 +120,12 @@ def test_demo_catalog_is_allowlisted_and_pinned() -> None:
 
 
 def test_the_hosted_image_can_run_the_minishop_regression_tests() -> None:
+def test_minishop_features_the_rule_its_hosted_replay_verifies() -> None:
+    """The web's guest default approves only the featured rule: the one whose recorded path verifies."""
+    demos = load_demo_repos(DEPLOY / "demos" / "demos.yaml")
+    assert next(d for d in demos if d.name == "minishop").featured_rule == "refunded_total_le_paid"
+
+
     """ROOK-039c: replay runs execute the allowlisted `test` command (pytest) from the workspace copy."""
     entry = Allowlist.from_yaml(DEPLOY / "demos" / "allowlist.yaml").get(
         "rook-demo/minishop", "406059b53767b10f157b4eb92105d10af6a0c44d")
@@ -390,6 +396,9 @@ def test_smoke_answers_like_a_demo_user() -> None:
     assert smoke.answer_for({"kind": "menu", "options": [{"id": "retry"}, {"id": "report"}]}) == "report"
     verify = {"cx_id": "cx_001", "verified": True, "summary": "4/4 checks passed"}
     committed = {"cx_id": "cx_001", "branch": "rook/fix-cx-001"}
+    featured = {"rules": [{**rules["rules"][0], "featured": False}, {**rules["rules"][1], "featured": True}]}
+    assert smoke.answer_for({"kind": "approve_rules", "payload": featured}) == ["r2"]
+    assert smoke.answer_for({"kind": "approve_rules", "payload": featured}, "all") == "all"
     done = {"status": "done", "summary": "Fixed and verified cx_001 (rule r1); committed to local branch"}
     assert smoke.fix_verified(done, {"verify.done": verify, "fix.committed": committed})
     assert not smoke.fix_verified(done, {"verify.done": {**verify, "verified": False}, "fix.committed": committed})

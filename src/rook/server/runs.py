@@ -64,9 +64,11 @@ def default_session_factory(settings: ServerSettings, allowlist: Allowlist) -> S
         return BobClient(bus, run_id, mode=settings.bob_mode)
 
     def make(spec: RunSpec) -> RunSession:
+        demo = settings.demo(spec.repo.ref) if spec.repo.kind == "demo" else None
         return Session(spec.repo, spec.request, spec.options, bus=spec.bus, store=spec.store, run_id=spec.run_id,
                        user_id=spec.user_id, workspaces_root=settings.workspaces_root, client_factory=client,
-                       allowlist=allowlist, run_workspace=run_workspace)
+                       allowlist=allowlist, run_workspace=run_workspace,
+                       featured_rule=demo.featured_rule if demo is not None else None)
 
     return make
 
