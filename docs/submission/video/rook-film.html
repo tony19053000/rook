@@ -1,0 +1,452 @@
+<title>Rook Launch Film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --stage:#1A1918; --panel:#262624; --panel2:#30302E; --line:#3A3936;
+  --ink:#F0EEE6; --muted:#A8A59B; --faint:#6F6C64;
+  --accent:#E0563F; --good:#6BD9A0; --bad:#FF8C83; --warn:#E9C46A;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+html,body{height:100%;margin:0;background:#0f0e0d;overflow:hidden}
+body{font-family:var(--sans);color:var(--ink)}
+#fit{position:fixed;inset:0;display:grid;place-items:center}
+#stage{position:relative;width:1920px;height:1080px;background:var(--stage);overflow:hidden;transform-origin:center center;flex:none}
+#stage::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(1200px 700px at 70% 20%, rgba(224,86,63,.09), transparent 60%),
+  radial-gradient(900px 600px at 10% 90%, rgba(107,217,160,.05), transparent 60%);pointer-events:none}
+#grain{position:absolute;inset:0;opacity:.05;pointer-events:none;background-image:repeating-radial-gradient(circle at 17% 32%, #fff 0 1px, transparent 1px 3px);mix-blend-mode:overlay}
+.layer{position:absolute;inset:0;visibility:hidden}
+.center{display:grid;place-items:center;text-align:center}
+
+/* ---------- scene 1: the bug ---------- */
+#s1 .calls{display:grid;gap:26px;font-family:var(--mono);font-size:40px;text-align:left}
+#s1 .call{display:flex;gap:28px;align-items:baseline;opacity:0}
+#s1 .verb{color:var(--accent);font-weight:600;min-width:120px}
+#s1 .ok{color:var(--good);font-size:28px}
+#s1 .tally{margin-top:70px;font-family:var(--sans);font-size:30px;color:var(--muted);letter-spacing:.02em;opacity:0}
+#s1 .tally b{font-family:var(--mono);font-size:72px;color:var(--bad);display:block;margin-top:8px;font-weight:600;letter-spacing:-.01em}
+#s1 .tests{margin-top:34px;font-size:24px;color:var(--good);font-family:var(--mono);opacity:0}
+
+/* ---------- scene 2: thesis ---------- */
+#s2 .guess,#s2 .prove{font-family:var(--serif);font-size:150px;line-height:1;letter-spacing:-.02em;position:absolute;left:0;right:0;text-align:center}
+#s2 .guess{top:300px;color:var(--muted)}
+#s2 .strike{position:absolute;left:50%;top:385px;height:10px;width:0;background:var(--bad);transform:translateX(-50%);border-radius:5px}
+#s2 .prove{top:540px;opacity:0}
+#s2 .prove em{color:var(--accent);font-style:italic}
+.brand{display:flex;align-items:center;gap:30px}
+.brand svg{width:130px;height:130px}
+.brand span{font-family:var(--serif);font-size:150px;letter-spacing:-.02em}
+#s2 .brand{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);opacity:0}
+#s2 .tag{position:absolute;left:0;right:0;top:640px;text-align:center;font-size:30px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;opacity:0}
+
+/* ---------- terminal (hero) ---------- */
+#cam{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:50% 50%}
+#term{position:absolute;left:260px;top:120px;width:1400px;height:840px;background:#141312;border:1px solid var(--line);border-radius:22px;box-shadow:0 60px 160px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.02) inset;overflow:hidden}
+#term .bar{height:58px;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--line);background:#1b1a19}
+#term .dot{width:14px;height:14px;border-radius:50%;background:#3b3a37}
+#term .title{margin-left:18px;font-family:var(--mono);font-size:19px;color:var(--faint)}
+#tbody{padding:30px 40px;font-family:var(--mono);font-size:25px;line-height:1.62;color:var(--ink);display:grid;gap:6px}
+.ln{opacity:0;display:flex;align-items:center;gap:14px;min-height:40px;white-space:pre}
+.ps{color:var(--accent)} .mut{color:var(--muted)} .fnt{color:var(--faint)}
+.g{color:var(--good)} .r{color:var(--bad)} .y{color:var(--warn)}
+.who{font-weight:600}
+.blob{width:30px;height:30px;border-radius:50% 50% 46% 46%;position:relative;flex:none;transform:scale(0)}
+.blob::before,.blob::after{content:"";position:absolute;top:10px;width:5px;height:7px;border-radius:3px;background:#141312}
+.blob::before{left:8px}.blob::after{right:8px}
+.rule{display:flex;gap:16px;align-items:center}
+.rule .box{width:22px;height:22px;border:2px solid var(--muted);border-radius:5px;display:grid;place-items:center;font-size:16px;color:#141312}
+.rule.on .box{background:var(--good);border-color:var(--good)}
+.rule.off{color:var(--faint)}
+.rule.off .txt{text-decoration:line-through;text-decoration-color:var(--bad)}
+.cursor{display:inline-block;width:13px;height:28px;background:var(--ink);vertical-align:-5px;margin-left:2px}
+#status{position:absolute;left:0;right:0;bottom:0;height:54px;border-top:1px solid var(--line);display:flex;align-items:center;gap:26px;padding:0 30px;font-family:var(--mono);font-size:19px;color:var(--muted);background:#171615;opacity:0}
+#status .pill{padding:4px 12px;border-radius:999px;background:var(--panel2);color:var(--ink)}
+
+/* ---------- proof cards ---------- */
+.card{position:absolute;background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:0 40px 120px rgba(0,0,0,.6);padding:34px 40px;opacity:0}
+.eyebrow{font-size:17px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.pillx{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:999px;font-size:18px;font-weight:600}
+.pbad{background:rgba(255,140,131,.14);color:var(--bad)}
+.pgood{background:rgba(107,217,160,.14);color:var(--good)}
+
+#search{left:520px;top:210px;width:880px}
+#search .row{display:flex;gap:26px;margin-top:26px}
+#search .tile{flex:1;background:var(--panel2);border-radius:14px;padding:22px 26px}
+#search .tile small{font-size:16px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+#search .tile b{display:block;font-family:var(--mono);font-size:64px;font-weight:500;margin-top:6px;font-variant-numeric:tabular-nums}
+#flash{position:absolute;inset:0;background:var(--bad);opacity:0;mix-blend-mode:screen}
+#broken{position:absolute;left:0;right:0;top:420px;text-align:center;font-family:var(--serif);font-size:170px;color:var(--bad);letter-spacing:-.02em;opacity:0}
+
+#cx{left:430px;top:130px;width:1060px}
+#cx h3{font-family:var(--serif);font-weight:400;font-size:46px;margin:14px 0 22px;letter-spacing:-.01em}
+#cx .chips{display:flex;gap:14px;align-items:center;font-family:var(--mono);font-size:24px;color:var(--muted);margin-bottom:22px}
+#cx .chip{padding:6px 16px;border-radius:10px;background:var(--panel2);opacity:0}
+#cx .chip.now{background:var(--accent);color:#fff}
+#cx .steps{display:grid;gap:12px}
+#cx .step{display:flex;gap:22px;align-items:center;background:var(--panel2);border-radius:12px;padding:14px 22px;font-family:var(--mono);font-size:26px;opacity:0}
+#cx .step i{font-style:normal;color:var(--faint);width:24px}
+#cx .obs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:22px}
+#cx .obs div{background:#1d1c1b;border-radius:12px;padding:16px 20px;opacity:0}
+#cx .obs small{font-size:15px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+#cx .obs b{display:block;font-family:var(--mono);font-size:40px;font-weight:500;margin-top:4px}
+#cx .foot{margin-top:22px;display:flex;gap:18px;align-items:center;opacity:0}
+
+#diag{left:330px;top:150px;width:1260px}
+#diag .loc{font-family:var(--mono);font-size:44px;margin-top:14px;color:var(--bad)}
+#diag p{font-size:27px;line-height:1.5;color:var(--muted);max-width:60ch;margin:14px 0 26px}
+#diff{background:#161514;border-radius:14px;padding:22px 0;font-family:var(--mono);font-size:25px;line-height:1.75;overflow:hidden}
+#diff div{padding:0 28px;white-space:pre}
+#diff .dm{background:rgba(255,140,131,.12);color:var(--bad)}
+#diff .dp{background:rgba(107,217,160,.12);color:var(--good)}
+#diff .ctx{color:var(--muted)}
+#diag .rev{display:flex;gap:16px;margin-top:22px;opacity:0}
+
+#verify{left:460px;top:120px;width:1000px}
+#verify .check{display:flex;justify-content:space-between;align-items:center;padding:20px 26px;background:var(--panel2);border-radius:12px;margin-top:14px;font-size:27px;opacity:0}
+#verify .check small{display:block;font-family:var(--mono);font-size:19px;color:var(--muted);margin-top:4px}
+#verify .check .mark{font-family:var(--mono);color:var(--good);font-size:30px;opacity:0}
+#verdict{margin-top:30px;text-align:center;font-family:var(--serif);font-size:96px;color:var(--good);letter-spacing:-.01em;opacity:0}
+#pr{margin-top:8px;text-align:center;font-family:var(--mono);font-size:24px;color:var(--muted);opacity:0}
+
+/* ---------- scene 8: web + end ---------- */
+#web{position:absolute;left:210px;top:120px;width:1500px;height:840px;border-radius:22px;overflow:hidden;background:#262624;border:1px solid var(--line);box-shadow:0 60px 160px rgba(0,0,0,.55);display:flex;opacity:0}
+#web .side{width:300px;background:#1f1e1d;padding:26px 20px;display:grid;align-content:start;gap:10px;font-size:20px}
+#web .side .wm{display:flex;align-items:center;gap:12px;font-family:var(--serif);font-size:32px;margin-bottom:16px}
+#web .side .wm svg{width:34px;height:34px}
+#web .nav{padding:10px 14px;border-radius:10px;color:var(--muted)}
+#web .nav.new{background:var(--panel2);color:var(--ink)}
+#web .rec{font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:18px}
+#web .item{display:flex;gap:10px;align-items:center;padding:8px 14px;color:var(--muted);font-size:18px}
+#web .item i{width:9px;height:9px;border-radius:50%;background:var(--good)}
+#web .main{flex:1;position:relative}
+#web .hello{position:absolute;top:130px;left:0;right:0;text-align:center;font-family:var(--serif);font-size:44px}
+#web .comp{position:absolute;left:150px;right:150px;bottom:70px}
+#web .chips{display:flex;gap:12px;margin-bottom:14px}
+#web .chip{padding:8px 16px;border-radius:999px;border:1px solid var(--line);font-size:18px;color:var(--muted)}
+#web .chip.repo{color:var(--ink)}
+#web .box{border:1px solid var(--line);border-radius:18px;background:var(--panel2);padding:22px 24px;font-size:22px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+#web .send{width:40px;height:40px;border-radius:10px;background:var(--accent)}
+#webtag{position:absolute;left:0;right:0;top:36px;text-align:center;font-size:24px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);opacity:0}
+
+#end .brand{justify-content:center}
+#end .line{font-family:var(--serif);font-size:64px;margin-top:40px;letter-spacing:-.01em}
+#end .line em{color:var(--accent)}
+#end .links{margin-top:50px;display:flex;gap:40px;justify-content:center;font-family:var(--mono);font-size:26px;color:var(--muted)}
+#end .bob{margin-top:40px;font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+#end > div > *{opacity:0}
+
+/* ---------- captions + chrome ---------- */
+#cap{position:absolute;left:0;right:0;bottom:44px;text-align:center;pointer-events:none}
+#cap span{display:inline-block;max-width:1400px;font-size:30px;line-height:1.35;padding:10px 24px;border-radius:12px;background:rgba(15,14,13,.72);color:var(--ink);text-wrap:balance}
+#cap span:empty{display:none}
+.nocap #cap{display:none}
+#ui{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);display:flex;gap:10px;align-items:center;font:14px var(--sans);color:#ccc;background:rgba(0,0,0,.6);padding:8px 14px;border-radius:12px}
+#ui button{font:inherit;color:#fff;background:#333;border:0;border-radius:8px;padding:6px 12px;cursor:pointer}
+#ui button:focus-visible{outline:2px solid var(--accent)}
+#ui input{width:360px;accent-color:var(--accent)}
+.render #ui{display:none}
+@media (prefers-reduced-motion: reduce){#grain{display:none}}
+</style>
+
+<div id="fit"><div id="stage">
+  <div id="grain"></div>
+
+  <!-- S1 -->
+  <div class="layer center" id="s1"><div>
+    <div class="calls">
+      <div class="call"><span class="verb">POST</span><span>/orders <span class="mut">{ total: 100 }</span></span><span class="ok">201</span></div>
+      <div class="call"><span class="verb">POST</span><span>/orders/7/cancel <span class="mut">→ refunds 100</span></span><span class="ok">200</span></div>
+      <div class="call"><span class="verb">POST</span><span>/orders/7/refund <span class="mut">{ amount: 100 }</span></span><span class="ok">200</span></div>
+    </div>
+    <div class="tally">Refunded on a ₹100 order<b>₹<span id="s1n">0</span></b></div>
+    <div class="tests">✓ 14 / 14 unit tests passing</div>
+  </div></div>
+
+  <!-- S2 -->
+  <div class="layer" id="s2">
+    <div class="guess">AI can guess.</div>
+    <div class="strike"></div>
+    <div class="prove">Rook <em>proves.</em></div>
+    <div class="brand" id="s2brand"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#262624"/><path fill="#e0563f" d="M9 7h3v3h2V7h4v3h2V7h3v6l-2 2v7h2v3H9v-3h2v-7l-2-2z"/></svg><span>Rook</span></div>
+    <div class="tag">Invariant breaker · powered by IBM Bob</div>
+  </div>
+
+  <!-- S3–S7: terminal + proof cards -->
+  <div class="layer" id="tl">
+    <div id="cam">
+      <div id="term">
+        <div class="bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="title">~/shop-app — rook</span></div>
+        <div id="tbody">
+          <div class="ln" id="l0"><span class="ps">$</span><span id="cmd"></span><span class="cursor" id="cur"></span></div>
+          <div class="ln" id="l1"><span class="fnt">Run started · shop-app · workspace is a copy, your repo is never touched</span></div>
+          <div class="ln ag" id="l2"><span class="blob" style="background:#5EC8B8"></span><span class="who" style="color:#5EC8B8">Scout</span><span class="g">✓</span><span class="mut">Express + SQLite store · 9 files read</span></div>
+          <div class="ln ag" id="l3"><span class="blob" style="background:#F0A060"></span><span class="who" style="color:#F0A060">Mechanic</span><span class="g">✓</span><span class="mut">app started in a Docker sandbox</span></div>
+          <div class="ln ag" id="l4"><span class="blob" style="background:#7FB2F0"></span><span class="who" style="color:#7FB2F0">Mapper</span><span class="g">✓</span><span class="mut">8 actions, 2 state readers · all dry-ran OK</span></div>
+          <div class="ln ag" id="l5"><span class="blob" style="background:#C98BF0"></span><span class="who" style="color:#C98BF0">Lawmaker</span><span class="g">✓</span><span class="mut">proposed 4 business rules from the code</span></div>
+          <div class="ln rule on" id="r1"><span class="box">✓</span><span class="txt">refunded total never exceeds the order total</span><span class="fnt">orders.js:258</span></div>
+          <div class="ln rule on" id="r2"><span class="box">✓</span><span class="txt">product stock never goes below zero</span></div>
+          <div class="ln rule on" id="r3"><span class="box">✓</span><span class="txt">a customer cannot create products</span></div>
+          <div class="ln rule" id="r4"><span class="box"></span><span class="txt">order total is always positive</span><span class="r" id="r4why" style="opacity:0">Rule Critic: trivially true</span></div>
+          <div class="ln" id="l6"><span class="y">?</span><span>Approve 3 rules?</span><span class="mut">(Y / n)</span><span class="g" id="yes" style="opacity:0">Y</span></div>
+        </div>
+        <div id="status"><span class="pill">IBM Bob · 13 agents</span><span id="stxt">Searching…</span><span style="margin-left:auto" id="coins">0.00 coins</span></div>
+      </div>
+    </div>
+
+    <div class="card" id="search">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="eyebrow">Live search · the engine judges</span><span class="pillx pbad" id="spill" style="opacity:0">✗ Rule broken</span></div>
+      <div class="row">
+        <div class="tile"><small>Sequences</small><b id="seq">0</b></div>
+        <div class="tile"><small>Requests</small><b id="req">0</b></div>
+        <div class="tile"><small>Rules checked</small><b>3</b></div>
+      </div>
+    </div>
+    <div id="flash"></div>
+    <div id="broken">Rule broken.</div>
+
+    <div class="card" id="cx">
+      <div style="display:flex;justify-content:space-between"><span class="eyebrow">Counterexample #001</span><span class="pillx pbad">refunded_total_le_order_total</span></div>
+      <h3>Refunds on an order never exceed its total</h3>
+      <div class="chips"><span class="mut">shrinking</span><span class="chip" id="c1">11 steps</span><span class="chip" id="c2">7</span><span class="chip" id="c3">4 · smallest</span></div>
+      <div class="steps">
+        <div class="step"><i>1</i>admin: create_product(price=100)</div>
+        <div class="step"><i>2</i>customer: place_order(qty=1)</div>
+        <div class="step"><i>3</i>customer: cancel_order()</div>
+        <div class="step"><i>4</i>admin: refund_order(amount=100)</div>
+      </div>
+      <div class="obs"><div><small>Order total</small><b>100</b></div><div><small>Refunded</small><b class="r">200</b></div><div><small>Must hold</small><b style="font-size:26px;line-height:1.9">refunded ≤ total</b></div></div>
+      <div class="foot"><span class="pillx pgood">✓ Replayed 10 / 10 · real bug</span><span class="fnt" style="font-family:var(--mono);font-size:20px">regression test written: rook_cx_001.test.js</span></div>
+    </div>
+
+    <div class="card" id="diag">
+      <div style="display:flex;justify-content:space-between"><span class="eyebrow">Detective · root cause</span><span class="pillx pgood" id="drev1" style="opacity:0">✓ Diagnosis Reviewer</span></div>
+      <div class="loc">src/routes/orders.js : 264</div>
+      <p>Each refund is checked against the full order total, not what is still refundable, so a cancelled order can be refunded again.</p>
+      <div id="diff">
+        <div class="ctx">@@ -262,3 +262,3 @@ router.post('/:id/refund')</div>
+        <div class="ctx">   const numAmount = Number(req.body.amount);</div>
+        <div class="dm">-  if (numAmount &gt; order.total) {</div>
+        <div class="dp">+  if (numAmount &gt; order.total - order.refundedTotal) {</div>
+        <div class="ctx">     return res.status(400).json({ error: 'refund too large' });</div>
+      </div>
+      <div class="rev"><span class="pillx pgood">✓ Surgeon · 1-line fix</span><span class="pillx pgood">✓ Fix Reviewer</span></div>
+    </div>
+
+    <div class="card" id="verify">
+      <span class="eyebrow">Verification by the engine</span>
+      <div class="check"><div>Exact replay<small>rule held in 10 / 10 replays</small></div><span class="mark">✓</span></div>
+      <div class="check"><div>Project tests<small>npm test · all passing</small></div><span class="mark">✓</span></div>
+      <div class="check"><div>New regression test<small>fails before the fix, passes after</small></div><span class="mark">✓</span></div>
+      <div class="check"><div>Fresh search<small>new seed · no violation found</small></div><span class="mark">✓</span></div>
+      <div id="verdict">✓ Fix verified</div>
+      <div id="pr">branch rook/fix-cx-001 · pull request opened with the evidence</div>
+    </div>
+  </div>
+
+  <!-- S8 -->
+  <div class="layer" id="s8">
+    <div id="webtag">Also on the web</div>
+    <div id="web">
+      <div class="side">
+        <div class="wm"><svg viewBox="0 0 32 32"><path fill="#e0563f" d="M9 7h3v3h2V7h4v3h2V7h3v6l-2 2v7h2v3H9v-3h2v-7l-2-2z"/></svg>Rook</div>
+        <div class="nav new">+ New run</div><div class="nav">Counterexamples</div><div class="nav">Rules</div><div class="nav">Repositories</div>
+        <div class="rec">Recents</div>
+        <div class="item"><i></i>shop-app · fixed</div><div class="item"><i></i>minishop · fixed</div><div class="item"><i style="background:var(--warn)"></i>billing-service · found</div>
+      </div>
+      <div class="main">
+        <div class="hello">What should Rook check next, Ayush?</div>
+        <div class="comp">
+          <div class="chips"><span class="chip">● IBM Bob</span><span class="chip repo">⌂ tony19053000/shop-app</span></div>
+          <div class="box"><span id="webtype"></span><span class="send"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="layer center" id="end"><div>
+    <div class="brand"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="#262624"/><path fill="#e0563f" d="M9 7h3v3h2V7h4v3h2V7h3v6l-2 2v7h2v3H9v-3h2v-7l-2-2z"/></svg><span>Rook</span></div>
+    <div class="line">Don't ask AI if your code is correct. <em>Make the code prove it.</em></div>
+    <div class="links"><span>rook-weld-six.vercel.app</span><span>github.com/tony19053000/rook</span></div>
+    <div class="bob">Built with IBM Bob · IBM Bob Hackathon 2026</div>
+  </div></div>
+
+  <div id="cap"><span id="capt"></span></div>
+</div></div>
+
+<div id="ui"><button id="play" type="button">Play</button><input id="scrub" type="range" min="0" max="150" step="0.05" value="0" aria-label="Timeline"><span id="clock">0:00</span><button id="capbtn" type="button">Captions on</button></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const params = new URLSearchParams(location.search);
+if (params.has("render")) document.body.classList.add("render");
+if (params.get("captions") === "0") document.body.classList.add("nocap");
+
+function fit(){ const s = Math.min(innerWidth/1920, innerHeight/1080); $("#stage").style.transform = `scale(${s})`; }
+addEventListener("resize", fit); fit();
+
+const tl = gsap.timeline({ paused: true });
+const EO = "power3.out", EIO = "power2.inOut", SPR = "back.out(2.2)";
+
+function typeText(el, text, at, dur){
+  const p = { n: 0 };
+  tl.to(p, { n: text.length, duration: dur, ease: "none", onUpdate(){ el.textContent = text.slice(0, Math.round(p.n)); } }, at);
+}
+function count(el, to, at, dur, fmt = v => Math.round(v).toLocaleString("en-IN")){
+  const p = { v: 0 };
+  tl.to(p, { v: to, duration: dur, ease: "power1.inOut", onUpdate(){ el.textContent = fmt(p.v); } }, at);
+}
+const show = (sel, at) => tl.set(sel, { visibility: "visible" }, at);
+const hide = (sel, at) => tl.set(sel, { visibility: "hidden" }, at);
+
+/* S1 · 0–12 */
+show("#s1", 0);
+tl.from("#s1 .calls", { scale: 1.06, duration: 12, ease: "none" }, 0);
+gsap.utils.toArray("#s1 .call").forEach((el, i) => tl.fromTo(el, { opacity: 0, x: -40 }, { opacity: 1, x: 0, duration: .7, ease: EO }, 0.6 + i * 1.3));
+tl.to("#s1 .tally", { opacity: 1, duration: .6 }, 4.8);
+count($("#s1n"), 200, 5.0, 1.8);
+tl.fromTo("#s1 .tally b", { scale: 1 }, { scale: 1.12, duration: .25, yoyo: true, repeat: 1, ease: "power2.out" }, 6.8);
+tl.to("#s1 .tests", { opacity: 1, duration: .6 }, 7.6);
+tl.to("#s1", { opacity: 0, filter: "blur(12px)", duration: .8, ease: EIO }, 11.2);
+hide("#s1", 12);
+
+/* S2 · 12–24 */
+show("#s2", 12);
+tl.fromTo("#s2 .guess", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: .9, ease: EO }, 12.2);
+tl.to("#s2 .strike", { width: 980, duration: .6, ease: "power4.inOut" }, 14.4);
+tl.to("#s2 .guess", { opacity: .35, duration: .4 }, 14.9);
+tl.fromTo("#s2 .prove", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1, ease: EO }, 15.3);
+tl.to(["#s2 .guess", "#s2 .strike", "#s2 .prove"], { opacity: 0, y: -30, duration: .7, ease: EIO }, 18.6);
+tl.fromTo("#s2brand", { opacity: 0, scale: .85 }, { opacity: 1, scale: 1, duration: 1.1, ease: SPR }, 19.3);
+tl.fromTo("#s2brand svg", { rotate: -12 }, { rotate: 0, duration: 1.1, ease: SPR }, 19.3);
+tl.to("#s2brand", { y: -60, duration: .8, ease: EO }, 20.6);
+tl.fromTo("#s2 .tag", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: .8, ease: EO }, 20.9);
+tl.to("#s2", { opacity: 0, scale: 1.04, duration: .8, ease: EIO }, 23.2);
+hide("#s2", 24);
+
+/* S3 · 24–46: terminal hero, agents */
+show("#tl", 24);
+tl.fromTo("#cam", { scale: .82, y: 120, opacity: 0 }, { scale: 1, y: 0, opacity: 1, duration: 1.4, ease: "expo.out" }, 24);
+tl.to("#l0", { opacity: 1, duration: .2 }, 24.6);
+typeText($("#cmd"), " rook run tony19053000/shop-app", 25.2, 2.2);
+tl.to("#cur", { opacity: 0, duration: .1 }, 27.6);
+tl.to("#l1", { opacity: 1, duration: .5 }, 28.0);
+["#l2", "#l3", "#l4"].forEach((id, i) => {
+  const at = 29.4 + i * 3.2;
+  tl.to(id, { opacity: 1, duration: .4 }, at);
+  tl.fromTo(id + " .blob", { scale: 0 }, { scale: 1, duration: .7, ease: "elastic.out(1,0.45)" }, at);
+  tl.fromTo(id + " .blob", { y: 0 }, { y: -6, duration: .35, yoyo: true, repeat: 3, ease: "sine.inOut" }, at + .6);
+});
+tl.to("#cam", { scale: 1.08, x: 60, y: 40, duration: 8, ease: "sine.inOut" }, 30);
+
+/* S4 · 46–64: rules + approval */
+tl.to("#cam", { scale: 1.12, x: 20, y: -60, duration: 3, ease: EIO }, 45.5);
+tl.to("#l5", { opacity: 1, duration: .4 }, 46.2);
+tl.fromTo("#l5 .blob", { scale: 0 }, { scale: 1, duration: .7, ease: "elastic.out(1,0.45)" }, 46.2);
+["#r1", "#r2", "#r3", "#r4"].forEach((id, i) => tl.fromTo(id, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: .5, ease: EO }, 48 + i * .9));
+tl.add(() => {}, 52);
+tl.set("#r4", { attr: { class: "ln rule off" } }, 53.4);
+tl.to("#r4why", { opacity: 1, duration: .4 }, 53.4);
+tl.fromTo("#r4", { x: 0 }, { x: 10, duration: .08, yoyo: true, repeat: 3 }, 53.4);
+tl.to("#l6", { opacity: 1, duration: .4 }, 56.5);
+tl.to("#yes", { opacity: 1, duration: .1 }, 59.2);
+tl.fromTo("#l6", { backgroundColor: "rgba(107,217,160,0)" }, { backgroundColor: "rgba(107,217,160,.14)", duration: .25, yoyo: true, repeat: 1 }, 59.3);
+tl.to("#status", { opacity: 1, duration: .5 }, 60.4);
+tl.to("#cam", { scale: .9, x: -330, y: 0, opacity: .45, filter: "blur(2px)", duration: 1.6, ease: EIO }, 62.4);
+
+/* S5 · 64–92: search → break → shrink → replay */
+tl.fromTo("#search", { opacity: 0, y: 60, scale: .96 }, { opacity: 1, y: 0, scale: 1, duration: .9, ease: EO }, 63.6);
+count($("#seq"), 1842, 64.4, 5.2);
+count($("#req"), 23107, 64.4, 5.2);
+tl.to("#flash", { opacity: .35, duration: .08 }, 69.7);
+tl.to("#flash", { opacity: 0, duration: .5 }, 69.8);
+tl.to("#spill", { opacity: 1, duration: .2 }, 69.7);
+tl.fromTo("#search", { x: 0 }, { x: 14, duration: .06, yoyo: true, repeat: 5 }, 69.7);
+tl.to("#search", { opacity: 0, y: -40, duration: .5, ease: EIO }, 71.2);
+tl.fromTo("#broken", { opacity: 0, scale: 1.25, letterSpacing: ".08em" }, { opacity: 1, scale: 1, letterSpacing: "-.02em", duration: .9, ease: "expo.out" }, 71.4);
+tl.to("#broken", { opacity: 0, y: -40, duration: .5, ease: EIO }, 73.6);
+tl.fromTo("#cx", { opacity: 0, y: 70, scale: .96 }, { opacity: 1, y: 0, scale: 1, duration: .9, ease: EO }, 74.1);
+[["#c1", 75.2], ["#c2", 76.4], ["#c3", 77.6]].forEach(([id, at], i, arr) => {
+  tl.to(id, { opacity: 1, duration: .3 }, at);
+  tl.set(id, { attr: { class: "chip now" } }, at);
+  if (i) tl.set(arr[i - 1][0], { attr: { class: "chip" } }, at);
+});
+gsap.utils.toArray("#cx .step").forEach((el, i) => tl.fromTo(el, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: .5, ease: EO }, 78.6 + i * .7));
+gsap.utils.toArray("#cx .obs div").forEach((el, i) => tl.fromTo(el, { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: .5, ease: EO }, 82.4 + i * .35));
+tl.fromTo("#cx .obs .r", { scale: 1 }, { scale: 1.18, duration: .22, yoyo: true, repeat: 1 }, 83.4);
+tl.to("#cx .foot", { opacity: 1, duration: .6 }, 85.8);
+tl.to("#cx", { opacity: 0, x: -80, duration: .7, ease: EIO }, 91.2);
+
+/* S6 · 92–114: diagnosis + diff */
+tl.fromTo("#diag", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: .8, ease: EO }, 92);
+tl.fromTo("#diag .loc", { letterSpacing: ".2em", opacity: 0 }, { letterSpacing: "0em", opacity: 1, duration: 1, ease: "expo.out" }, 92.6);
+tl.to("#drev1", { opacity: 1, duration: .4 }, 97);
+gsap.utils.toArray("#diff div").forEach((el, i) => tl.fromTo(el, { opacity: 0 }, { opacity: 1, duration: .35 }, 99 + i * .45));
+tl.fromTo("#diff .dp", { clipPath: "inset(0 100% 0 0)" }, { clipPath: "inset(0 0% 0 0)", duration: 1.1, ease: "power2.out" }, 100.4);
+tl.to("#diag .rev", { opacity: 1, duration: .5 }, 105);
+tl.to("#diag", { opacity: 0, y: -50, duration: .7, ease: EIO }, 113.2);
+
+/* S7 · 114–134: verify + PR */
+tl.fromTo("#verify", { opacity: 0, y: 60 }, { opacity: 1, y: 0, duration: .8, ease: EO }, 114);
+gsap.utils.toArray("#verify .check").forEach((el, i) => {
+  const at = 115.2 + i * 2.4;
+  tl.fromTo(el, { opacity: 0, x: -24 }, { opacity: 1, x: 0, duration: .5, ease: EO }, at);
+  tl.fromTo(el.querySelector(".mark"), { opacity: 0, scale: 2.4 }, { opacity: 1, scale: 1, duration: .6, ease: SPR }, at + 1.1);
+});
+tl.fromTo("#verdict", { opacity: 0, scale: .8 }, { opacity: 1, scale: 1, duration: 1, ease: SPR }, 125.4);
+tl.to("#pr", { opacity: 1, duration: .6 }, 127.4);
+tl.to("#tl", { opacity: 0, duration: .8, ease: EIO }, 133.2);
+hide("#tl", 134);
+
+/* S8 · 134–150: web + end card */
+show("#s8", 134);
+tl.to("#webtag", { opacity: 1, duration: .6 }, 134.3);
+tl.fromTo("#web", { opacity: 0, y: 80, rotateX: 12, scale: .94 }, { opacity: 1, y: 0, rotateX: 0, scale: 1, duration: 1.3, ease: "expo.out" }, 134.4);
+typeText($("#webtype"), "Find bugs in the refund flow", 136.4, 2);
+tl.to("#s8", { opacity: 0, scale: .96, duration: .8, ease: EIO }, 141.6);
+hide("#s8", 142.4);
+show("#end", 142.4);
+tl.fromTo("#end .brand", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .9, ease: SPR }, 142.5);
+tl.fromTo("#end .line", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: .9, ease: EO }, 143.3);
+tl.fromTo("#end .links", { opacity: 0 }, { opacity: 1, duration: .8 }, 145.2);
+tl.fromTo("#end .bob", { opacity: 0 }, { opacity: 1, duration: .8 }, 146);
+tl.to({}, { duration: .1 }, 149.9);
+
+/* captions (voiceover lines) */
+const CAPS = [
+  [0.5, 11, "Three normal requests. A customer gets refunded twice. Every test still passes."],
+  [12.3, 18.4, "AI reviewers can only say this might be wrong. That's a guess."],
+  [19.4, 23.2, "Rook proves it."],
+  [24.6, 45.4, "One command. IBM Bob agents read your code, start your app in a sandbox, and map its API."],
+  [46, 63.4, "Bob proposes business rules from the code. A critic rejects weak ones. You approve."],
+  [63.8, 73.5, "Then the engine, not the AI, runs thousands of real request sequences and checks every rule after every step."],
+  [74, 91, "It shrinks the failure to the smallest proof, and replays it ten out of ten."],
+  [92, 113, "Bob finds the root cause and writes a one-line fix, with a regression test."],
+  [114, 133, "Only when the replay, your tests, the new test and a fresh search all pass does Rook call it fixed. Then it opens a pull request."],
+  [134.3, 141.6, "The same agents run on the web. Connect GitHub, pick a repo, and go."],
+  [143, 149.8, "Don't ask AI if your code is correct. Make the code prove it."],
+];
+const capEl = $("#capt");
+tl.eventCallback("onUpdate", () => {
+  const t = tl.time();
+  const c = CAPS.find(([a, b]) => t >= a && t <= b);
+  const txt = c ? c[2] : "";
+  if (capEl.textContent !== txt) capEl.textContent = txt;
+  const s = $("#scrub"); if (s && !scrubbing) s.value = t;
+  $("#clock").textContent = `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+});
+
+/* controls + render hook */
+let scrubbing = false;
+window.seek = t => { tl.pause(); tl.seek(t, false); };
+window.DURATION = 150;
+$("#play").onclick = () => { if (tl.paused()) { if (tl.progress() >= 1) tl.seek(0); tl.play(); $("#play").textContent = "Pause"; } else { tl.pause(); $("#play").textContent = "Play"; } };
+$("#scrub").oninput = e => { scrubbing = true; tl.pause(); tl.seek(+e.target.value); $("#play").textContent = "Play"; scrubbing = false; };
+$("#capbtn").onclick = () => { document.body.classList.toggle("nocap"); $("#capbtn").textContent = document.body.classList.contains("nocap") ? "Captions off" : "Captions on"; };
+tl.seek(0);
+document.fonts.ready.then(() => { window.READY = true; if (!params.has("render")) { tl.seek(0); } });
+</script>
