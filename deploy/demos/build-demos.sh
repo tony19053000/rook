@@ -4,12 +4,15 @@
 # Each non-comment line: <owner/name> <40-char commit SHA> <https git URL> <recipe>
 # recipe: none | npm (npm ci) | go (go build ./...) | uv (uv sync --frozen)
 # The checkout is verified against the pinned SHA; the app lands in <dest-dir>/<name>, which must match the
-# `app_dir` of its allowlist.yaml entry.
+# `app_dir` of its allowlist.yaml entry. Go apps share one module cache and one warm build cache in
+# <dest-dir>/.go/{mod,cache} (the allowlist entries point GOMODCACHE/GOCACHE there), so a sandboxed
+# `go run` starts in seconds and never downloads anything.
 set -euo pipefail
 
 manifest=$1
 dest=$2
 mkdir -p "$dest"
+dest=$(cd "$dest" && pwd)
 
 while read -r ref sha url recipe extra; do
     [[ -z "${ref:-}" || "$ref" == \#* ]] && continue
@@ -32,7 +35,7 @@ while read -r ref sha url recipe extra; do
     case "$recipe" in
         none) ;;
         npm) (cd "$app" && npm ci --no-audit --no-fund) ;;
-        go) (cd "$app" && go build ./...) ;;
+        go) (cd "$app" && GOMODCACHE="$dest/.go/mod" GOCACHE="$dest/.go/cache" go build ./...) ;;
         uv) (cd "$app" && uv sync --frozen) ;;
         *) echo "$ref: unknown recipe '$recipe'" >&2; exit 1 ;;
     esac

@@ -14,13 +14,45 @@ entries:
       test: ['{python}', '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-o', 'asyncio_mode=auto']
     command_timeout: 300
 
-# ROOK-039 hooks: add the real demo apps here with the SHAs pinned in repos.txt, e.g.
-#  - repo: tony19053000/shop-app
-#    commit: '<sha>'
-#    app_dir: /opt/rook/demos/shop-app
-#    start: ['node', 'server.js']
-#    port_env: PORT
-#    db_env: DATABASE_PATH
-#    commands: {test: ['npm', 'test', '--']}   # the native test command; replay runs append the test file's path
-#  - repo: tony19053000/billing-service    (app_dir /opt/rook/demos/billing-service)
-#  - repo: tony19053000/wallet-api         (app_dir /opt/rook/demos/wallet-api)
+
+  # The user's three demo apps (ROOK-039), built by build-demos.sh from the SHAs pinned in repos.txt. Each
+  # listens on PORT and HOST, keeps its data in the temp DB file (DATABASE_PATH, SQLite) or in memory, and
+  # answers GET /health. A replay run starts them from the workspace copy: the dependencies stay in app_dir
+  # (the workspace copy leaves out node_modules and .venv, workspace.COPY_IGNORE), see each entry.
+  #
+  # shop-app (Node 22, Express, in-memory store): the image links /node_modules to app_dir/node_modules,
+  # so Node's module lookup (which walks up the parent folders) finds them from /data/workspaces/<run>/.
+  # The test command is vitest from app_dir; replay runs append the regression test's path.
+  - repo: tony19053000/shop-app
+    commit: 'e92c86669dab20af82a711a6927508a75c708fd2'
+    app_dir: /opt/rook/demos/shop-app
+    start: ['/usr/local/bin/node', 'src/server.js']
+    env: {HOST: 127.0.0.1}
+    commands:
+      test: ['/usr/local/bin/node', '/opt/rook/demos/shop-app/node_modules/vitest/vitest.mjs', 'run', '--no-cache']
+    command_timeout: 300
+
+  # billing-service (FastAPI, SQLite): the app dir's uv venv runs the workspace's `app` package (python -m
+  # puts the cwd first on sys.path).
+  - repo: tony19053000/billing-service
+    commit: '21860393a0e4d0a016398c5a55c5c02ac2bf4064'
+    app_dir: /opt/rook/demos/billing-service
+    start: ['/opt/rook/demos/billing-service/.venv/bin/python', '-m', 'uvicorn', 'app.main:app',
+            '--host', '127.0.0.1', '--port', '{port}']
+    db_env: DATABASE_PATH
+    commands:
+      test: ['/opt/rook/demos/billing-service/.venv/bin/python', '-m', 'pytest', '-q', '-p', 'no:cacheprovider']
+    command_timeout: 300
+
+  # wallet-api (Go, SQLite via modernc.org/sqlite): `go run` compiles the workspace's code against the
+  # image's module cache and warm build cache (build-demos.sh), with no toolchain or module download.
+  # No `test` command: `go test` cannot take one file path, so the regression test is Rook's HTTP-level
+  # fallback test (02 section 7.8), run against the app.
+  - repo: tony19053000/wallet-api
+    commit: 'cdfc08c74ac6a7a6f16169e49a1a69d6545cf4fa'
+    app_dir: /opt/rook/demos/wallet-api
+    start: ['/usr/local/go/bin/go', 'run', './cmd/pocketa']
+    db_env: DATABASE_PATH
+    env: {HOST: 127.0.0.1, GOMODCACHE: /opt/rook/demos/.go/mod, GOCACHE: /opt/rook/demos/.go/cache,
+          GOTOOLCHAIN: local, GOFLAGS: -mod=readonly, GOPROXY: 'off', CGO_ENABLED: '0'}
+    health_timeout: 120

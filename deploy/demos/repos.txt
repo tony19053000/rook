@@ -1,7 +1,7 @@
 # Demo apps baked into the hosted image (ROOK-039, U5), pinned by full commit SHA.
 # <owner/name> <commit SHA> <https git URL> <recipe: none|npm|go|uv>
 # Each one also needs an entry in allowlist.yaml (app_dir /opt/rook/demos/<name>) and in demos.yaml.
-#
-# tony19053000/shop-app        <sha>  https://github.com/tony19053000/shop-app.git        npm
-# tony19053000/billing-service <sha>  https://github.com/tony19053000/billing-service.git uv
-# tony19053000/wallet-api      <sha>  https://github.com/tony19053000/wallet-api.git      go
+
+tony19053000/shop-app        e92c86669dab20af82a711a6927508a75c708fd2  https://github.com/tony19053000/shop-app.git        npm
+tony19053000/billing-service 21860393a0e4d0a016398c5a55c5c02ac2bf4064  https://github.com/tony19053000/billing-service.git uv
+tony19053000/wallet-api      cdfc08c74ac6a7a6f16169e49a1a69d6545cf4fa  https://github.com/tony19053000/wallet-api.git      go

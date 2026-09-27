@@ -75,14 +75,20 @@ RUN tgz="/tmp/vendor/bobshell-${BOB_VERSION}.tgz"; \
 
 # Demo apps from pinned SHAs (deploy/demos/repos.txt, ROOK-039), then the interim demo: the minishop fixture.
 COPY deploy/demos/ /opt/rook/config/
-RUN /opt/rook/config/build-demos.sh /opt/rook/config/repos.txt /opt/rook/demos
+# A replay run starts a demo from its workspace copy (/data/workspaces/<run>/), which leaves out node_modules:
+# Node's module lookup walks up the parent folders to this link. `go run` needs a writable build cache.
+RUN /opt/rook/config/build-demos.sh /opt/rook/config/repos.txt /opt/rook/demos \
+    && ln -s /opt/rook/demos/shop-app/node_modules /node_modules \
+    && chown -R rook:rook /opt/rook/demos/.go/cache
 COPY tests/fixtures/minishop/app.py tests/fixtures/minishop/test_minishop_app.py /opt/rook/demos/minishop/
 
 # Bob recordings of our own demo apps only (03 §10), read by replay mode from $HOME/.rook/recordings.
 COPY tests/fixtures/recordings/understand_minishop/ tests/fixtures/recordings/rules_minishop/ \
      tests/fixtures/recordings/design_minishop/ tests/fixtures/recordings/diagnose_minishop/ \
      tests/fixtures/recordings/surgeon_minishop/ tests/fixtures/recordings/session_minishop/ \
-     tests/fixtures/recordings/hosted_minishop/ /home/rook/.rook/recordings/
+     tests/fixtures/recordings/hosted_minishop/ tests/fixtures/recordings/hosted_shop-app/ \
+     tests/fixtures/recordings/hosted_billing-service/ tests/fixtures/recordings/hosted_wallet-api/ \
+     /home/rook/.rook/recordings/
 RUN chown rook:rook /home/rook/.rook && chmod -R a+rX /home/rook/.rook/recordings /opt/rook
 
 COPY deploy/start.sh /usr/local/bin/rook-start

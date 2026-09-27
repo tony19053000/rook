@@ -67,6 +67,13 @@ def test_dockerfile_copies_every_minishop_recording_folder() -> None:
     assert folders, "the minishop recordings are the replay demo"
     for folder in folders:
         assert f"tests/fixtures/recordings/{folder}/" in text
+    hosted = sorted(p.name for p in (ROOT / "tests/fixtures/recordings").glob("hosted_*") if p.is_dir())
+    assert {"hosted_minishop", "hosted_shop-app"} <= set(hosted)
+    for folder in hosted:  # every demo app's hosted recordings reach the image (ROOK-039)
+        assert f"tests/fixtures/recordings/{folder}/" in text
+    # A demo started from its workspace copy finds shop-app's node_modules via /node_modules; Go needs its cache.
+    assert "ln -s /opt/rook/demos/shop-app/node_modules /node_modules" in text
+    assert "chown -R rook:rook /opt/rook/demos/.go/cache" in text
 
 
 def test_bob_is_optional_and_vendored_only() -> None:
@@ -112,20 +119,21 @@ def test_start_sh_refuses_live_mode_without_key(tmp_path: Path) -> None:
 def test_demo_catalog_is_allowlisted_and_pinned() -> None:
     allowlist = Allowlist.from_yaml(DEPLOY / "demos" / "allowlist.yaml")
     demos = load_demo_repos(DEPLOY / "demos" / "demos.yaml")
-    assert [d.ref for d in demos] == ["rook-demo/minishop"]
+    # ROOK-039: a demo app is offered once its recorded hosted replay ends "Fixed and verified".
+    assert [d.ref for d in demos] == ["rook-demo/minishop", "tony19053000/shop-app"]
     for demo in demos:
         entry: AllowlistEntry = allowlist.get(demo.ref, demo.commit)
         assert entry.app_dir == Path("/opt/rook/demos") / demo.name
     assert "/opt/rook/demos/minishop/" in (DEPLOY / "Dockerfile").read_text()
 
 
-def test_the_hosted_image_can_run_the_minishop_regression_tests() -> None:
 def test_minishop_features_the_rule_its_hosted_replay_verifies() -> None:
     """The web's guest default approves only the featured rule: the one whose recorded path verifies."""
     demos = load_demo_repos(DEPLOY / "demos" / "demos.yaml")
     assert next(d for d in demos if d.name == "minishop").featured_rule == "refunded_total_le_paid"
 
 
+def test_the_hosted_image_can_run_the_minishop_regression_tests() -> None:
     """ROOK-039c: replay runs execute the allowlisted `test` command (pytest) from the workspace copy."""
     entry = Allowlist.from_yaml(DEPLOY / "demos" / "allowlist.yaml").get(
         "rook-demo/minishop", "406059b53767b10f157b4eb92105d10af6a0c44d")
@@ -136,7 +144,10 @@ def test_minishop_features_the_rule_its_hosted_replay_verifies() -> None:
 
 def test_build_demos_skips_comments_and_rejects_unpinned(tmp_path: Path) -> None:
     script = DEPLOY / "demos" / "build-demos.sh"
-    ok = subprocess.run(["bash", str(script), str(DEPLOY / "demos" / "repos.txt"), str(tmp_path / "d")],
+    comments = tmp_path / "comments.txt"  # the real repos.txt clones from GitHub: keep only its comments
+    comments.write_text("".join(ln for ln in (DEPLOY / "demos" / "repos.txt").read_text().splitlines(True)
+                                if ln.startswith("#") or not ln.strip()))
+    ok = subprocess.run(["bash", str(script), str(comments), str(tmp_path / "d")],
                         capture_output=True, text=True, check=False)
     assert ok.returncode == 0, ok.stderr
     bad = tmp_path / "repos.txt"
@@ -392,13 +403,13 @@ def test_smoke_answers_like_a_demo_user() -> None:
     rules = {"rules": [{"id": "r1", "accepted": True, "check": "refunded <= paid"},
                        {"id": "r2", "accepted": True, "check": "stock >= 0"}]}
     assert smoke.answer_for({"kind": "approve_rules", "payload": rules}) == ["r1"]
+    featured = {"rules": [{**rules["rules"][0], "featured": False}, {**rules["rules"][1], "featured": True}]}
+    assert smoke.answer_for({"kind": "approve_rules", "payload": featured}) == ["r2"]
+    assert smoke.answer_for({"kind": "approve_rules", "payload": featured}, "all") == "all"
     assert smoke.answer_for({"kind": "fix"}) == "yes"
     assert smoke.answer_for({"kind": "menu", "options": [{"id": "retry"}, {"id": "report"}]}) == "report"
     verify = {"cx_id": "cx_001", "verified": True, "summary": "4/4 checks passed"}
     committed = {"cx_id": "cx_001", "branch": "rook/fix-cx-001"}
-    featured = {"rules": [{**rules["rules"][0], "featured": False}, {**rules["rules"][1], "featured": True}]}
-    assert smoke.answer_for({"kind": "approve_rules", "payload": featured}) == ["r2"]
-    assert smoke.answer_for({"kind": "approve_rules", "payload": featured}, "all") == "all"
     done = {"status": "done", "summary": "Fixed and verified cx_001 (rule r1); committed to local branch"}
     assert smoke.fix_verified(done, {"verify.done": verify, "fix.committed": committed})
     assert not smoke.fix_verified(done, {"verify.done": {**verify, "verified": False}, "fix.committed": committed})

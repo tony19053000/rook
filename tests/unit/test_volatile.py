@@ -64,6 +64,14 @@ def test_fresh_values_rook_sent_are_masked() -> None:
     assert masker.text(f"created item-{fresh}") == "created item-<fresh>"
 
 
+def test_a_long_slug_holding_a_fresh_value_is_always_fresh_never_random() -> None:
+    """ROOK-039: shop-app slugs such as `kitchen-item-<fresh>` are long enough to read as random for some
+    fresh values; they must look the same on every run."""
+    for fresh in ("a1b2c3d4e5", "ZmFrZWZyZXNo", "0123456789"):
+        masker = Masker((fresh,))
+        assert masker.value({"slug": f"kitchen-item-{fresh}"}) == {"slug": "kitchen-item-<fresh>"}
+
+
 def test_text_masks_in_place() -> None:
     token = secrets.token_urlsafe(24)
     line = (f"2026-09-27T01:31:08Z login ok token={token} Authorization: Bearer {token} "

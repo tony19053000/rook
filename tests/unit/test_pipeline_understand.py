@@ -452,3 +452,13 @@ def test_example_shapes_still_match() -> None:
     assert set(SUMMARY) == set(example_for(RepoSummary))
     SandboxPlan.model_validate(PLAN)
     MapperOutput.model_validate(MAPPER_PARTS)
+
+
+def test_read_files_leaves_out_binary_files(tmp_path: Path) -> None:
+    """ROOK-039: shop-app keeps PNG screenshots in docs/; a NUL byte can't go into `bob run`'s argv."""
+    from rook.agents.understand import read_files
+
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "shot.png").write_bytes(b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR")
+    (tmp_path / "README.md").write_text("# Shop\n")
+    assert read_files(tmp_path, ["docs/shot.png", "README.md"]) == {"README.md": "# Shop\n"}

@@ -149,9 +149,12 @@ class Masker:
             return f"{m.group(1)} {self.label('token', m.group(2))}"
         if _UUID_FULL.fullmatch(text):
             return self.label("uuid", text.lower())
+        masked = self._fresh(text)
+        if masked != text:  # Rook's own fresh value inside a longer word (a slug): always `<fresh>`
+            return masked
         if _WORD.fullmatch(text) and looks_random(text):
             return self.label("random", text)
-        return self._fresh(text)
+        return text
 
     def _fresh(self, text: str) -> str:
         for token in self.fresh:

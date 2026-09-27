@@ -190,6 +190,8 @@ def read_files(workspace: Path, rels: list[str]) -> dict[str, str]:
         if path is None:
             continue
         text = _read_text(path)
+        if "\x00" in text:  # a binary file (an image in docs/): no use to Bob, and argv can't carry NUL
+            continue
         if total + len(text) > FILES_MAX_TOTAL:
             break
         out[path.relative_to(workspace.resolve()).as_posix()] = text

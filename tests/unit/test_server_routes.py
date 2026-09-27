@@ -101,6 +101,8 @@ async def test_create_run_for_a_user_and_a_guest(tmp_path: Path) -> None:
     spec = factory.sessions[user_run].spec
     assert spec.repo.kind == "demo" and spec.repo.ref == DEMO.ref and spec.repo.commit == DEMO.commit
     assert spec.options.hosted is True and spec.options.auto is False and spec.request == "find a refund bug"
+    # Replay mode: the recorded search (fixed seed, one sequence at a time), so DIAGNOSE replays (ROOK-039).
+    assert (spec.options.seed, spec.options.concurrency, spec.options.verify_seconds) == (7, 1, 30.0)
     assert spec.user_id == "u_alice"
     assert factory.sessions[guest_run].spec.user_id.startswith("g_")
     assert "rook_guest=" in guest_response.headers["set-cookie"]

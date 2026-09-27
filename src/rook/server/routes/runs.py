@@ -42,6 +42,12 @@ LIST_LIMIT = 50
 
 # --- admission: which repo may run, and whether there is room for it ---
 
+# A replay-mode run replays recorded Bob calls, so its search must be the recorded one: a fixed seed, one sequence
+# at a time (with parallel sequences the app's own counters, such as order numbers, depend on thread timing), so
+# the counterexample and the Detective's evidence (its recording key) are the same on every run. A shorter
+# fresh search in VERIFY keeps a demo run near a minute; no Bob prompt depends on it.
+REPLAY_SEARCH: dict[str, int | float] = {"seed": 7, "concurrency": 1, "verify_seconds": 30.0}
+
 
 def _demo_repo(state: ServerState, caller: Caller, kind: str, ref: str) -> RepoSpec:
     """Only allowlisted demo repos run on the hosted server (03 §3)."""
@@ -77,7 +83,8 @@ def _admit(state: ServerState, caller: Caller, request: Request, auto: bool) -> 
         limits = {f"guest:{caller.id}": settings.guest_runs_per_day, f"ip:{ip}": settings.guest_runs_per_ip_per_day}
         if not state.db.consume_run(limits, day):
             raise HTTPException(429, GUEST_LIMIT_MESSAGE, headers=retry)
-    return SessionOptions(auto=auto, hosted=True, daily_cap=cap, daily_spent=spent)
+    options = SessionOptions(auto=auto, hosted=True, daily_cap=cap, daily_spent=spent)
+    return options.model_copy(update=REPLAY_SEARCH) if settings.bob_mode == "replay" else options
 
 
 def _start(state: ServerState, repo: RepoSpec, request_text: str, options: SessionOptions, owner: str,

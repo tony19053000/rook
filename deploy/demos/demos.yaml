@@ -1,7 +1,8 @@
 # The demo catalog of GET /repos (ROOK_DEMO_REPOS). Every ref@commit must also be in allowlist.yaml.
 repos:
   - {ref: rook-demo/minishop, commit: '406059b53767b10f157b4eb92105d10af6a0c44d', name: minishop, language: Python, featured_rule: refunded_total_le_paid}
-# ROOK-039:
-#  - {ref: tony19053000/shop-app, commit: '<sha>', name: shop-app, language: JavaScript}
-#  - {ref: tony19053000/billing-service, commit: '<sha>', name: billing-service, language: Python}
-#  - {ref: tony19053000/wallet-api, commit: '<sha>', name: wallet-api, language: Go}
+  - {ref: tony19053000/shop-app, commit: 'e92c86669dab20af82a711a6927508a75c708fd2', name: shop-app, language: JavaScript,
+     featured_rule: refunded_total_le_order_total}
+# ROOK-039: billing-service and wallet-api are pinned in repos.txt and allowlisted, but they are not
+# offered until a recorded hosted replay ends "Fixed and verified" (tests/unit/test_demo_apps.py). Add them as
+#  - {ref: tony19053000/<name>, commit: '<sha from repos.txt>', name: <name>, language: <lang>, featured_rule: <rule id>}
