@@ -8,9 +8,11 @@ PATH, so no AWS call and no network ever happens. The image build and the in-con
 
 from __future__ import annotations
 
+import fnmatch
 import importlib.util
 import json
 import os
+import re
 import stat
 import subprocess
 import sys
@@ -94,6 +96,15 @@ def test_dockerignore_is_an_allowlist() -> None:
     assert "**/.env*" in lines and "**/*.pem" in lines
     for secretish in ("!.env", "!.git", "!web", "!deploy/aws", "!deploy/"):
         assert secretish not in lines
+
+
+def test_dockerignore_lets_every_copied_recording_folder_in() -> None:
+    allowed = [ln.strip()[1:].rstrip("/") for ln in (ROOT / ".dockerignore").read_text().splitlines()
+               if ln.strip().startswith("!tests/fixtures/recordings/")]
+    copied = re.findall(r"tests/fixtures/recordings/[\w-]+", (DEPLOY / "Dockerfile").read_text())
+    assert copied
+    for folder in copied:
+        assert any(fnmatch.fnmatch(folder, pattern) for pattern in allowed), f"{folder} is not in the build context"
 
 
 def test_start_sh_refuses_live_mode_without_bob(tmp_path: Path) -> None:

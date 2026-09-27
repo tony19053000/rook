@@ -13,6 +13,7 @@
 !tests/fixtures/minishop/app.py
 !tests/fixtures/minishop/test_minishop_app.py
 !tests/fixtures/recordings/*_minishop/
+!tests/fixtures/recordings/hosted_*/
 **/__pycache__
 **/*.pyc
 **/.env*
