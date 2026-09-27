@@ -72,7 +72,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-027 | Question prompts + cards | P0 | DONE | reviewer PASS round 1. Follow-up: 'e to edit one rule' not implemented (no Session answer shape; 04 §3.4). 024 wires prompts.register(app) + Backend.answer Any |
 | ROOK-028 | Background run + chat | P0 | DONE | reviewer PASS round 1; teardown LookupError root cause = callbacks ran in run-thread contextvars → app context captured at bind(); regression test 20x green |
 | ROOK-029 | FastAPI server | P0 | DONE | reviewer PASS round 1. Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify the Vercel rewrite streams SSE |
-| ROOK-030 | Auth (Supabase + CLI login) | P1 | TODO | needs U1 |
+| ROOK-030 | Auth (Supabase + CLI login) | P1 | IN PROGRESS | coder started: Supabase Google login (PKCE, sb_publishable key), server JWT HS256 + JWKS |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | DONE | reviewer PASS round 1; action.yml + rook-pr-comment (dry run, marker upsert, SHA pins verified). Open: Bob tgz hosting for live mode; README `@<full-commit-sha>` placeholder; never run on a real runner |
 | ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
@@ -90,7 +90,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 
 | ID | Task | Status |
 |---|---|---|
-| U1 | Supabase + Google OAuth | TODO |
+| U1 | Supabase + Google OAuth | DONE (Supabase nfegrmjlbwfgvcyhwddh; Google app in Testing mode → owner as test user; judges use guest) |
 | U2 | GitHub App "Rook" | TODO |
 | U3 | AWS account + IAM user rook-deploy (profile `rook`) | DONE (was HF Space; $100 credits) |
 | U4 | Vercel project | DONE (rook-weld-six.vercel.app) |
