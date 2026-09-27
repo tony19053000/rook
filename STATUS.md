@@ -34,7 +34,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | Product | Rook (`rook`), IBM Bob-powered invariant breaker |
 | Repo | https://github.com/tony19053000/rook (public) |
 | Hosted web | not deployed yet (Vercel) |
-| Hosted API | not deployed yet (AWS EC2 + Caddy; scripts in deploy/aws/) |
+| Hosted API | https://44-239-185-88.sslip.io (AWS EC2 t3.small + Caddy, replay mode) |
 | Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 2.01 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
 
