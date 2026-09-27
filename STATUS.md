@@ -2,15 +2,15 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-27 03:19 IST · **By:** Account 1 (ROOK-037 DONE: AWS image + scripts; user to run create/deploy)
+**Last updated:** 2026-09-27 08:08 IST · **By:** Account 1 (ROOK-038 DONE; user deploys + sets ROOK_PROXY_SECRET)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [██████████████████████████░░░░]  87%  35 / 40 tickets
-TIME      [██████████████░░░░░░░░░░░░░░░░]  49%   ~17.2h left (to 27 Sep 20:30 IST)
+OVERALL   [███████████████████████████░░░]  90%  36 / 40 tickets
+TIME      [██████████████████░░░░░░░░░░░░]  63%   ~12.4h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -22,7 +22,7 @@ M6  CLI (hero)        [██████████] 100%   5 / 5    ROOK-024�
 M7  Server            [██████████] 100%   1 / 1    ROOK-029
 M8  Auth & GitHub     [███░░░░░░░]  33%   1 / 3    ROOK-030…032
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
-M10 Deploy & demo     [██░░░░░░░░]  25%   1 / 4    ROOK-037…040
+M10 Deploy & demo     [█████░░░░░]  50%   2 / 4    ROOK-037…040
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -80,7 +80,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-035 | Web cards + answers + chat | P0 | DONE | reviewer PASS round 1 (132 vitest). Not built (no backend yet): Edit-rule, Replay, Download-test buttons. Follow-ups: DOM tests for double-submit/countdown; gate /dev/* before 038 |
 | ROOK-036 | Web pages, picker, guest | P0 | DONE | reviewer PASS round 2; `npm run test:e2e` (web/e2e/smoke.mjs, replay, 0 coins, 17 checks). Replayed run ends `failed` at DIAGNOSE (Detective recording key includes sandbox logs; recorded in-process vs real uvicorn) → follow-up |
 | ROOK-037 | Server image + AWS EC2 deploy | P0 | DONE | reviewer PASS r1. Re-targeted from HF (Docker Spaces now paid) to AWS EC2 t3.small + Caddy on `<ip-dashes>.sslip.io`, profile `rook`, us-west-2 ($100 credits). Local: image builds, /health via Caddy, guest replay run to SAVE (fails at DIAGNOSE, known). NOT deployed yet: user runs deploy/aws/create.sh + deploy.sh + set-secret.sh BOB_API_KEY |
-| ROOK-038 | Vercel deploy | P0 | IN PROGRESS | live at https://rook-weld-six.vercel.app (pages + /api/v1 proxy OK). Coder fixing: SSE times out through the Vercel rewrite; 2nd guest run → 429 (IP bucket via Vercel?); CSP |
+| ROOK-038 | Vercel deploy | P0 | DONE | reviewer PASS r1. SSE `: flush` after bursts (Vercel held burst tails ~15 s); ROOK_PROXY_SECRET header via web/middleware.ts → trusted client IP; per-IP guest quota 10/day (cookie 3); nonce CSP; favicon; e2e/console.mjs. User must set ROOK_PROXY_SECRET on Vercel THEN server (deploy.sh + set-secret.sh) and check /health proxied:true |
 | ROOK-039 | Demo apps integration + recordings | P0 | TODO | needs U5 |
 | ROOK-040 | Release polish + PyPI | P1 | TODO | |
 
