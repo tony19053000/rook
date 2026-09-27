@@ -33,7 +33,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 |---|---|
 | Product | Rook (`rook`), IBM Bob-powered invariant breaker |
 | Repo | https://github.com/tony19053000/rook (public) |
-| Hosted web | not deployed yet (Vercel) |
+| Hosted web | https://rook-weld-six.vercel.app |
 | Hosted API | https://44-239-185-88.sslip.io (AWS EC2 t3.small + Caddy, replay mode) |
 | Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 2.01 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
@@ -80,7 +80,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-035 | Web cards + answers + chat | P0 | DONE | reviewer PASS round 1 (132 vitest). Not built (no backend yet): Edit-rule, Replay, Download-test buttons. Follow-ups: DOM tests for double-submit/countdown; gate /dev/* before 038 |
 | ROOK-036 | Web pages, picker, guest | P0 | DONE | reviewer PASS round 2; `npm run test:e2e` (web/e2e/smoke.mjs, replay, 0 coins, 17 checks). Replayed run ends `failed` at DIAGNOSE (Detective recording key includes sandbox logs; recorded in-process vs real uvicorn) → follow-up |
 | ROOK-037 | Server image + AWS EC2 deploy | P0 | DONE | reviewer PASS r1. Re-targeted from HF (Docker Spaces now paid) to AWS EC2 t3.small + Caddy on `<ip-dashes>.sslip.io`, profile `rook`, us-west-2 ($100 credits). Local: image builds, /health via Caddy, guest replay run to SAVE (fails at DIAGNOSE, known). NOT deployed yet: user runs deploy/aws/create.sh + deploy.sh + set-secret.sh BOB_API_KEY |
-| ROOK-038 | Vercel deploy | P0 | TODO | needs U4 |
+| ROOK-038 | Vercel deploy | P0 | IN PROGRESS | live at https://rook-weld-six.vercel.app (pages + /api/v1 proxy OK). Coder fixing: SSE times out through the Vercel rewrite; 2nd guest run → 429 (IP bucket via Vercel?); CSP |
 | ROOK-039 | Demo apps integration + recordings | P0 | TODO | needs U5 |
 | ROOK-040 | Release polish + PyPI | P1 | TODO | |
 
@@ -93,7 +93,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 | U1 | Supabase + Google OAuth | TODO |
 | U2 | GitHub App "Rook" | TODO |
 | U3 | AWS account + IAM user rook-deploy (profile `rook`) | DONE (was HF Space; $100 credits) |
-| U4 | Vercel project | TODO |
+| U4 | Vercel project | DONE (rook-weld-six.vercel.app) |
 | U5 | 3 demo apps via Antigravity | TODO (ask Claude for the prompt) |
 | U6 | Bob IDE clips | TODO |
 | U7 | Video | TODO |
