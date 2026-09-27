@@ -2,15 +2,15 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-27 08:08 IST · **By:** Account 1 (ROOK-038 DONE; user deploys + sets ROOK_PROXY_SECRET)
+**Last updated:** 2026-09-27 09:11 IST · **By:** Account 1 (ROOK-030 DONE; user deploys server)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [███████████████████████████░░░]  90%  36 / 40 tickets
-TIME      [██████████████████░░░░░░░░░░░░]  63%   ~12.4h left (to 27 Sep 20:30 IST)
+OVERALL   [███████████████████████████░░░]  92%  37 / 40 tickets
+TIME      [███████████████████░░░░░░░░░░░]  66%   ~11.3h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -20,7 +20,7 @@ M4  Bob agents        [██████████] 100%   8 / 8    ROOK-015�
 M5  Session           [██████████] 100%   1 / 1    ROOK-023
 M6  CLI (hero)        [██████████] 100%   5 / 5    ROOK-024…028
 M7  Server            [██████████] 100%   1 / 1    ROOK-029
-M8  Auth & GitHub     [███░░░░░░░]  33%   1 / 3    ROOK-030…032
+M8  Auth & GitHub     [██████░░░░]  66%   2 / 3    ROOK-030…032
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [█████░░░░░]  50%   2 / 4    ROOK-037…040
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
@@ -72,7 +72,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-027 | Question prompts + cards | P0 | DONE | reviewer PASS round 1. Follow-up: 'e to edit one rule' not implemented (no Session answer shape; 04 §3.4). 024 wires prompts.register(app) + Backend.answer Any |
 | ROOK-028 | Background run + chat | P0 | DONE | reviewer PASS round 1; teardown LookupError root cause = callbacks ran in run-thread contextvars → app context captured at bind(); regression test 20x green |
 | ROOK-029 | FastAPI server | P0 | DONE | reviewer PASS round 1. Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify the Vercel rewrite streams SSE |
-| ROOK-030 | Auth (Supabase + CLI login) | P1 | IN PROGRESS | coder started: Supabase Google login (PKCE, sb_publishable key), server JWT HS256 + JWKS |
+| ROOK-030 | Auth (Supabase + CLI login) | P1 | DONE | reviewer PASS r1. JWT HS256 + JWKS (project is ES256); web Google PKCE via @supabase/auth-js; rook login (localhost + --device), logout. No CLI token refresh (re-login after ~1h) |
 | ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
 | ROOK-032 | GitHub Action | P1 | DONE | reviewer PASS round 1; action.yml + rook-pr-comment (dry run, marker upsert, SHA pins verified). Open: Bob tgz hosting for live mode; README `@<full-commit-sha>` placeholder; never run on a real runner |
 | ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
