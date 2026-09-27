@@ -1,8 +1,7 @@
 """ROOK-021: Surgeon (regression test, then fix) -> path guard -> Fix Reviewer -> Verifier, on minishop.
 
-The counterexample comes from the real engine (seed 1) and the diagnosis is the one of the real ROOK-020
-Detective + Diagnosis Reviewer run, frozen in `tests/fixtures/minishop_diagnosis.json` (the Surgeon's
-recorded prompts hold it, so it must not change when the Detective's evidence format does). The default suite uses a scripted fake Bob (whose "edits" are real file writes) and
+The counterexample comes from the real engine (seed 1) and the diagnosis from the committed replay of
+the ROOK-020 run. The default suite uses a scripted fake Bob (whose "edits" are real file writes) and
 a committed replay of a real Surgeon + Fix Reviewer run (its edits are replayed from the edit tape).
 Tests run next to the app through `LocalSandbox`: a subprocess in the workspace copy with a minimal env
 (no host secrets). The live run (`-m bob`) re-records when ROOK_RECORD_DIR is set:
@@ -37,7 +36,7 @@ from test_shrinker import BASE, ENV, FIXTURE_DIR, MODEL, REFUND, executor
 
 from rook.agents import edit_tape
 from rook.agents.bob import AgentOutputError, AgentResult, BobClient
-from rook.agents.diagnose import DiagnosisResult
+from rook.agents.diagnose import DiagnosePipeline, DiagnosisResult
 from rook.agents.fix import (
     FixNotApproved,
     FixPipeline,
@@ -60,7 +59,7 @@ from rook.sandbox.base import ExecResult, Sandbox
 
 RUN = "r_fix"
 RECORDINGS = Path(__file__).parents[1] / "fixtures" / "recordings" / "surgeon_minishop"
-ROOK020_DIAGNOSIS = Path(__file__).parents[1] / "fixtures" / "minishop_diagnosis.json"
+DIAGNOSE_RECORDINGS = Path(__file__).parents[1] / "fixtures" / "recordings" / "diagnose_minishop"
 BUGGY_LINE = "        already = order.refunded_total if is_fixed else 0\n"
 FIXED_LINE = "        already = order.refunded_total\n"
 TEST_PATH = "test_rook_cx_001.py"
@@ -616,10 +615,12 @@ def test_example_shapes_still_match() -> None:
 
 
 async def recorded_diagnosis(ws: Path) -> DiagnosisResult:
-    """The approved ROOK-020 diagnosis (app.py, the refund check), as that real run returned it."""
-    data = json.loads(ROOK020_DIAGNOSIS.read_text(encoding="utf-8"))
-    assert (ws / data["file"]).read_text().splitlines()[data["line"] - 1] == BUGGY_LINE.rstrip("\n")
-    return DiagnosisResult(**data)
+    """The ROOK-020 diagnosis, replayed from its committed recording (free)."""
+    client = BobClient(EventBus(), "r_diagnose", mode="replay", recordings_dir=DIAGNOSE_RECORDINGS,
+                       replay_speed=1e9, replay_max_gap=0.0)
+    cx = await refund_cx()
+    async with executor(REFUND) as ex:
+        return await DiagnosePipeline(client, ws).run(MODEL, cx, ex)
 
 
 def test_recordings_hold_no_secrets() -> None:

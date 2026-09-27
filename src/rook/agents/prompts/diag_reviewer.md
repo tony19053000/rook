@@ -17,12 +17,9 @@ Decide whether the cited file and line really explain the rule violation.
 [[steps]]
 
 ## State after each step
-Ids the app assigned are shown as `var[n]`: the n-th value (from 0) captured into `var` in this replay,
-the same index the steps' `refs` use.
 [[states]]
 
 ## Sandbox logs
-The app's own output, without one line per HTTP request; times, addresses and pids are masked.
 [[logs]]
 
 ## Cited and related files
