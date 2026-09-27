@@ -67,6 +67,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep ~12:55 | 2 | ROOK-039d PASS + committed (hosted refund replay → Fixed and verified; approve-all → done, honestly unverified, patch reverted). Submission kit committed b71bdf9. Running: 039 demo apps coder, UI polish coder (+ guest default = one verifying rule) | ROOK-039d |
 | 27 Sep ~12:40 | 2 | User: build freeze in ~3h (rest for deck/video). Running in parallel (all uncommitted): 039d fix path (option C/b: hosted approve-all ends `done` unverified, patch reverted) IN REVIEW; 039 demo apps coder (shop-app e92c866, billing-service 2186039, wallet-api cdfc08c; ≤5 coins); web UI polish coder (web/ only); submission kit writer (docs/submission/SUBMISSION_KIT.md). README committed 9615561. PyPI: rook-cli taken, no user answer yet → default skip | (docs) |
 | 27 Sep 11:31 | 2 | ROOK-031 PASS r1 + committed. 38/40. 039d re-record running; 040 README drafted; rook-cli PyPI name taken | ROOK-031 |
 | 27 Sep | 2 | ROOK-039b PASS r1 + committed (e2e both approve modes done, 0 coins). Reviewer follow-up: redact Coordinator notes at source. 031 coding | ROOK-039b |
