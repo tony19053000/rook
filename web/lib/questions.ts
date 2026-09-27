@@ -104,6 +104,8 @@ export interface RuleRow {
   status: RuleStatus;
   reason: string;
   alreadyBroken: boolean;
+  /** The demo's featured rule (payload `featured: true`): the one whose recorded path is fixed and verified. */
+  featured: boolean;
   /** Set once the approval is known (rules.approved, or the question's answer). */
   approved: boolean | null;
 }
@@ -137,7 +139,7 @@ export function ruleRows(item: Pick<RulesItem, "rules" | "verdicts" | "approvedI
   };
   (item.rules as ProposedRule[]).forEach((rule, i) => {
     const f = ruleFields(rule, i + 1);
-    if (!byId.has(f.id)) add({ ...f, status: "proposed", reason: "", alreadyBroken: false, approved: null });
+    if (!byId.has(f.id)) add({ ...f, status: "proposed", reason: "", alreadyBroken: false, featured: false, approved: null });
   });
   for (const [ruleId, verdicts] of Object.entries(item.verdicts)) {
     const row = byId.get(clean(ruleId));
@@ -157,13 +159,14 @@ export function ruleRows(item: Pick<RulesItem, "rules" | "verdicts" | "approvedI
     const f = ruleFields(rule, i + 1);
     let row = byId.get(f.id);
     if (row === undefined) {
-      row = { ...f, status: "proposed", reason: "", alreadyBroken: false, approved: null };
+      row = { ...f, status: "proposed", reason: "", alreadyBroken: false, featured: false, approved: null };
       add(row);
     }
     row.text = f.text;
     row.status = rule.accepted === true ? "accepted" : "rejected";
     row.reason = rule.reason ? clean(String(rule.reason)) : row.reason;
     row.alreadyBroken = rule.already_broken === true;
+    row.featured = rule.featured === true;
   });
   let approved: Set<string> | null = null;
   if (item.approvedIds !== null) approved = new Set(item.approvedIds.map((i) => clean(String(i))));
@@ -177,9 +180,16 @@ export function choosable(row: RuleRow): boolean {
   return row.status === "accepted";
 }
 
-/** The pre-selection: every accepted rule except one flagged `already_broken`. */
-export function initialSelection(rows: readonly RuleRow[]): string[] {
-  return rows.filter((r) => choosable(r) && !r.alreadyBroken).map((r) => r.id);
+/**
+ * The pre-selection: every accepted rule except one flagged `already_broken`. A guest (demo mode) gets only
+ * the demo's featured rule(s) when the payload marks one, so the demo's one recorded bug is the one fixed and
+ * verified (approving every rule makes VERIFY's fresh search break another planted bug). A signed-in user
+ * always starts from every rule.
+ */
+export function initialSelection(rows: readonly RuleRow[], guest = false): string[] {
+  const all = rows.filter((r) => choosable(r) && !r.alreadyBroken);
+  const featured = guest ? all.filter((r) => r.featured) : [];
+  return (featured.length > 0 ? featured : all).map((r) => r.id);
 }
 
 /** The approve_rules answer: always the explicit id list (in card order), never "all". */
@@ -193,7 +203,7 @@ export function rulesApproval(rows: readonly RuleRow[], selected: Iterable<strin
  * never auto-approved), or null when nothing would be approved (a person decides then).
  */
 export function guestRulesAnswer(rows: readonly RuleRow[]): string[] | null {
-  const ids = rulesApproval(rows, initialSelection(rows));
+  const ids = rulesApproval(rows, initialSelection(rows, true));
   return ids.length > 0 ? ids : null;
 }
 

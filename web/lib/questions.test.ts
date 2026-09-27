@@ -136,6 +136,40 @@ describe("already_broken rules (the recorded approve_rules question)", () => {
   });
 });
 
+describe("the demo's featured rule (guest default)", () => {
+  const { rules, q } = atApproval();
+  /** The recorded question with the refund rule marked `featured: true` (the server's demo catalog field). */
+  const featuredQ = (ids: string[]): QuestionItem => {
+    const payload = q.payload as { rules: Array<Record<string, unknown>> };
+    return { ...q, payload: { ...payload, rules: payload.rules.map((r) => ({ ...r, featured: ids.includes(String(r.id)) })) } };
+  };
+
+  it("reads `featured` from the approve_rules payload", () => {
+    const rows = ruleRows(rules, featuredQ(["refunded_total_le_paid"]));
+    expect(rows.filter((r) => r.featured).map((r) => r.id)).toEqual(["refunded_total_le_paid"]);
+    expect(ruleRows(rules, q).some((r) => r.featured)).toBe(false);
+  });
+
+  it("a guest pre-ticks and auto-sends only the featured rule; a signed-in user keeps every rule", () => {
+    const rows = ruleRows(rules, featuredQ(["refunded_total_le_paid"]));
+    expect(initialSelection(rows, true)).toEqual(["refunded_total_le_paid"]);
+    expect(guestRulesAnswer(rows)).toEqual(["refunded_total_le_paid"]);
+    expect(initialSelection(rows)).toHaveLength(8);
+    expect(initialSelection(rows, false)).toHaveLength(8);
+  });
+
+  it("falls back to every rule for a guest when nothing usable is featured", () => {
+    expect(initialSelection(ruleRows(rules, q), true)).toHaveLength(8);
+    // A featured rule that is flagged already_broken or rejected is never auto-approved.
+    expect(initialSelection(ruleRows(rules, featuredQ(["admin_export_forbidden_for_customer"])), true)).toHaveLength(8);
+    expect(initialSelection(ruleRows(rules, featuredQ(["buy_response_status_paid"])), true)).toHaveLength(8);
+    // Only `featured: true` counts, not a truthy string.
+    const payload = q.payload as { rules: Array<Record<string, unknown>> };
+    const loose = { ...q, payload: { rules: payload.rules.map((r) => ({ ...r, featured: "yes" })) } };
+    expect(initialSelection(ruleRows(rules, loose), true)).toHaveLength(8);
+  });
+});
+
 describe("question prompts", () => {
   it("picks the prompt like the TUI", () => {
     const opts = [{ id: "yes", label: "Fix it" }, { id: "no", label: "Not now" }];

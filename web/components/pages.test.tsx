@@ -270,3 +270,35 @@ describe("sidebar and composer", () => {
     expect(html(<Composer picker={<span data-slot />} repoLabel="x" />)).toContain("data-slot");
   });
 });
+
+describe("home landing (ROOK-040 polish)", () => {
+  const SECOND: RepoOption = { kind: "demo", ref: "tony19053000/wallet-api", name: "wallet-api", private: false, language: "Go" };
+  const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO, SECOND, HOSTILE])} navigate={() => {}} />);
+
+  it("says what Rook is in one line", () => {
+    expect(out).toContain("data-tagline");
+    expect(out).toContain("smallest sequence of actions that breaks a business rule");
+  });
+
+  it("lists every demo repo from the API as a chip, cleaned", () => {
+    expect(out).toContain("data-demo-chips");
+    expect(out).toContain(">shop-app<");
+    expect(out).toContain(">wallet-api<");
+    expect(out).not.toContain("<img");
+  });
+
+  it("names the demo the Try the demo button will start", () => {
+    expect(out).toContain("Try the demo on shop-app");
+  });
+
+  it("disables Try the demo and hides the chips with no demo repos", () => {
+    const empty = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([])} navigate={() => {}} />);
+    expect(empty).not.toContain("data-demo-chips");
+    expect(empty).toMatch(/<button[^>]*disabled=""[^>]*>Try the demo<\/button>/);
+  });
+});
+
+it("home: Try the demo says the demos are loading while GET /repos is in flight", () => {
+  const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([], { loading: true })} navigate={() => {}} />);
+  expect(out).toContain("Loading the demos…");
+});

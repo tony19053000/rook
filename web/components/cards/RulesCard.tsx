@@ -24,6 +24,7 @@ function RowPill({ row }: { row: RuleRow }) {
   if (row.approved === true) return <Pill tone="good">Approved</Pill>;
   if (row.approved === false) return <Pill tone="idle">Not approved</Pill>;
   if (row.alreadyBroken) return <Pill tone="warn">Possibly already broken</Pill>;
+  if (row.featured) return <Pill tone="idle">Demo rule</Pill>;
   return null;
 }
 
@@ -93,7 +94,7 @@ function Approval({ question, rows }: { question: QuestionItem; rows: RuleRow[] 
   const { guest, autoSeconds } = useRunActions();
   const { state, submit, locked } = useAnswer(question);
   const [picked, setPicked] = useState<Set<string> | null>(null);
-  const selected = picked ?? new Set(initialSelection(rows));
+  const selected = picked ?? new Set(initialSelection(rows, guest));
   const ids = rulesApproval(rows, selected);
   const countdown = useCountdown(
     guest && picked === null && guestRulesAnswer(rows) !== null && !locked && state.status !== "error",

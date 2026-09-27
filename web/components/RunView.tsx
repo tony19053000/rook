@@ -12,7 +12,38 @@ import { Note, RunActionsContext, type RunActions } from "./cards/ui";
 import type { ApiClient } from "@/lib/api";
 import { GUEST_AUTO_SECONDS, sendAnswer, sendChat, type SendOutcome } from "@/lib/questions";
 import type { RunState } from "@/lib/runStore";
+import { runOutcome, type Outcome } from "@/lib/outcome";
 import { clean } from "@/lib/safeText";
+
+const OUTCOME_STYLE: Record<Outcome["tone"], { box: string; mark: string }> = {
+  good: { box: "border-good bg-good-soft", mark: "bg-good text-app" },
+  warn: { box: "border-warn bg-warn-soft", mark: "bg-warn text-app" },
+  bad: { box: "border-bad bg-bad-soft", mark: "bg-bad text-app" },
+  idle: { box: "border-line bg-surface", mark: "bg-sunk text-muted" },
+};
+
+/** The run's final card (04 §3.6): the outcome headline, then the server's summary line. */
+function OutcomeCard({ state, summary }: { state: RunState; summary: string }) {
+  const outcome = runOutcome(state);
+  const style = OUTCOME_STYLE[outcome?.tone ?? "idle"];
+  return (
+    <div
+      data-run-summary={state.status}
+      data-outcome={outcome?.kind}
+      role="status"
+      className={`mt-2 flex min-w-0 gap-3 rounded-xl border px-4 py-3.5 ${style.box}`}
+    >
+      <span aria-hidden className={`grid size-7 flex-none place-items-center rounded-full text-[15px] font-bold ${style.mark}`}>
+        {outcome?.mark ?? "·"}
+      </span>
+      <div className="flex min-w-0 flex-col gap-1">
+        <p className="text-[15px] font-semibold">{outcome?.title ?? "Run finished"}</p>
+        {outcome !== null && outcome.lead !== "" && <p className="text-[13.5px]">{outcome.lead}</p>}
+        <p className="break-words text-[13px] text-muted">{clean(summary)}</p>
+      </div>
+    </div>
+  );
+}
 
 export interface RunViewProps {
   state: RunState;
@@ -69,11 +100,7 @@ export function RunView({ state, runId, api, guest = false, autoSeconds = GUEST_
       <AppShell {...shell} banner={banner} coins={state.coins} composer={composer}>
         {header}
         <Transcript state={state} />
-        {state.summary !== null && (
-          <p data-run-summary={state.status} className={`font-semibold ${state.status === "done" ? "" : "text-bad"}`}>
-            {clean(state.summary)}
-          </p>
-        )}
+        {state.summary !== null && <OutcomeCard state={state} summary={state.summary} />}
       </AppShell>
     </RunActionsContext.Provider>
   );

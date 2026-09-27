@@ -67,7 +67,7 @@ export function VerifyCard({
     ) : item.done.verified ? (
       <Pill tone="good">✓ Fix verified</Pill>
     ) : (
-      <Pill tone="bad">✗ Not verified</Pill>
+      <Pill tone="warn">! Not verified</Pill>
     );
   return (
     <Card name="verify">
@@ -115,7 +115,10 @@ export function VerifyCard({
           </div>
         ) : (
           <div data-verified="false">
-            <Mark ok={false} /> <b>Fix not verified</b> · {clean(item.done.summary)}
+            <span className="font-bold text-warn" aria-hidden>
+              !
+            </span>{" "}
+            <b>Fix not verified</b> · {clean(item.done.summary)}
           </div>
         ))}
       {question !== null && (

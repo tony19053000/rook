@@ -30,7 +30,7 @@ export function EngineRow({ item, reducedMotion }: { item: EngineItem; reducedMo
     return (
       <div className="flex min-w-0 items-center gap-2 font-mono text-[12.5px]" data-row="engine" data-status={item.status}>
         <span aria-hidden className="size-[9px] flex-none bg-ink" />
-        <b>{name}</b>
+        <b className="flex-none whitespace-nowrap">{name}</b>
         <span className="min-w-0 truncate">
           <Mark ok={item.status === "done"} /> {clean(item.summary ?? "")}
         </span>
@@ -46,7 +46,7 @@ export function EngineRow({ item, reducedMotion }: { item: EngineItem; reducedMo
         data-pulse={reduced ? "off" : "on"}
         className={`size-[9px] flex-none bg-ink ${reduced ? "" : "animate-pulse-dot"}`}
       />
-      <b>{name}</b>
+      <b className="flex-none whitespace-nowrap">{name}</b>
       <span
         role="progressbar"
         aria-label={`${name} progress`}

@@ -142,6 +142,17 @@ describe("already_broken on the RulesCard", () => {
     expect(guest).toContain("data-countdown");
     expect(guest).toContain("in 6s");
   });
+
+  it("for a guest, pre-ticks only the demo's featured rule; a signed-in user still gets every rule", () => {
+    const payload = q.payload as { rules: Array<Record<string, unknown>> };
+    const featured = { ...q, payload: { rules: payload.rules.map((r) => ({ ...r, featured: r.id === "refunded_total_le_paid" })) } };
+    const guest = html(withActions(<RulesCard item={rules} question={featured} />, { guest: true }));
+    expect(count(guest, 'checked=""')).toBe(1);
+    expect(guest).toContain("Approve 1 rule");
+    expect(guest).toContain("Demo rule");
+    const user = html(withActions(<RulesCard item={rules} question={featured} />));
+    expect(count(user, 'checked=""')).toBe(8);
+  });
 });
 
 describe("questions without a card", () => {
@@ -257,5 +268,33 @@ describe("untrusted text (XSS and control characters)", () => {
     expect(out).toContain('data-chat="user"');
     expect(out).toContain('data-chat="guide"');
     expect(out).toContain('data-log="warn"');
+  });
+});
+
+describe("the run's final card (04 §3.6)", () => {
+  it("shows a success card for a verified fix", () => {
+    const out = runView(reduceEvents(minishopRun));
+    expect(out).toContain('data-outcome="verified"');
+    expect(out).toContain("Fixed and verified</p>");
+    expect(out).toContain("border-good bg-good-soft");
+  });
+
+  it("shows a calm warn card (not red) for the unverified ending, with the server's summary", () => {
+    const cut = minishopRun.findIndex((e) => e.type === "verify.done");
+    const last = minishopRun[cut - 1]!.seq;
+    const summary = "Found and saved cx_001; the fix for rule refund_le_paid was written and the exact replay now passes. NOT verified.";
+    const out = runView(
+      reduceEvents([
+        ...minishopRun.slice(0, cut),
+        tail(last + 1, "verify.done", { cx_id: "cx_001", verified: false, summary: "3/4 checks passed; failed: fresh_search" }),
+        tail(last + 2, "run.finished", { status: "done", summary }),
+      ]),
+    );
+    expect(out).toContain('data-run-summary="done"');
+    expect(out).toContain('data-outcome="unverified"');
+    expect(out).toContain("border-warn bg-warn-soft");
+    expect(out).toContain("Found and saved cx_001; the fix for rule refund_le_paid was written");
+    expect(out).toMatch(/data-pill="warn"[^>]*>! Not verified/);
+    expect(out).not.toContain("border-bad bg-bad-soft px-4");
   });
 });

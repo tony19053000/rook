@@ -37,3 +37,16 @@ export function apiRewrites(target: string | null): { source: string; destinatio
 export function devPagesEnabled(nodeEnv: string | undefined): boolean {
   return nodeEnv === "development" || nodeEnv === "test";
 }
+
+/**
+ * The site's public origin for absolute OG/Twitter URLs: NEXT_PUBLIC_SITE_URL, else Vercel's production host
+ * (VERCEL_PROJECT_PRODUCTION_URL, a bare hostname). Null when neither is a valid https origin.
+ */
+export function siteUrl(explicit: string | undefined, vercelHost: string | undefined): URL | null {
+  const candidates = [explicit, vercelHost ? `https://${vercelHost}` : undefined];
+  for (const raw of candidates) {
+    const origin = proxyTarget(raw);
+    if (origin !== null && origin.startsWith("https://")) return new URL(origin);
+  }
+  return null;
+}

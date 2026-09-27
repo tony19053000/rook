@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
+import { siteUrl } from "@/lib/config";
 import "./globals.css";
 
 // Self-hosted by next/font at build time, so the CSP needs no third-party font origin (03 §8).
@@ -12,9 +13,30 @@ const newsreader = Newsreader({ subsets: ["latin"], weight: ["400", "500"], vari
 // prerendered at build time would have scripts without a nonce, and the browser would block them.
 export const dynamic = "force-dynamic";
 
+const DESCRIPTION =
+  "Rook finds the smallest sequence of actions that breaks a business rule, proves it on the real app, and verifies the fix. Built on IBM Bob.";
+
 export const metadata: Metadata = {
-  title: "Rook",
-  description: "Finds the smallest sequence of actions that breaks a business rule, proves it, and verifies the fix.",
+  metadataBase: siteUrl(process.env.NEXT_PUBLIC_SITE_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  title: "Rook · prove the bug, verify the fix",
+  description: DESCRIPTION,
+  applicationName: "Rook",
+  openGraph: {
+    type: "website",
+    siteName: "Rook",
+    title: "Rook · prove the bug, verify the fix",
+    description: DESCRIPTION,
+  },
+  twitter: { card: "summary", title: "Rook · prove the bug, verify the fix", description: DESCRIPTION },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#1a1a1a" },
+    { media: "(prefers-color-scheme: light)", color: "#f7f8f7" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

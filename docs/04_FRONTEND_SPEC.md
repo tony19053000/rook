@@ -169,7 +169,7 @@ A dropdown above the composer with **"Your GitHub repositories"** (after connect
 - **VerifyCard:** a Before (red) / After (green) duo, rows for each verify check with pills, and after `pr.opened` a **View pull request** button.
 - **QuestionCard:** a generic card for `setup_value` and `menu` questions.
 
-The question buttons send `POST /runs/{id}/answers`, and the card then shows `✓ <answer>`. In **guest demo mode**, unanswered questions auto-answer "yes" after 6 s with a visible countdown, so judges see the full flow.
+The question buttons send `POST /runs/{id}/answers`, and the card then shows `✓ <answer>`. In **guest demo mode**, unanswered questions auto-answer "yes" after 6 s with a visible countdown, so judges see the full flow. On the RulesCard a guest's default selection (pre-ticked, and what the countdown sends) is only the rule(s) the approve_rules payload marks `featured: true` (the demo's recorded, verifiable bug), falling back to every accepted, unflagged rule; a signed-in user always starts from every rule.
 
 ### 3.5 Visual tokens
 Default is dark, with a light theme via `prefers-color-scheme` and `[data-theme]`.
@@ -191,6 +191,7 @@ Default is dark, with a light theme via `prefers-color-scheme` and `[data-theme]
 Fonts: **Newsreader** (the greeting and wordmark only), **IBM Plex Sans** (UI) and **IBM Plex Mono** (code, numbers, details). Use tabular numbers for all counters.
 
 ### 3.6 States
+- **Run finished:** a final card above the composer: a headline from the engine's events (✓ "Fixed and verified" in green; ! "Bug proven · fix not verified" in amber, never red, when `verify.done` is false or a fix was never verified; ! "Rule broken · counterexample saved"; ✓ "Every approved rule held"; ✗ "Run failed"), one plain sentence, then the server's `run.finished` summary as-is.
 - **Loading** a run: skeleton rows. **Reconnecting** the SSE: a thin banner "Reconnecting…" with a retry that resumes with `after`.
 - **Errors:** an inline card with a clear cause and next step (for example: "The app didn't start: port 3000 never answered. Check the logs or edit the start command.").
 - **Empty recents:** "No runs yet. Pick a repository to start."

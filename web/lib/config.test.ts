@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { apiBase, apiRewrites, devPagesEnabled, proxyTarget } from "./config";
+import { apiBase, apiRewrites, devPagesEnabled, proxyTarget, siteUrl } from "./config";
 
 describe("API base (02 §13)", () => {
   it("defaults to same-origin", () => {
@@ -45,5 +45,20 @@ describe("dev pages", () => {
     expect(devPagesEnabled("test")).toBe(true);
     expect(devPagesEnabled("production")).toBe(false);
     expect(devPagesEnabled(undefined)).toBe(false);
+  });
+});
+
+describe("site URL for OG tags", () => {
+  it("prefers NEXT_PUBLIC_SITE_URL, then the Vercel production host", () => {
+    expect(siteUrl("https://rook.example.com/", "x.vercel.app")?.origin).toBe("https://rook.example.com");
+    expect(siteUrl(undefined, "rook-weld-six.vercel.app")?.origin).toBe("https://rook-weld-six.vercel.app");
+    expect(siteUrl("", "rook-weld-six.vercel.app")?.origin).toBe("https://rook-weld-six.vercel.app");
+  });
+
+  it("is null for missing, non-https or pathful values", () => {
+    expect(siteUrl(undefined, undefined)).toBeNull();
+    expect(siteUrl("http://rook.example.com", undefined)).toBeNull();
+    expect(siteUrl("https://rook.example.com/x", undefined)).toBeNull();
+    expect(siteUrl("javascript:alert(1)", "bad host/x")).toBeNull();
   });
 });
