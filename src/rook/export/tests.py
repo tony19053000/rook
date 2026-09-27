@@ -25,7 +25,7 @@ import signal
 import subprocess
 import sys
 import tempfile
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
@@ -163,6 +163,26 @@ def render_fallback_test(cx: Counterexample, model: RookModel) -> str:
     source = _render(cx.cx_id, data_json.splitlines())
     check_generated(source, cx.cx_id, data_json)
     return source
+
+
+def prompt_view(source: str, cx_id: str, mask: Callable[[Any], Any] | None = None) -> str:
+    """The generated test as an agent is shown it: the same file, with the run-specific values of the
+    embedded counterexample replaced by fixed labels (`created_at` -> `<time>`, the random search `seed`
+    -> `<seed>`) and `mask` applied to `observed`, so the prompt (a recording key) is the same on every
+    run. The file on disk, which the engine runs, is unchanged. Anything that is not a generated test for
+    `cx_id` is returned as it is."""
+    try:
+        data = json.loads(check_generated(source, cx_id))
+    except (UnsafeTestError, ValueError):
+        return source
+    cx = data.get("counterexample") if isinstance(data, dict) else None
+    if not isinstance(cx, dict):
+        return source
+    cx["created_at"] = "<time>"
+    cx["seed"] = "<seed>"
+    if mask is not None and "observed" in cx:
+        cx["observed"] = mask(cx["observed"])
+    return _render(cx_id, _data_json(data).splitlines())
 
 
 def write_fallback_test(root: Path, cx: Counterexample, model: RookModel) -> Path:

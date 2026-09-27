@@ -24,7 +24,7 @@ import os
 import random
 import re
 import stat
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -33,6 +33,7 @@ from rook.agents.caller import BOB_FAILURES, AgentCaller, call_agent
 from rook.agents.modes import write_modes
 from rook.agents.schemas import Diagnosis, ReviewVerdict
 from rook.agents.understand import SKIP_DIRS, check_not_rook_repo
+from rook.agents.volatile import Masker, is_token_key, snake
 from rook.core import rails
 from rook.core.events import (
     DiagnosisReady,
@@ -47,6 +48,7 @@ from rook.core.events import (
 from rook.engine.executor import Executor
 from rook.engine.judge import Judge
 from rook.export.counterexample import Counterexample, CxParallel, cap_value, rule_only_model
+from rook.model.jsonpath import JSONPathError, compile_path
 from rook.model.schema import RookModel
 from rook.sandbox.base import Sandbox, SandboxError
 
@@ -97,43 +99,189 @@ def _clip(value: Any, limit: int = STEP_VALUE_MAX_CHARS) -> Any:
     return capped if len(text) <= limit else {"_rook_truncated": f"{len(text)} chars", "preview": text[:limit]}
 
 
-def _is_id_key(key: str, names: frozenset[str]) -> bool:
-    return key == "id" or key.endswith(("_id", "_ids", "Id", "Ids")) or key in names
+_ID_NAMES = frozenset({"id", "ids", "uuid", "uuids", "_id", "pk"})
+# Field entities that name a user: resolved among the actors' setup captures (`customer.user_id`).
+_USERISH = frozenset({"user", "owner", "customer", "buyer", "seller", "author", "account", "member",
+                      "created_by", "payer", "payee", "actor"})
 
 
-def id_aliases(pool: Mapping[str, list[Any]]) -> dict[tuple[type, Any], str]:
-    """Each captured value (an app-assigned id) -> `var[n]`, its index in the pool, as the steps' `refs`
-    name it. The ids themselves depend on what the app served before (the search), the aliases do not."""
-    aliases: dict[tuple[type, Any], str] = {}
+def _is_id_key(key: str, names: frozenset[str] = frozenset()) -> bool:
+    if key in names:
+        return True
+    s = snake(key)
+    return s in _ID_NAMES or s.endswith(("_id", "_ids", "_uuid", "_uuids"))
+
+
+def _entity(name: str) -> str:
+    """The entity a var or field names: `order_id`, `orderId`, `orders`, `order_ids`, `customer.user_id` ->
+    `order`, `order`, `order`, `order`, `user` ("" for a bare `id`)."""
+    s = snake(name.rsplit(".", 1)[-1])
+    for suffix in ("_uuids", "_uuid", "_ids", "_id"):
+        if s.endswith(suffix):
+            s = s[: -len(suffix)]
+            break
+    else:
+        if s in _ID_NAMES:
+            s = ""
+    return s.removesuffix("s")
+
+
+def _aliasable(value: Any) -> bool:
+    return isinstance(value, int | str) and not isinstance(value, bool)
+
+
+@dataclass(frozen=True)
+class IdAliases:
+    """The replay's captured values, per var: `var -> {value: "var[n]"}` (n = its first index in the pool,
+    as the steps' `refs` name it). Actors' setup captures are vars too, named `actor.name`.
+
+    Apps often count ids per entity (order 1 and product 1), so one value can belong to several vars. A
+    value is resolved in context (`lookup`): first among the vars its place names (a capture path, the
+    field's name, the entity it sits in); only if none of them holds it, among all vars. If several vars
+    still hold it, all their aliases are shown (`order_id[0]|product_id[0]`), never a guess."""
+
+    by_var: dict[str, dict[tuple[type, Any], str]]
+
+    @property
+    def names(self) -> frozenset[str]:
+        return frozenset(self.by_var)
+
+    def vars_for(self, name: str) -> tuple[str, ...]:
+        """The vars a field or container name refers to: the var of that name, else those naming the
+        same entity (`orderId`, `order` and `orders` -> `order_id`)."""
+        if name in self.by_var:
+            return (name,)
+        entity = _entity(name)
+        if not entity:
+            return ()
+        found = tuple(v for v in self.by_var if _entity(v) == entity)
+        if found or entity not in _USERISH:
+            return found
+        # `owner_id`, `customer_id`, `userId`...: a user, i.e. an actor's own id from its setup
+        return tuple(v for v in self.by_var if "." in v and (
+            _entity(v) in _USERISH or not _entity(v) or v.split(".", 1)[0] == entity))
+
+    def lookup(self, value: Any, *groups: Sequence[str]) -> str | None:
+        if not _aliasable(value):
+            return None
+        key = (type(value), value)
+        for group in (*groups, tuple(self.by_var)):
+            found = sorted({self.by_var[v][key] for v in group if key in self.by_var.get(v, {})})
+            if found:
+                return "|".join(found)
+        return None
+
+
+def id_aliases(pool: Mapping[str, list[Any]], actors: Mapping[str, Mapping[str, Any]] | None = None
+               ) -> IdAliases:
+    """The aliases of a replay's pool and actor setup captures. The ids themselves depend on what the app
+    served before (the search), the aliases do not."""
+    by_var: dict[str, dict[tuple[type, Any], str]] = {}
     for var, values in pool.items():
+        aliases = by_var.setdefault(var, {})
         for index, value in enumerate(values):
-            if isinstance(value, int | str) and not isinstance(value, bool):
+            if _aliasable(value):
                 aliases.setdefault((type(value), value), f"{var}[{index}]")
-    return aliases
+    for actor, namespace in (actors or {}).items():
+        for name, value in namespace.items():
+            if _aliasable(value) and not is_token_key(name):
+                by_var[f"{actor}.{name}"] = {(type(value), value): f"{actor}.{name}"}
+    return IdAliases(by_var)
 
 
-def alias_ids(value: Any, aliases: Mapping[tuple[type, Any], str], names: frozenset[str] = frozenset(),
-              key: str = "") -> Any:
-    """`value` with every pooled id replaced by its alias: in dict keys (the state is keyed by id) and in
-    the values of id-like fields (`id`, `*_id`, `*Id` or a pool var name). Other values are left alone,
-    so a price that happens to equal an id is never touched."""
-    def swap(v: Any) -> Any:
-        if isinstance(v, int | str) and not isinstance(v, bool):
-            return aliases.get((type(v), v), v)
-        return v
+def capture_paths(captures: Mapping[str, str]) -> dict[tuple[str, ...], str]:
+    """An action's `capture` as `{key path in the response: var}` (list indexes and wildcards dropped)."""
+    out: dict[tuple[str, ...], str] = {}
+    for var, expr in captures.items():
+        try:
+            out[tuple(s for s in compile_path(expr) if isinstance(s, str))] = var
+        except JSONPathError:
+            continue
+    return out
 
+
+def alias_ids(value: Any, aliases: IdAliases, *, masker: Masker | None = None, key: str = "",
+              owner: Sequence[str] = (), keys_of: Sequence[str] = (),
+              captured: Mapping[tuple[str, ...], str] | None = None, path: tuple[str, ...] = ()) -> Any:
+    """`value` with every captured id replaced by its alias: in the keys of a map keyed by ids (`keys_of`
+    names their var; the state is `{reader: {id: fields}}`) and in the values of id-like fields (`id`,
+    `*_id`, `*Id`, `*_ids` or a var name). A field's value is looked up first under the var its capture
+    path names (`captured`, from the action that answered), then the vars its name names, then the entity
+    it sits in (`owner`, for a bare `id`). With a `masker`, an id-like value that is in no var (an id Rook
+    never captured) becomes a numbered label per field, like `<owner_id#1>`. Other values are left alone,
+    so a price that happens to equal an id is never touched.
+
+    In a list of objects, the entries that refer to nothing this replay made (`_mentions`) are what the app
+    already held, i.e. what the search left behind (an admin export lists every order): they are replaced
+    by one note naming their fields, so the evidence does not depend on the search."""
+    captured = captured or {}
     if isinstance(value, dict):
-        return {swap(k): alias_ids(v, aliases, names, str(k)) for k, v in value.items()}
+        out: dict[Any, Any] = {}
+        for k, v in value.items():
+            name = str(k)
+            new_key = aliases.lookup(k, keys_of) if keys_of else aliases.lookup(k)
+            # A nested object or list names its own entity (by the key it sits under); a scalar field
+            # belongs to this object's.
+            if keys_of:
+                child_owner = tuple(keys_of)
+            elif isinstance(v, dict | list | tuple):
+                child_owner = aliases.vars_for(name)
+            else:
+                child_owner = tuple(owner)
+            out[new_key if new_key is not None else k] = alias_ids(
+                v, aliases, masker=masker, key=name, owner=child_owner, captured=captured,
+                path=(*path, name) if not keys_of else path)
+        return out
     if isinstance(value, list | tuple):
-        return [alias_ids(v, aliases, names, key) for v in value]
-    return swap(value) if _is_id_key(key, names) else value
+        items = list(value)
+        other: list[dict[Any, Any]] = []
+        if items and all(isinstance(v, dict) for v in items):
+            other = [v for v in items if not _mentions(v, aliases, owner, captured, path)]
+            items = [v for v in items if not any(v is o for o in other)]
+        out_items = [alias_ids(v, aliases, masker=masker, key=key, owner=owner, captured=captured, path=path)
+                     for v in items]
+        if other:
+            fields = ", ".join(sorted({str(k) for o in other for k in o}))
+            out_items.append({"_rook_other_items": f"entries the app already held before this replay, not shown "
+                                                   f"(they depend on the search); their fields: {fields}"})
+        return out_items
+    alias = _resolve(value, aliases, key, owner, captured, path)
+    if alias is not None or not _is_id_key(key, aliases.names) or not _aliasable(value):
+        return alias if alias is not None else value
+    return masker.label(key, str(value)) if masker is not None else value
 
 
-async def collect_step_states(ex: Executor, model: RookModel, cx: Counterexample) -> list[dict[str, Any]]:
+def _resolve(value: Any, aliases: IdAliases, key: str, owner: Sequence[str],
+             captured: Mapping[tuple[str, ...], str], path: tuple[str, ...]) -> str | None:
+    """The alias of an id-like field's value in its context, or None."""
+    if not _is_id_key(key, aliases.names) or not _aliasable(value):
+        return None
+    by_path = (captured[path],) if path in captured else ()
+    by_owner = tuple(owner) if snake(key) in _ID_NAMES else ()
+    return aliases.lookup(value, by_path, aliases.vars_for(key), by_owner)
+
+
+def _mentions(item: dict[Any, Any], aliases: IdAliases, owner: Sequence[str],
+              captured: Mapping[tuple[str, ...], str], path: tuple[str, ...]) -> bool:
+    """Whether a list entry refers to something this replay made (one of its id fields, or of a nested
+    object's, is a captured value). Entries that do not are what the app held before: the search's data."""
+    for k, v in item.items():
+        name = str(k)
+        if isinstance(v, dict) and _mentions(v, aliases, aliases.vars_for(name), captured, (*path, name)):
+            return True
+        if _resolve(v, aliases, name, owner, captured, (*path, name)) is not None:
+            return True
+    return False
+
+
+async def collect_step_states(ex: Executor, model: RookModel, cx: Counterexample,
+                              masker: Masker | None = None) -> list[dict[str, Any]]:
     """Replay the counterexample once, exactly, from a fresh context and record, after every step, each
     response (status and body) and the state of every pooled entity. The Judge marks where the rule
     breaks. Request bodies are left out: they hold fresh random values and the actors' credentials.
-    App-assigned ids are shown as their aliases (`id_aliases`)."""
+    App-assigned ids are shown as their aliases (`id_aliases`), and volatile values (tokens, times, random
+    ids, Rook's fresh values) are masked by `masker` (`volatile.Masker`), so the records do not depend on
+    the run."""
     restricted = rule_only_model(model, cx)
     judge = Judge(restricted)
     ctx = ex.new_context()
@@ -152,27 +300,42 @@ async def collect_step_states(ex: Executor, model: RookModel, cx: Counterexample
         state = await ex.read_state(ctx)
         broken = judge.check_state(state, index) is not None or broken
         raw.append((responses, state, broken))
-    aliases = id_aliases(ctx.pool)
-    names = frozenset(ctx.pool)
+    masker = masker if masker is not None else Masker()
+    masker.add_fresh(ctx.fresh_token)
+    aliases = id_aliases(ctx.pool, ctx.actors)
+    captures = {a.name: capture_paths(a.capture) for a in model.actions}
+    each = {r.name: r.each for r in model.state}
+
+    def body(r: dict[str, Any]) -> Any:
+        return masker.value(alias_ids(r["body"], aliases, masker=masker, captured=captures.get(r["action"])))
+
+    def entities(state: dict[str, Any]) -> dict[str, Any]:
+        return {name: masker.value(alias_ids(items, aliases, masker=masker, keys_of=(each.get(name, name),)))
+                for name, items in state.items()}
+
     records: list[dict[str, Any]] = []
     for index, (responses, state, broken) in enumerate(raw):
         records.append({
             "step": index + 1,
-            "responses": [{**r, "body": _clip(alias_ids(r["body"], aliases, names))} for r in responses],
-            "state": _clip(alias_ids(state, aliases, names), 4 * STEP_VALUE_MAX_CHARS),
+            "responses": [{**r, "body": _clip(body(r)),
+                           **({"error": masker.text(r["error"])} if "error" in r else {})} for r in responses],
+            "state": _clip(entities(state), 4 * STEP_VALUE_MAX_CHARS),
             "rule": "broken" if broken else "holds",
         })
     errors = [*ctx.state_errors, *judge.rule_errors.values()]
     if errors:
-        records.append({"replay_problems": [redact_text(e) for e in errors[:10]]})
+        records.append({"replay_problems": [masker.text(redact_text(e)) for e in errors[:10]]})
     return redact(records)
 
 
-def _rule_input(cx: Counterexample) -> dict[str, Any]:
+def _rule_input(cx: Counterexample, masker: Masker | None = None) -> dict[str, Any]:
+    """The broken rule and what the engine observed, with volatile values masked (`volatile.Masker`)."""
+    masker = masker if masker is not None else Masker()
     return {
         **cx.rule.model_dump(mode="json", exclude_none=True),
         "expected": cx.expected,
-        "observed": _clip(cx.observed),
+        # Found during the search: its ids are the search's, never this replay's (so none is an alias).
+        "observed": _clip(masker.value(alias_ids(cx.observed, IdAliases({}), masker=masker))),
         "broken_at_step": cx.violated_at_step + 1,
         "reproduced": cx.reproduced,
     }
@@ -284,20 +447,13 @@ _LIFECYCLE_LINE = re.compile(
     r"|Booting worker|Started reloader process|Will watch for changes",
     re.IGNORECASE,
 )
-# Volatile bits of the lines that are kept (masked, not dropped: a traceback's text still matters).
-_VOLATILE = (
-    (re.compile(r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:?\d{2})?"), "<time>"),
-    (re.compile(r"\b\d{2}:\d{2}:\d{2}(?:[.,]\d+)?\b"), "<time>"),
-    (re.compile(r"\b(?:\d{1,3}(?:\.\d{1,3}){3}|localhost|\[[0-9a-fA-F:]*\]):\d{1,5}\b"), "<addr>"),
-    (re.compile(r"(?i)\b(pid[ =:]?|process \[)\d+"), r"\1<pid>"),
-    (re.compile(r"/tmp/[^\s\"':,)]+"), "<tmp>"),
-    (re.compile(r"\b\d+(?:\.\d+)?\s?ms\b"), "<ms>"),
-)
 
 
-def clean_logs(text: str, workspace: Path | None = None) -> str:
-    """The app's log lines without request and start/stop lines, with timestamps, addresses, pids, temp
-    paths and durations masked, and the workspace path shown as `/workspace`."""
+def clean_logs(text: str, workspace: Path | None = None, masker: Masker | None = None) -> str:
+    """The app's log lines without request and start/stop lines, with volatile bits masked in place (not
+    dropped: a traceback's text still matters): timestamps, addresses, pids, temp paths, durations,
+    tokens and random ids (`volatile.Masker.text`); the workspace path is shown as `/workspace`."""
+    masker = masker if masker is not None else Masker()
     root = str(workspace.resolve()) if workspace is not None else ""
     out = []
     for line in text.splitlines():
@@ -305,15 +461,14 @@ def clean_logs(text: str, workspace: Path | None = None) -> str:
             continue
         if root:
             line = line.replace(root, "/workspace")
-        for pattern, mask in _VOLATILE:
-            line = pattern.sub(mask, line)
-        out.append(line.rstrip())
+        out.append(masker.text(line).rstrip())
     return "\n".join(out)
 
 
-def tail_logs(text: str, limit: int = LOGS_MAX_CHARS, workspace: Path | None = None) -> str:
+def tail_logs(text: str, limit: int = LOGS_MAX_CHARS, workspace: Path | None = None,
+              masker: Masker | None = None) -> str:
     """The cleaned, redacted logs, cut to their last `limit` characters at a line start."""
-    text = clean_logs(redact_text(text), workspace)
+    text = clean_logs(redact_text(text), workspace, masker)
     if len(text) <= limit:
         return text
     cut = text[-limit:]
@@ -322,13 +477,15 @@ def tail_logs(text: str, limit: int = LOGS_MAX_CHARS, workspace: Path | None = N
 
 
 def build_bundle(workspace: Path, model: RookModel, cx: Counterexample, states: list[dict[str, Any]],
-                 logs: str, summary: RepoSummary | None = None) -> EvidenceBundle:
+                 logs: str, summary: RepoSummary | None = None, masker: Masker | None = None) -> EvidenceBundle:
+    """`masker`: the one that masked `states`, so a value keeps its label across the bundle."""
+    masker = masker if masker is not None else Masker()
     return EvidenceBundle(
         cx_id=cx.cx_id,
-        rule=_rule_input(cx),
+        rule=_rule_input(cx, masker),
         steps=_steps_input(cx),
         states=states,
-        logs=tail_logs(logs, workspace=workspace),
+        logs=tail_logs(logs, workspace=workspace, masker=masker),
         files=related_files(workspace, model, cx, summary),
     )
 
@@ -461,12 +618,13 @@ class DiagnosePipeline:
         await self._publish("run.phase", RunPhase(phase="DIAGNOSE"))
         await self._publish("engine.started", EngineStarted(
             worker="replayer", label=f"Replaying {cx.cx_id} to record the state after each step"))
-        states = await collect_step_states(executor, model, cx)
+        masker = Masker()
+        states = await collect_step_states(executor, model, cx, masker)
         await self._publish("engine.finished", EngineFinished(
             worker="replayer", ok=True, summary=f"Recorded the state after {len(cx.steps)} steps"))
         logs = await self._logs(sandbox)
-        bundle = await asyncio.to_thread(build_bundle, self.workspace, model, cx, states, logs, summary)
-        return await self.diagnose(bundle, prior=prior)
+        bundle = await asyncio.to_thread(build_bundle, self.workspace, model, cx, states, logs, summary, masker)
+        return await self.diagnose(bundle, prior=masker.text(prior))
 
     async def _logs(self, sandbox: Sandbox | None) -> str:
         if sandbox is None:

@@ -12,6 +12,7 @@ from typing import Any, Literal
 
 from rook.agents.caller import BOB_FAILURES, AgentCaller, call_agent
 from rook.agents.schemas import CoordinatorDecision
+from rook.agents.volatile import Masker
 from rook.core import rails
 from rook.core.events import Log
 from rook.core.rails import Branch, RunState, Step
@@ -42,7 +43,8 @@ def state_summary(
     if request:
         summary["user_request"] = request[:_REQUEST_MAX]
     if notes:
-        summary["notes"] = [n[:_NOTE_MAX] for n in notes[-_NOTES_MAX:]]
+        masker = Masker()  # a note may quote app output (tokens, times): keep the prompt stable
+        summary["notes"] = [masker.text(n)[:_NOTE_MAX] for n in notes[-_NOTES_MAX:]]
     return summary
 
 

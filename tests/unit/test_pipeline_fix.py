@@ -401,6 +401,29 @@ async def test_reject_reject_approve_feeds_issues_back(workspace: Path) -> None:
         EVENT_TYPES[e.type].model_validate(e.data)
 
 
+async def test_the_surgeon_sees_the_generated_test_without_the_runs_time_and_seed(tmp_path: Path) -> None:
+    """The fallback test embeds the counterexample, with its `created_at` and random search `seed`: the
+    Surgeon's copy masks them (so its recording key is the same on every run); the file on disk, which the
+    engine runs, keeps them."""
+    base = await refund_cx()
+    prompts, sources = [], []
+    for n, (seed, created) in enumerate([(1, "2026-09-27T01:00:00Z"), (987654, "2026-09-28T13:14:15Z")]):
+        ws = tmp_path / f"ws{n}"
+        shutil.copytree(FIXTURE_DIR, ws, ignore=shutil.ignore_patterns("__pycache__", "rook.yaml", ".pytest_cache"))
+        cx = base.model_copy(update={"seed": seed, "created_at": created})
+        client = FakeClient({"surgeon": [fix_edit()], "fix_reviewer": [review("approve")]})
+        pipeline = FixPipeline(client, ws)
+        regression = await pipeline._fallback(REFUND, cx, "test")
+        result = await pipeline.fix(approved(), REFUND, cx, DIAGNOSIS, regression)
+        assert result.applied
+        sources.append((ws / regression.path).read_text())
+        prompts.append(client.prompts("surgeon")[0])
+    assert prompts[0] == prompts[1]
+    assert "created_at" in prompts[0] and "<time>" in prompts[0] and "<seed>" in prompts[0]
+    assert "2026-09-27T01:00:00Z" not in prompts[0]
+    assert "2026-09-27T01:00:00Z" in sources[0] and "987654" in sources[1]  # the engine's file is unchanged
+
+
 async def test_three_rejections_leave_the_workspace_unchanged(workspace: Path) -> None:
     cx = await refund_cx()
     regression = with_test(workspace)

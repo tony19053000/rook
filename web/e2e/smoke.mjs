@@ -20,12 +20,12 @@
 // engine (it finds, saves and diagnoses the refund counterexample; the Diagnosis Reviewer approves) and ends
 // `done`. The Detective's evidence is stable across machines (ids as aliases, no request log lines), so its
 // recording replays on the real uvicorn subprocess too. Required: run.finished `done`, a reviewed diagnosis,
-// 0 coins, and GET /runs agreeing with run.finished. The fix is reported, not required: on the hosted
-// ProcessSandbox the app runs from the allowlisted app dir, not the patched workspace, so a verified fix is
-// not reachable there yet (docs/04_FRONTEND_SPEC.md §3.8).
+// 0 coins, and GET /runs agreeing with run.finished. The fix is reported, not required: the Surgeon's
+// recordings for this route are not made yet (docs/04_FRONTEND_SPEC.md §3.8).
 //
 // Env: ROOK_E2E_API_PORT (default 8765), ROOK_E2E_PYTHON (default ../.venv/bin/python, i.e. after `uv sync`),
-// ROOK_E2E_TIMEOUT_S (default 300), ROOK_E2E_SKIP_BUILD=1, ROOK_E2E_KEEP=1 (after the checks, keep both servers
+// ROOK_E2E_APPROVE (refund | all | both, default both: one run approving the refund rule, one approving every
+// rule like the web UI), ROOK_E2E_TIMEOUT_S (default 300 per run), ROOK_E2E_SKIP_BUILD=1, ROOK_E2E_KEEP=1 (after the checks, keep both servers
 // up for the manual in-browser check of docs/04_FRONTEND_SPEC.md §3.8; Ctrl-C stops them and cleans up).
 
 import { spawn } from "node:child_process";
@@ -46,7 +46,9 @@ const REQUEST = "find and fix a bug";
 
 const API_PORT = Number(process.env.ROOK_E2E_API_PORT ?? 8765);
 const PYTHON = process.env.ROOK_E2E_PYTHON ?? join(ROOT, ".venv", "bin", "python");
-const TIMEOUT_MS = Number(process.env.ROOK_E2E_TIMEOUT_S ?? 300) * 1000;
+const APPROVE = process.env.ROOK_E2E_APPROVE ?? "both";
+const APPROVE_MODES = { refund: ["refund"], all: ["all"], both: ["refund", "all"] }[APPROVE];
+const TIMEOUT_MS = Number(process.env.ROOK_E2E_TIMEOUT_S ?? 300 * (APPROVE_MODES?.length ?? 1)) * 1000;
 
 const children = [];
 let scratch = "";
@@ -214,10 +216,12 @@ async function json(res, what) {
   return res.json();
 }
 
-/** Answers a question the way a demo user would (approve the refund rule, apply the fix). */
-function answerFor(question) {
+/** Answers a question the way a demo user would: approve the refund rule only (`approve` = "refund", like the
+ * CLI demo) or every proposed rule (`approve` = "all", what the web UI's approve button sends), apply the fix. */
+function answerFor(question, approve) {
   switch (question.kind) {
     case "approve_rules": {
+      if (approve === "all") return "all";
       const rules = question.payload?.rules ?? [];
       const refund = rules.filter((r) => r.accepted && r.check.includes("refund") && r.check.includes("paid"));
       return refund.length > 0 ? refund.map((r) => r.id) : "all";
@@ -232,7 +236,7 @@ function answerFor(question) {
   }
 }
 
-async function streamRun(call, runId) {
+async function streamRun(call, runId, approve) {
   const res = await call(`/api/v1/runs/${runId}/events`, { headers: { accept: "text/event-stream" } });
   check(res.ok && (res.headers.get("content-type") ?? "").startsWith("text/event-stream"),
     "GET /api/v1/runs/<id>/events streams text/event-stream through the proxy");
@@ -258,7 +262,7 @@ async function streamRun(call, runId) {
       if (event.type === "verify.done") seen.verify = event.data;
       if (event.type === "agent.finished" && !event.data.ok) log(`agent ${event.data.agent} failed: ${event.data.summary}`);
       if (event.type === "question.asked") {
-        const answer = answerFor(event.data);
+        const answer = answerFor(event.data, approve);
         log(`question ${event.data.kind}: "${event.data.text.slice(0, 70)}" -> ${JSON.stringify(answer)}`);
         const reply = await json(
           await call(`/api/v1/runs/${runId}/answers`, {
@@ -281,7 +285,40 @@ async function streamRun(call, runId) {
 
 // --- main ---
 
+/** One guest run on the demo repo, answering approve_rules with `approve`; it must end `done`, diagnosed. */
+async function demoRun(call, approve) {
+  log(`--- demo run, approving ${approve === "all" ? "every proposed rule" : "the refund rule"} ---`);
+  const created = await json(
+    await call("/api/v1/runs", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ repo: { kind: "demo", ref: DEMO_REF }, request: REQUEST, options: { auto: false } }),
+    }),
+    "POST /api/v1/runs",
+  );
+  check(typeof created.run_id === "string" && created.run_id !== "", `POST /api/v1/runs -> ${created.run_id}`);
+
+  const { finished, types, seen } = await streamRun(call, created.run_id, approve);
+  log(`events: ${[...types].map(([t, n]) => `${t}×${n}`).join(", ")}`);
+  check(finished.status === "done", `[${approve}] run.finished with status "done": ${finished.summary}`);
+  check(types.has("counterexample.saved"), `[${approve}] the engine found, shrank and saved a counterexample (streamed)`);
+  check(seen.diagnosis !== null && seen.diagnosis.reviewed === true && seen.diagnosis.file !== "",
+    `[${approve}] DIAGNOSE replayed: ${seen.diagnosis?.file}:${seen.diagnosis?.line}, approved by the Diagnosis Reviewer`);
+  log(`fix: ${seen.verify === null ? "not verified (no verify.done)" : `verify.done verified=${seen.verify.verified}`}`);
+  const detail = await json(await call(`/api/v1/runs/${created.run_id}`), "GET /api/v1/runs/<id>");
+  check(detail.run.coins === 0, `[${approve}] the run spent 0 Bobcoins (replay)`);
+  check(detail.counterexamples.length > 0, `GET /api/v1/runs/<id> lists ${detail.counterexamples.length} counterexample(s)`);
+
+  const page = await call(`/runs/${created.run_id}`);
+  check(page.status === 200, `GET /runs/${created.run_id} -> 200`);
+  const runs = await json(await call("/api/v1/runs"), "GET /api/v1/runs");
+  const listed = runs.find((r) => r.id === created.run_id);
+  check(listed !== undefined, "GET /api/v1/runs lists the new run (the recents)");
+  check(listed.status === finished.status, `the listed run has status "${listed.status}" (= run.finished)`);
+}
+
 async function main() {
+  if (APPROVE_MODES === undefined) throw new Error(`ROOK_E2E_APPROVE must be refund, all or both, not ${APPROVE}`);
   if (!existsSync(PYTHON)) throw new Error(`no Python at ${PYTHON}: run \`uv sync\` in the repo root first`);
   demoSetup();
   const webPort = await freePort();
@@ -316,33 +353,7 @@ async function main() {
   const repos = await json(await call("/api/v1/repos"), "GET /api/v1/repos");
   check(repos.some((r) => r.kind === "demo" && r.ref === DEMO_REF), `GET /api/v1/repos lists the demo ${DEMO_REF}`);
 
-  const created = await json(
-    await call("/api/v1/runs", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ repo: { kind: "demo", ref: DEMO_REF }, request: REQUEST, options: { auto: false } }),
-    }),
-    "POST /api/v1/runs",
-  );
-  check(typeof created.run_id === "string" && created.run_id !== "", `POST /api/v1/runs -> ${created.run_id}`);
-
-  const { finished, types, seen } = await streamRun(call, created.run_id);
-  log(`events: ${[...types].map(([t, n]) => `${t}×${n}`).join(", ")}`);
-  check(finished.status === "done", `run.finished with status "done": ${finished.summary}`);
-  check(types.has("counterexample.saved"), "the engine found, shrank and saved a counterexample (streamed)");
-  check(seen.diagnosis !== null && seen.diagnosis.reviewed === true && seen.diagnosis.file !== "",
-    `DIAGNOSE replayed: ${seen.diagnosis?.file}:${seen.diagnosis?.line}, approved by the Diagnosis Reviewer`);
-  log(`fix: ${seen.verify === null ? "not verified (no verify.done)" : `verify.done verified=${seen.verify.verified}`}`);
-  const detail = await json(await call(`/api/v1/runs/${created.run_id}`), "GET /api/v1/runs/<id>");
-  check(detail.run.coins === 0, "the run spent 0 Bobcoins (replay)");
-  check(detail.counterexamples.length > 0, `GET /api/v1/runs/<id> lists ${detail.counterexamples.length} counterexample(s)`);
-
-  const page = await call(`/runs/${created.run_id}`);
-  check(page.status === 200, `GET /runs/${created.run_id} -> 200`);
-  const runs = await json(await call("/api/v1/runs"), "GET /api/v1/runs");
-  const listed = runs.find((r) => r.id === created.run_id);
-  check(listed !== undefined, "GET /api/v1/runs lists the new run (the recents)");
-  check(listed.status === finished.status, `the listed run has status "${listed.status}" (= run.finished)`);
+  for (const approve of APPROVE_MODES) await demoRun(call, approve);
   return web;
 }
 

@@ -80,6 +80,11 @@ class SequenceContext:
         self._token = secrets.token_hex(5)
         self.fresh = _fresh(self._token)
 
+    @property
+    def fresh_token(self) -> str:
+        """The random part of this context's fresh values (so evidence can mask it)."""
+        return self._token
+
     def new_fresh(self) -> dict[str, str]:
         """New unique fresh values (one set per actor setup)."""
         self._counter += 1

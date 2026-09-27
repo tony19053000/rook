@@ -32,6 +32,7 @@ from pydantic import ValidationError
 from rook.agents.caller import BOB_FAILURES, AgentCaller, call_agent
 from rook.agents.modes import write_modes
 from rook.agents.schemas import MapperOutput, SandboxPlan
+from rook.agents.volatile import mask_text
 from rook.core import rails
 from rook.core.events import (
     EngineFinished,
@@ -382,7 +383,8 @@ class UnderstandPipeline:
                 needed = {name: values[name] for name in plan.env_required}
                 app = await asyncio.to_thread(self.launcher, plan, needed, summary)
             except (SandboxError, ValueError, OSError) as exc:
-                logs = _tail(f"Attempt {attempt} with plan {plan.model_dump_json()} failed:\n{exc}")
+                logs = _tail(f"Attempt {attempt} with plan {plan.model_dump_json()} failed:\n"
+                             f"{mask_text(str(exc))}")
                 await self._log("warn", f"The app did not start (attempt {attempt}/{self.max_attempts}): "
                                         f"{redact_text(str(exc)).splitlines()[0] if str(exc) else 'error'}")
                 continue
@@ -441,7 +443,8 @@ class UnderstandPipeline:
             if report.ok:
                 return model, report, []
             last = (model, report)
-            feedback = _tail(_mapper_feedback(output, f"Dry-run failures:\n{report.failures()}"), 12_000)
+            feedback = _tail(_mapper_feedback(output, f"Dry-run failures:\n{mask_text(report.failures())}"),
+                             12_000)
         if last is None:
             raise UnderstandError("MAP", f"no valid model after {self.max_attempts} attempts")
         model, disabled = disable_failed(*last)

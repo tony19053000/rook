@@ -16,11 +16,16 @@ Bob's tool calls quote it, and replay never uses it (the recording key is the sl
 import json
 import os
 import re
+import secrets
 import shutil
+import time
+import uuid
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
 import pytest
+from fastapi import Depends, FastAPI, Header, HTTPException
 from pydantic import BaseModel
 from test_export import found_cx
 from test_shrinker import FIXTURE_DIR, MODEL, REFUND, executor
@@ -34,6 +39,7 @@ from rook.agents.diagnose import (
     InvalidDiagnosis,
     alias_ids,
     build_bundle,
+    capture_paths,
     check_diagnosis,
     clean_logs,
     collect_step_states,
@@ -44,7 +50,10 @@ from rook.agents.diagnose import (
 )
 from rook.agents.prompts import BANNER
 from rook.agents.schemas import Diagnosis, ReviewVerdict, example_for
+from rook.agents.volatile import Masker
 from rook.core.events import EVENT_TYPES, EventBus, RepoSummary, clear_secrets, register_secret
+from rook.engine.executor import Executor
+from rook.engine.inprocess import InProcessTransport
 from rook.export.counterexample import Counterexample
 from rook.sandbox.base import ExecResult, Sandbox, SandboxError
 
@@ -271,19 +280,152 @@ def test_clean_logs_keeps_app_output_and_masks_volatile_bits(tmp_path: Path) -> 
 
 
 def test_id_aliases_replace_ids_only_where_ids_are() -> None:
-    pool = {"product_id": [180], "order_id": [182, 180], "token": ["abc"]}
+    pool = {"product_id": [180], "order_id": [182], "token": ["abc"]}
     aliases = id_aliases(pool)
-    assert aliases == {(int, 180): "product_id[0]", (int, 182): "order_id[0]", (str, "abc"): "token[0]"}
-    names = frozenset(pool)
-    state = {"order": {182: {"paid": 180, "product_id": 180, "shipped": True, "id": 182}},
-             "product": {180: {"price": 180, "stock": 1, "tags": ["x"], "item_ids": [180, 5]}}}
-    assert alias_ids(state, aliases, names) == {
-        "order": {"order_id[0]": {"paid": 180, "product_id": "product_id[0]", "shipped": True,
-                                  "id": "order_id[0]"}},
-        "product": {"product_id[0]": {"price": 180, "stock": 1, "tags": ["x"], "item_ids": ["product_id[0]", 5]}},
+    assert aliases.lookup(180) == "product_id[0]" and aliases.lookup("abc") == "token[0]"
+    state = {182: {"paid": 180, "product_id": 180, "shipped": True, "id": 182, "item_ids": [180, 5]}}
+    assert alias_ids(state, aliases, keys_of=("order_id",)) == {
+        "order_id[0]": {"paid": 180, "product_id": "product_id[0]", "shipped": True, "id": "order_id[0]",
+                        "item_ids": ["product_id[0]", 5]},
     }
-    assert alias_ids({"id": True, "paid": 182}, {(int, 1): "x[0]", (int, 182): "order_id[0]"}) == \
-        {"id": True, "paid": 182}  # a bool is never an id; a non-id field keeps its value
+    assert alias_ids({"id": True, "paid": 182}, aliases) == {"id": True, "paid": 182}  # a bool is never an id
+
+
+def test_colliding_ids_across_entities_resolve_by_context() -> None:
+    """Apps that count ids per entity: product 1, order 1 and user 1 at once. Each id is attributed by where
+    it sits (the capture path, the field name, the entity map or object it is in), never by pool order."""
+    pool = {"product_id": [1, 2], "order_id": [2, 1]}
+    aliases = id_aliases(pool, {"customer": {"user_id": 1, "token": "t0k3n"}, "admin": {"token": "x"}})
+    assert "customer.token" not in aliases.names  # credentials are never aliases
+    order = {"id": 1, "product_id": 1, "user_id": 1, "paid": 1, "product": {"id": 2}, "orders": [{"id": 2}]}
+    assert alias_ids(order, aliases, captured=capture_paths({"order_id": "$.id"})) == {
+        "id": "order_id[1]", "product_id": "product_id[0]", "user_id": "customer.user_id", "paid": 1,
+        "product": {"id": "product_id[1]"}, "orders": [{"id": "order_id[0]"}],
+    }
+    # the state reader's map: keys and the bare `id` inside are that reader's var
+    assert alias_ids({1: {"id": 1}, 2: {"id": 2}}, aliases, keys_of=("product_id",)) == \
+        {"product_id[0]": {"id": "product_id[0]"}, "product_id[1]": {"id": "product_id[1]"}}
+    assert alias_ids({1: {"id": 1}}, aliases, keys_of=("order_id",)) == {"order_id[1]": {"id": "order_id[1]"}}
+    # no context at all: every candidate is shown, never a guess
+    assert alias_ids({"ref_id": 1}, aliases) == {"ref_id": "customer.user_id|order_id[1]|product_id[0]"}
+    # an id Rook never captured gets a stable label per field (with a masker), else stays as it is
+    masker = Masker()
+    assert alias_ids({"owner_id": 77, "sku_ids": [9, 9]}, aliases, masker=masker) == \
+        {"owner_id": "<owner_id#1>", "sku_ids": ["<sku_ids#1>", "<sku_ids#1>"]}
+    assert alias_ids({"owner_id": 77}, aliases) == {"owner_id": 77}
+
+
+def test_list_entries_the_search_left_behind_are_summarised() -> None:
+    """An admin export lists every order the search made; only the entries this replay made are shown."""
+    aliases = id_aliases({"order_id": [31]})
+    def export(history: int) -> Any:
+        rows = [{"id": n, "paid": n * 3, "status": "paid"} for n in range(1, history + 1)]
+        return alias_ids({"orders": [*rows, {"id": 31, "paid": 1, "status": "refunded"}]}, aliases)
+    assert export(3) == export(12) == {"orders": [
+        {"id": "order_id[0]", "paid": 1, "status": "refunded"},
+        {"_rook_other_items": "entries the app already held before this replay, not shown (they depend on the "
+                              "search); their fields: id, paid, status"},
+    ]}
+    assert alias_ids([], aliases) == [] and alias_ids([1, 2], aliases) == [1, 2]
+
+
+def test_colliding_ids_give_the_same_evidence_whatever_the_counters() -> None:
+    """The same steps on an app whose counters stand elsewhere (ids collide in one run, not in the other)."""
+    def evidence(product: int, order: int, user: int) -> Any:
+        aliases = id_aliases({"product_id": [product], "order_id": [order]}, {"customer": {"user_id": user}})
+        body = {"id": order, "product_id": product, "owner_id": user}
+        state = {order: {"id": order, "product_id": product}}
+        return (alias_ids(body, aliases, captured=capture_paths({"order_id": "$.id"})),
+                alias_ids(state, aliases, keys_of=("order_id",)))
+
+    assert evidence(1, 1, 1) == evidence(5, 9, 3) == evidence(4, 4, 2)
+
+
+def noisy_shop(users: int = 1, products: int = 1, orders: int = 1) -> FastAPI:
+    """A minishop-compatible app (same routes, same refund bug) like the real demo apps: every entity has
+    its own id counter (starting where the arguments say), logins return random tokens, and bodies hold
+    ISO and epoch timestamps, uuid4s and random hex."""
+    counters = {"user": users, "product": products, "order": orders}
+    db: dict[str, dict[int, dict[str, Any]]] = {"user": {}, "product": {}, "order": {}}
+    tokens: dict[str, int] = {}
+    app = FastAPI()
+
+    def new(kind: str, **fields: Any) -> dict[str, Any]:
+        item = {"id": counters[kind], "created_at": datetime.now(UTC).isoformat(), **fields}
+        db[kind][counters[kind]] = item
+        counters[kind] += 1
+        return item
+
+    def me(authorization: Annotated[str, Header()] = "") -> dict[str, Any]:
+        return db["user"][tokens[authorization.removeprefix("Bearer ")]]
+
+    new("user", email="admin@demo.local", password="admin-pass")
+
+    @app.post("/auth/signup")
+    async def signup(body: dict[str, Any]) -> dict[str, Any]:
+        return {"id": new("user", **body)["id"]}
+
+    @app.post("/auth/login")
+    async def login(body: dict[str, Any]) -> dict[str, Any]:
+        user = next(u for u in db["user"].values() if u["email"] == body["email"])
+        token = secrets.token_urlsafe(24)
+        tokens[token] = user["id"]
+        return {"token": token, "expires_at": time.time() + 3600}
+
+    @app.post("/products")
+    async def create_product(body: dict[str, Any], user: Annotated[dict, Depends(me)]) -> dict[str, Any]:
+        return new("product", sku=str(uuid.uuid4()), **body)
+
+    @app.get("/products/{pid}")
+    async def read_product(pid: int) -> dict[str, Any]:
+        return {**db["product"][pid], "updatedAt": datetime.now(UTC).isoformat()}
+
+    @app.post("/orders")
+    async def buy(body: dict[str, Any], user: Annotated[dict, Depends(me)]) -> dict[str, Any]:
+        product = db["product"][body["product_id"]]
+        return new("order", owner_id=user["id"], product_id=product["id"], paid=product["price"],
+                   refunded_total=0, status="paid", shipped=False, payment_ref=secrets.token_hex(16))
+
+    @app.get("/orders/{oid}")
+    async def read_order(oid: int, user: Annotated[dict, Depends(me)]) -> dict[str, Any]:
+        return {**db["order"][oid], "paidAt": time.time()}
+
+    @app.post("/orders/{oid}/refunds")
+    async def refund(oid: int, body: dict[str, Any], user: Annotated[dict, Depends(me)]) -> dict[str, Any]:
+        order = db["order"][oid]
+        if body["amount"] > order["paid"]:  # the minishop bug: earlier refunds are not counted
+            raise HTTPException(400, "refund exceeds amount paid")
+        order["refunded_total"] += body["amount"]
+        return {"refunded_total": order["refunded_total"], "refund_id": str(uuid.uuid4()),
+                "at": datetime.now(UTC).isoformat()}
+
+    return app
+
+
+async def noisy_states(**counters: int) -> list[dict[str, Any]]:
+    cx = await refund_cx()
+    async with Executor(REFUND, "http://noisy.test", transport=InProcessTransport(noisy_shop(**counters)),
+                        env={"MINISHOP_ADMIN_PASSWORD": "admin-pass"}) as ex:
+        return await collect_step_states(ex, MODEL, cx)
+
+
+async def test_states_are_stable_on_an_app_with_per_entity_ids_tokens_and_times() -> None:
+    """Colliding ids (product 1 and order 1), random tokens, timestamps and uuids: the evidence is the same
+    whatever the counters and the clock, and each id is attributed to its own entity."""
+    fresh = await noisy_states()
+    shifted = await noisy_states(users=40, products=7, orders=2)  # order 2 = product 2 of the first run
+    assert fresh == shifted
+    text = json.dumps(fresh)
+    assert not re.search(r"\d{4}-\d{2}-\d{2}T|[0-9a-f]{8}-[0-9a-f]{4}-|\d{10}\.\d", text), text
+    bought = fresh[1]["responses"][0]["body"]
+    assert (bought["id"], bought["product_id"]) == ("order_id[0]", "product_id[0]")
+    assert bought["created_at"] == "<time>" and bought["payment_ref"] == "<random#1>"
+    assert bought["owner_id"] == "<owner_id#1>" and bought["paid"] == 1 and bought["status"] == "paid"
+    last = fresh[3]
+    assert last["rule"] == "broken" and last["responses"][0]["body"]["refund_id"] == "<refund_id#2>"
+    order = last["state"]["order"]["order_id[0]"]
+    assert order == {"paid": 1, "refunded": 2, "status": "paid", "shipped": False}
+    assert list(last["state"]["product"]) == ["product_id[0]"]
 
 
 async def test_states_do_not_depend_on_what_the_app_served_before(workspace: Path) -> None:
