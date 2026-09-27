@@ -8,6 +8,11 @@ entries:
     commit: '406059b53767b10f157b4eb92105d10af6a0c44d'
     app_dir: /opt/rook/demos/minishop
     start: ['{python}', '-m', 'uvicorn', 'app:app', '--host', '127.0.0.1', '--port', '{port}']
+    # The native test command (key `test`). It runs only in replay mode, from the run's workspace copy, with
+    # the regression test's path appended (sandbox/process.py). pytest comes from the image's `sandbox` group.
+    commands:
+      test: ['{python}', '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-o', 'asyncio_mode=auto']
+    command_timeout: 300
 
 # ROOK-039 hooks: add the real demo apps here with the SHAs pinned in repos.txt, e.g.
 #  - repo: tony19053000/shop-app
@@ -16,5 +21,6 @@ entries:
 #    start: ['node', 'server.js']
 #    port_env: PORT
 #    db_env: DATABASE_PATH
+#    commands: {test: ['npm', 'test', '--']}   # the native test command; replay runs append the test file's path
 #  - repo: tony19053000/billing-service    (app_dir /opt/rook/demos/billing-service)
 #  - repo: tony19053000/wallet-api         (app_dir /opt/rook/demos/wallet-api)

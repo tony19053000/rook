@@ -119,6 +119,15 @@ def test_demo_catalog_is_allowlisted_and_pinned() -> None:
     assert "/opt/rook/demos/minishop/" in (DEPLOY / "Dockerfile").read_text()
 
 
+def test_the_hosted_image_can_run_the_minishop_regression_tests() -> None:
+    """ROOK-039c: replay runs execute the allowlisted `test` command (pytest) from the workspace copy."""
+    entry = Allowlist.from_yaml(DEPLOY / "demos" / "allowlist.yaml").get(
+        "rook-demo/minishop", "406059b53767b10f157b4eb92105d10af6a0c44d")
+    assert entry.commands["test"][:3] == ["{python}", "-m", "pytest"]
+    assert "asyncio_mode=auto" in entry.commands["test"] and entry.command_timeout <= 600
+    assert "uv sync --frozen --no-dev --group sandbox" in (DEPLOY / "Dockerfile").read_text()
+
+
 def test_build_demos_skips_comments_and_rejects_unpinned(tmp_path: Path) -> None:
     script = DEPLOY / "demos" / "build-demos.sh"
     ok = subprocess.run(["bash", str(script), str(DEPLOY / "demos" / "repos.txt"), str(tmp_path / "d")],

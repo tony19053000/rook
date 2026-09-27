@@ -48,7 +48,8 @@ ENV PATH=/app/.venv/bin:/usr/local/go/bin:$PATH \
 WORKDIR /app
 COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src ./src
-RUN uv sync --frozen --no-dev --no-editable && rm -rf /root/.cache/uv
+# `sandbox` group: pytest + pytest-asyncio, which run the demo apps' regression tests (03 §3).
+RUN uv sync --frozen --no-dev --group sandbox --no-editable && rm -rf /root/.cache/uv
 
 # Optional Bob Shell (deploy/vendor/bobshell-<version>.tgz, see deploy/vendor/README.md) and its Node 24.
 COPY deploy/vendor/ /tmp/vendor/

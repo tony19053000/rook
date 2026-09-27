@@ -20,6 +20,10 @@ PREPARE -> SCOUT -> START_APP -> MAP -> RULES -> APPROVE -> DESIGN -> SEARCH -> 
   stops the search, waits for a sandbox that is still starting and stops every sandbox the run started.
 - Persistence: with a `Store`, the bus stores every event and the run row is kept up to date;
   `read_run()` rebuilds a run's state from its events.
+- Demo repos (ProcessSandbox) run the pristine allowlisted app unless the server grants `run_workspace`
+  (replay mode only, 03 section 3): then the app and the entry's allowlisted `test` command run from the
+  workspace copy, so VERIFY executes the Surgeon's patch. Without it a fix cannot be verified there, so
+  VERIFY is skipped and the summary says so.
 
 The public API (used by the CLI, ROOK-024/028, and the server, ROOK-029) is `Session.run()`,
 `events(after)`, `answer()`, `chat()`, `cancel()` and `pending_questions()`. `answer`, `chat` and
@@ -102,11 +106,14 @@ from rook.engine.testrunner import TestRunner, parse_command
 from rook.engine.verifier import Verifier, VerifyResult
 from rook.export.counterexample import CX_DIR, Counterexample, next_cx_id, publish_saved, save_counterexample
 from rook.model.schema import RookModel
-from rook.sandbox.allowlist import DEFAULT_ALLOWLIST, Allowlist
+from rook.sandbox.allowlist import DEFAULT_ALLOWLIST, TEST_COMMAND, Allowlist
 from rook.sandbox.base import Sandbox, SandboxError
 from rook.sandbox.process import ProcessSandbox
 from rook.store.repo import CxStatus, RunRecord, Store
 
+# Why a fix cannot be verified on a demo app that runs from its pristine copy (live mode on the server).
+_PRISTINE_NOTE = ("the server runs the original demo app, never AI-patched code from a live run. "
+                  "Run `rook` from the CLI to fix and verify on your own copy.")
 LAUNCH_WAIT = 120.0  # how long cancel waits for a sandbox that is still starting, before stopping it
 _ANSWER_MAX = 10_000
 _RULE_IDS_MAX = 200
@@ -254,15 +261,18 @@ class SandboxTracker:
             return self._inflight
 
 
-def process_launcher(workspace: Workspace, allowlist: Allowlist = DEFAULT_ALLOWLIST) -> Launcher:
-    """The hosted launcher: the allowlisted demo app as a subprocess (a SandboxPlan is never executed)."""
+def process_launcher(workspace: Workspace, allowlist: Allowlist = DEFAULT_ALLOWLIST, *,
+                     run_workspace: bool = False) -> Launcher:
+    """The hosted launcher: the allowlisted demo app as a subprocess (a SandboxPlan is never executed),
+    from its pristine app dir, or from the run's workspace copy with `run_workspace` (replay mode only)."""
     entry = workspace.demo
     if entry is None:
         raise ValueError("the process launcher runs allowlisted demo repos only")
+    run_from = workspace.path if run_workspace else None
 
     def launch(plan: SandboxPlan, values: Mapping[str, str], summary: RepoSummary) -> StartedApp:
         env = {k: v for k, v in values.items() if k in entry.settable_env}
-        sandbox = ProcessSandbox(entry.repo, entry.commit, allowlist=allowlist, env=env)
+        sandbox = ProcessSandbox(entry.repo, entry.commit, allowlist=allowlist, env=env, workspace=run_from)
         return StartedApp(sandbox=sandbox, base_url=sandbox.start(plan))
 
     return launch
@@ -311,9 +321,13 @@ class Session:
         token: str | None = None,
         allowlist: Allowlist = DEFAULT_ALLOWLIST,
         github_url: str = GITHUB_URL,
+        run_workspace: bool = False,
     ) -> None:
         """`bus` should hold `store` when both are given (the server shares one bus); `token` is a GitHub
-        installation token for a clone (never published or stored)."""
+        installation token for a clone (never published or stored).
+
+        `run_workspace` comes from trusted server config only (never a request): a demo app then runs from
+        the workspace copy. It takes effect only while the Bob client replays (`_runs_workspace`)."""
         self.repo = repo
         self.request = request
         self.options = options or SessionOptions()
@@ -328,6 +342,7 @@ class Session:
         self._token = token
         self._allowlist = allowlist
         self._github_url = github_url
+        self._run_workspace = run_workspace
         for value in self.options.setup_values.values():
             register_secret(value)
         self.state = RunState(auto=self.options.auto, budget=self.options.budget,
@@ -607,13 +622,26 @@ class Session:
         self._guide = Guide(self._client, ws, self.snapshot, bob_allowed=self.state.bob_allowed)
         await self._log("info", f"Workspace ready: a copy of {self.repo.name} "
                                 f"(base {self.workspace.base_commit[:12]})")
+        if self._run_workspace and self.workspace.demo is not None and not self._runs_workspace():
+            await self._log("warn", "The demo app runs from its original copy: only replayed runs may run "
+                                    "patched code on this server")
+
+    def _runs_workspace(self) -> bool:
+        """A demo app may run from the workspace only when the server allows it AND every Bob call replays
+        a committed recording, so every edit in the workspace comes from a reviewed edit tape."""
+        return self._run_workspace and self._client is not None and edit_tape.tape_mode(self._client) == "replay"
+
+    def _pristine_demo(self) -> bool:
+        """The app runs from the untouched allowlisted app dir, so it never serves a patch."""
+        return (self._launcher_factory is None and self.workspace is not None and self.workspace.demo is not None
+                and not self._runs_workspace())
 
     def _launcher(self) -> Launcher:
         assert self.workspace is not None
         if self._launcher_factory is not None:
             launcher = self._launcher_factory(self.workspace, self.run_id)
         elif self.workspace.demo is not None:
-            launcher = process_launcher(self.workspace, self._allowlist)
+            launcher = process_launcher(self.workspace, self._allowlist, run_workspace=self._runs_workspace())
         else:
             launcher = docker_launcher(self.workspace.path, self.run_id)
         return self._tracker.wrap(launcher)
@@ -628,7 +656,10 @@ class Session:
                 await self._retry_or_stop(_AGENT_OF_PHASE.get(exc.phase, "mapper"), str(exc))
                 continue
             self._app, self._env = known.app, dict(known.env)
-            command = known.summary.test_command or None
+            command: str | list[str] | None = known.summary.test_command or None
+            demo = self.workspace.demo if self.workspace is not None else None
+            if self._launcher_factory is None and demo is not None and self._runs_workspace():
+                command = demo.commands.get(TEST_COMMAND)  # the allowlisted one, never the Scout's guess
             try:
                 if command:
                     parse_command(command)
@@ -772,6 +803,10 @@ class Session:
             if fixed is None:
                 return f"Found and saved {cx.cx_id}; no fix was approved by the Fix Reviewer."
             self._store_cx(cx, "fixed")
+            if self._pristine_demo():
+                await self._log("warn", f"The fix for {cx.cx_id} was not verified: {_PRISTINE_NOTE}")
+                return (f"Found and saved {cx.cx_id}; a fix was written to the run's workspace but NOT verified: "
+                        f"{_PRISTINE_NOTE}")
             verification = await fixer.verify(cx, regression, self._harness, self._verifier(model))
             if verification.verified:
                 self._verified = True

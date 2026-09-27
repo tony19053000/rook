@@ -3,6 +3,12 @@
 Used by the hosted server, which cannot run Docker. Only repos on the allowlist are run, with the
 start command and env from their allowlist entry (a SandboxPlan's commands are never executed here).
 
+Where it runs from: by default the pristine, pre-installed `app_dir`. With `workspace=` (a capability the
+server grants only in replay mode, 03 section 3) the app and the entry's commands run from the run's
+workspace copy instead: the pinned repo plus the Surgeon's taped, path-guarded edits, so VERIFY executes
+the patched code. Only then may the `test` command get one extra argument: the path of a regular test
+file inside that workspace. The start command, env and commands still come only from the entry.
+
 Each run gets a fresh temp dir (HOME, TMPDIR and the temp DB file live there) and a free port on
 127.0.0.1. The child env is built from scratch: none of Rook's own env (API keys, tokens) is passed.
 The app runs in its own process group, and the whole group is killed on stop, on an exception inside
@@ -13,13 +19,14 @@ import atexit
 import os
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tempfile
 import threading
 import time
 from collections.abc import Mapping, Sequence
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import IO
 
 import httpx
@@ -27,6 +34,7 @@ import httpx
 from rook.agents.schemas import SandboxPlan
 from rook.sandbox.allowlist import (
     DEFAULT_ALLOWLIST,
+    TEST_COMMAND,
     Allowlist,
     AllowlistEntry,
     check_env_name,
@@ -41,6 +49,21 @@ _SYSTEM_PATH = ("/usr/local/bin", "/usr/bin", "/bin")
 # logs() reads at most this much from the end of app.log. The file itself lives in the run's temp
 # dir and is deleted on stop; demo apps are trusted, so it is not rotated.
 _LOG_TAIL_BYTES = 256_000
+# exec() commands (tests) get no easy way out: every proxy variable points at a closed local port and
+# package managers are told to stay offline. Best effort only (a subprocess has no network namespace of
+# its own); what runs is the pinned repo plus reviewed, taped edits. Loopback stays reachable.
+_DEAD_PROXY = "http://127.0.0.1:9"
+_OFFLINE_ENV = {
+    **{name: _DEAD_PROXY for name in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy",
+                                     "all_proxy")},
+    "NO_PROXY": "127.0.0.1,localhost",
+    "no_proxy": "127.0.0.1,localhost",
+    "UV_OFFLINE": "1",
+    "PIP_NO_INDEX": "1",
+    "npm_config_offline": "true",
+    "GOPROXY": "off",
+    "GOTOOLCHAIN": "local",
+}
 
 # Strong refs: a sandbox dropped without stop() must still be stopped at exit.
 _LIVE: "set[ProcessSandbox]" = set()
@@ -66,6 +89,26 @@ def _resolve(argv: Sequence[str], port: int) -> list[str]:
     return [t.replace("{python}", sys.executable).replace("{port}", str(port)) for t in argv]
 
 
+def _check_workspace(workspace: Path) -> Path:
+    path = Path(workspace)
+    if not path.is_absolute() or path.is_symlink() or not path.is_dir():
+        raise ValueError(f"the workspace must be an existing, absolute folder (not a symlink): {workspace}")
+    return path.resolve()
+
+
+def _test_file(root: Path, rel: str) -> bool:
+    """`rel` names a regular file inside `root`: relative, normalised, not an option, no symlink on the way."""
+    pure = PurePosixPath(rel)
+    if (not rel or rel.startswith("-") or "\\" in rel or "\x00" in rel or pure.is_absolute() or str(pure) != rel
+            or any(part in ("", ".", "..") for part in pure.parts)):
+        return False
+    path = root.joinpath(*pure.parts)
+    try:
+        return os.path.realpath(path, strict=True) == str(path) and stat.S_ISREG(os.lstat(path).st_mode)
+    except OSError:
+        return False
+
+
 class ProcessSandbox(Sandbox):
     def __init__(
         self,
@@ -74,13 +117,19 @@ class ProcessSandbox(Sandbox):
         *,
         allowlist: Allowlist = DEFAULT_ALLOWLIST,
         env: Mapping[str, str] | None = None,
+        workspace: Path | None = None,
     ) -> None:
         """Raises NotAllowlistedError if `repo@commit` is not allowlisted.
 
         `env` holds extra values for the app (e.g. setup values the user answered). Only names in the
         entry's `settable_env` are accepted, and never loader/interpreter/shell variables.
+
+        `workspace` (default None: run the pristine `app_dir`) makes the app and the entry's commands run
+        from that folder, the run's workspace copy. Only trusted config may grant it: the server does, in
+        replay mode only, where every edit in the workspace comes from a committed, reviewed edit tape.
         """
         self.entry: AllowlistEntry = allowlist.get(repo, commit)
+        self.workspace: Path | None = _check_workspace(workspace) if workspace is not None else None
         extra = dict(env or {})
         not_settable = sorted(set(extra) - self.entry.settable_env)
         if not_settable:
@@ -114,6 +163,11 @@ class ProcessSandbox(Sandbox):
     @property
     def temp_dir(self) -> Path | None:
         return self._tmp
+
+    @property
+    def run_dir(self) -> Path:
+        """The folder the app and its commands run from (cwd)."""
+        return self.workspace if self.workspace is not None else self.entry.app_dir
 
     # --- env ---
 
@@ -151,7 +205,7 @@ class ProcessSandbox(Sandbox):
         try:
             self._proc = subprocess.Popen(
                 _resolve(self.entry.start, port),
-                cwd=self.entry.app_dir,
+                cwd=self.run_dir,
                 env=self._child_env(tmp, port),
                 stdin=subprocess.DEVNULL,
                 stdout=self._log,
@@ -225,20 +279,34 @@ class ProcessSandbox(Sandbox):
 
     # --- commands and logs ---
 
+    def _allowed(self, wanted: list[str], port: int) -> bool:
+        """One of the entry's `commands` exactly (as argv lists). From a workspace, the `test` command may
+        also get one extra argument: the path of a regular test file inside that workspace."""
+        for name, argv in self.entry.commands.items():
+            allowed = _resolve(argv, port)
+            if wanted == allowed:
+                return True
+            if (self.workspace is not None and name == TEST_COMMAND and len(wanted) == len(allowed) + 1
+                    and wanted[:-1] == allowed and _test_file(self.workspace, wanted[-1])):
+                return True
+        return False
+
     def exec(self, cmd: Sequence[str], timeout: float = 600.0) -> ExecResult:
-        """Run one of the entry's `commands` (compared as argv lists); anything else is refused."""
+        """Run one of the entry's `commands` (see `_allowed`) from `run_dir`, with the app's scrubbed env
+        plus offline settings, for at most the entry's `command_timeout`; anything else is refused."""
         port = self._port or 0
         wanted = _resolve(cmd, port)
-        if wanted not in (_resolve(argv, port) for argv in self.entry.commands.values()):
+        if not self._allowed(wanted, port):
             raise SandboxError(f"command not allowlisted for {self.entry.repo}: {list(cmd)!r}")
+        timeout = min(timeout, self.entry.command_timeout)
         own_tmp = self._tmp is None
         tmp = Path(tempfile.mkdtemp(prefix="rook-exec-")) if own_tmp else self._tmp
         assert tmp is not None
         try:
             proc = subprocess.Popen(
                 wanted,
-                cwd=self.entry.app_dir,
-                env=self._child_env(tmp, port),
+                cwd=self.run_dir,
+                env={**self._child_env(tmp, port), **_OFFLINE_ENV},
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

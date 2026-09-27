@@ -56,13 +56,17 @@ ReplayFactory = Callable[[RunSpec, CounterexampleRecord], RunSession]
 
 
 def default_session_factory(settings: ServerSettings, allowlist: Allowlist) -> SessionFactory:
+    """Sessions for the server. Only in replay mode (server config, never a request) do demo apps run from
+    the run's workspace copy, where every edit comes from a committed, reviewed edit tape (03 §3)."""
+    run_workspace = settings.bob_mode == "replay"
+
     def client(bus: EventBus, run_id: str, workspace: Path) -> AgentCaller:
         return BobClient(bus, run_id, mode=settings.bob_mode)
 
     def make(spec: RunSpec) -> RunSession:
         return Session(spec.repo, spec.request, spec.options, bus=spec.bus, store=spec.store, run_id=spec.run_id,
                        user_id=spec.user_id, workspaces_root=settings.workspaces_root, client_factory=client,
-                       allowlist=allowlist)
+                       allowlist=allowlist, run_workspace=run_workspace)
 
     return make
 

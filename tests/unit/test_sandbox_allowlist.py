@@ -66,6 +66,7 @@ def test_process_sandbox_refuses_non_allowlisted_repo() -> None:
         {"env": {"lower-case": "x"}},
         {"port_env": "DB", "db_env": "DB"},
         {"commands": {"test": ["{shell}"]}},
+        {"command_timeout": 0},
         {"unknown": 1},
     ],
 )

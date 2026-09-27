@@ -1,7 +1,9 @@
 """Demo repos the hosted server may run (03 section 3), pinned by repo name and commit SHA.
 
-Nothing else is ever executed by `ProcessSandbox`: the start command, env and extra commands all come
-from here, never from a SandboxPlan (which Bob writes) or from the user.
+`ProcessSandbox` executes nothing else: the start command, env and extra commands all come from here,
+never from a SandboxPlan (which Bob writes) or from the user. The one extra argument it ever accepts is
+the path of a regression test file appended to the entry's `test` command, and only when it runs from
+the run's workspace copy (replay mode on the server, see `process.py`).
 
 Argv entries may use two placeholders, replaced as whole tokens or inside a token:
 `{python}` (this interpreter) and `{port}` (the port picked for the run).
@@ -102,6 +104,7 @@ def check_env_value(name: str, value: str) -> str:
 
 
 REFUSED_MESSAGE = "is not an allowlisted demo repo; run arbitrary repos with the CLI"
+TEST_COMMAND = "test"  # the `commands` key of the project's native test command
 
 
 class NotAllowlistedError(PermissionError):
@@ -136,6 +139,7 @@ class AllowlistEntry(BaseModel):
     env: dict[str, str] = Field(default_factory=dict)  # fixed, non-secret values
     settable_env: frozenset[str] = frozenset()  # the only names a caller may pass (e.g. setup answers)
     commands: dict[str, list[str]] = Field(default_factory=dict)  # e.g. {"test": [...]}, for exec()
+    command_timeout: float = Field(default=300.0, gt=0)  # upper bound in seconds for one exec()
 
     @field_validator("repo")
     @classmethod

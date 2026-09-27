@@ -573,6 +573,10 @@ dev = [
     { name = "pytest-asyncio" },
     { name = "ruff" },
 ]
+sandbox = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -593,6 +597,10 @@ dev = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "ruff" },
+]
+sandbox = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
 ]
 
 [[package]]

@@ -24,9 +24,13 @@ rook-pr-comment = "rook.github.pr_comment:main"
 
 [dependency-groups]
 dev = [
+    {include-group = "sandbox"},
+    "ruff",
+]
+# Installed in the hosted image too: the native and fallback regression tests of the demo apps run with it.
+sandbox = [
     "pytest",
     "pytest-asyncio",
-    "ruff",
 ]
 
 [build-system]
