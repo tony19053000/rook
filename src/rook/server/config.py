@@ -22,6 +22,7 @@ _REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 _SHA = re.compile(r"[0-9a-f]{40}")
 
 _LOCAL = re.compile(r"http://(127\.0\.0\.1|localhost)(:\d{1,5})?$")
+_SLUG = re.compile(r"[a-z0-9][a-z0-9-]{0,99}")
 
 DEFAULT_ORIGINS = ("http://localhost:3000",)
 
@@ -87,6 +88,16 @@ class ServerSettings(BaseModel):
     supabase_jwt_secret: SecretStr | None = None
     supabase_anon_key: str | None = None  # public (the web has it too), sent as `apikey` to Supabase
     public_url: str | None = None  # e.g. https://203-0-113-7.sslip.io
+    # The GitHub App (ROOK-031, 03 §6). App id + private key turn it on; the webhook needs its own secret. The
+    # OAuth client (id + secret) is optional: with it, the setup callback proves the installation is the user's.
+    github_app_id: int | None = Field(default=None, gt=0)
+    github_app_slug: str = "rook-invariants"
+    github_app_private_key: SecretStr | None = None
+    github_webhook_secret: SecretStr | None = None
+    github_client_id: str | None = None  # public
+    github_client_secret: SecretStr | None = None
+    github_api_url: str = "https://api.github.com"
+    github_web_url: str = "https://github.com"
     ping_seconds: float = Field(default=15.0, gt=0)
     flush_seconds: float = Field(default=0.25, gt=0)
 
@@ -110,6 +121,21 @@ class ServerSettings(BaseModel):
             raise ValueError(f"must be an https origin like https://example.com, not {v!r}")
         return v
 
+    @field_validator("github_api_url", "github_web_url")
+    @classmethod
+    def _github_url(cls, v: str) -> str:
+        v = v.strip().rstrip("/")
+        if not _ORIGIN.fullmatch(v) or not (v.startswith("https://") or _LOCAL.match(v)):
+            raise ValueError(f"must be an https origin, not {v!r}")
+        return v
+
+    @field_validator("github_app_slug")
+    @classmethod
+    def _slug(cls, v: str) -> str:
+        if not _SLUG.fullmatch(v):
+            raise ValueError(f"the GitHub App slug must be lowercase letters, digits and dashes, not {v!r}")
+        return v
+
     @field_validator("guest_secret")
     @classmethod
     def _secret(cls, v: SecretStr) -> SecretStr:
@@ -131,7 +157,8 @@ class ServerSettings(BaseModel):
     def from_env(cls, env: dict[str, str] | None = None) -> ServerSettings:
         """ROOK_WEB_ORIGINS (comma list), ROOK_DB_PATH, ROOK_WORKSPACES, ROOK_BOB_MODE, ROOK_DEMO_REPOS (a YAML
         file), ROOK_ALLOWLIST, ROOK_GUEST_SECRET (else a random key per process), ROOK_PROXY_SECRET, ROOK_TRUSTED_PROXY_HOPS,
-        ROOK_DAILY_COIN_CAP, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY, ROOK_PUBLIC_URL."""
+        ROOK_DAILY_COIN_CAP, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY, ROOK_PUBLIC_URL, GITHUB_APP_ID,
+        GITHUB_APP_SLUG, GITHUB_APP_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET."""
         env = dict(os.environ) if env is None else env
         values: dict[str, object] = {}
         if origins := env.get("ROOK_WEB_ORIGINS"):
@@ -162,7 +189,23 @@ class ServerSettings(BaseModel):
             values["supabase_anon_key"] = anon_key.strip()
         if public_url := env.get("ROOK_PUBLIC_URL"):
             values["public_url"] = public_url
+        if app_id := env.get("GITHUB_APP_ID", "").strip():
+            values["github_app_id"] = int(app_id)
+        if slug := env.get("GITHUB_APP_SLUG", "").strip():
+            values["github_app_slug"] = slug
+        if key := env.get("GITHUB_APP_PRIVATE_KEY", "").strip():
+            values["github_app_private_key"] = SecretStr(key)
+        if hook_secret := env.get("GITHUB_WEBHOOK_SECRET", "").strip():
+            values["github_webhook_secret"] = SecretStr(hook_secret)
+        if client_id := env.get("GITHUB_CLIENT_ID", "").strip():
+            values["github_client_id"] = client_id
+        if client_secret := env.get("GITHUB_CLIENT_SECRET", "").strip():
+            values["github_client_secret"] = SecretStr(client_secret)
         return cls.model_validate(values)
+
+    @property
+    def github_app_configured(self) -> bool:
+        return self.github_app_id is not None and self.github_app_private_key is not None
 
     def demo(self, ref: str) -> DemoRepo | None:
         return next((d for d in self.demo_repos if d.ref.lower() == ref.lower()), None)

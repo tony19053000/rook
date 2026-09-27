@@ -13,6 +13,7 @@ import sys
 import threading
 import time
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -175,6 +176,26 @@ async def test_auto_mode_runs_to_a_shipped_branch(tmp_path: Path) -> None:
     assert "coordinator" not in h.client.agents()  # no branch point on the default path
     assert h.session.state.verified
     assert h.events("run.finished") == [{"status": "done", "summary": result.summary}]
+
+
+async def test_a_shipper_that_opens_a_pr_publishes_pr_opened(tmp_path: Path) -> None:
+    """ROOK-031: a GitHub shipper (push + PR) makes SHIP publish `pr.opened` after `fix.committed`."""
+
+    class PrShipper:
+        async def ship(self, workspace: Path, request: ShipRequest) -> Any:
+            shipped = await LocalBranchShipper().ship(workspace, request)
+            self.body = request.body
+            return replace(shipped, pushed=True, pr_url="https://github.com/acme/shop/pull/7", pr_number=7)
+
+    h = Harness(tmp_path, replies(), auto=True)
+    h.session.shipper = shipper = PrShipper()
+    result = await h.session.run()
+    assert result.status == "done", result.summary
+    types = [e.type for e in history(h.session)]
+    assert types.index("pr.opened") == types.index("fix.committed") + 1
+    assert h.events("pr.opened") == [{"url": "https://github.com/acme/shop/pull/7", "number": 7,
+                                      "branch": "rook/fix-cx-001"}]
+    assert "Verified by Rook" in shipper.body and "https://github.com/acme/shop/pull/7" in result.summary
 
 
 async def test_a_user_answers_the_questions_and_the_run_waits_for_them(tmp_path: Path) -> None:

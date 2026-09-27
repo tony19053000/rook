@@ -20,9 +20,11 @@ export interface HomeViewProps {
   runs: { runs: RunSummary[]; loading: boolean };
   repos: Pick<ReposView, "repos" | "loading" | "error" | "retry">;
   navigate: (href: string) => void;
+  /** "Connect GitHub" (ROOK-031): goes to GitHub's install page; resolves to an error message, or null. */
+  connectGithub?: () => Promise<string | null>;
 }
 
-export function HomeView({ api, session, runs, repos, navigate }: HomeViewProps) {
+export function HomeView({ api, session, runs, repos, navigate, connectGithub }: HomeViewProps) {
   const [selected, setSelected] = useState<RepoOption | null>(null);
   const [auto, setAuto] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -93,6 +95,15 @@ export function HomeView({ api, session, runs, repos, navigate }: HomeViewProps)
               setSelected(repo);
               setHint(null);
             }}
+            onConnectGithub={
+              connectGithub &&
+              (() => {
+                setHint(null);
+                void connectGithub().then((message) => {
+                  if (message !== null) setHint(message);
+                });
+              })
+            }
             loading={repos.loading}
             error={reposError?.message ?? null}
             onRetry={repos.retry}

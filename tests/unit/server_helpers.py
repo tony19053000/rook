@@ -172,12 +172,13 @@ class Factory:
 
 
 def make_app(tmp_path: Path, factory: Any = None, *, github: Any = None, replay_factory: Any = None,
-             **settings: Any) -> FastAPI:
+             github_transport: Any = None, **settings: Any) -> FastAPI:
     values: dict[str, Any] = {"db_path": tmp_path / "server.db", "workspaces_root": tmp_path / "ws",
                               "demo_repos": [DEMO], "web_origins": ["https://rook.example.app"],
                               "guest_secret": "s" * 40, "bob_mode": "replay", **settings}
     return create_app(ServerSettings.model_validate(values), verifier=FakeVerifier(),
-                      session_factory=factory or Factory(), github=github, replay_factory=replay_factory)
+                      session_factory=factory or Factory(), github=github, replay_factory=replay_factory,
+                      github_transport=github_transport)
 
 
 def state_of(app: FastAPI) -> ServerState:

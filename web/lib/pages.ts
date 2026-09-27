@@ -145,6 +145,8 @@ export function newRunBody(
   auto: boolean,
 ): { body: CreateRunBody } | { error: string } {
   if (repo === null) return { error: "Pick a repository first." };
+  // The hosted server runs only the allowlisted demo repos (03 §3); your own repos run with the CLI.
+  if (repo.kind === "github") return { error: `The hosted server runs only the demo repositories. Run this one with the CLI: rook run ${repo.ref}` };
   const request = text.trim();
   if (request.length > REQUEST_MAX) return { error: `Requests are at most ${REQUEST_MAX.toLocaleString("en-US")} characters.` };
   return { body: { repo: { kind: repo.kind, ref: repo.ref }, request, options: { auto } } };

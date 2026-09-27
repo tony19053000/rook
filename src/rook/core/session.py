@@ -69,6 +69,7 @@ from rook.core.events import (
     FixCommitted,
     Log,
     Phase,
+    PrOpened,
     QuestionAnswered,
     QuestionAsked,
     QuestionOption,
@@ -879,6 +880,9 @@ class Session:
         self._ship = shipped
         await self._publish("fix.committed", FixCommitted(cx_id=cx.cx_id, branch=shipped.branch,
                                                           commit=shipped.commit, files=shipped.files))
+        if shipped.pr_url is not None and shipped.pr_number is not None:
+            await self._publish("pr.opened", PrOpened(url=shipped.pr_url, number=shipped.pr_number,
+                                                      branch=shipped.branch))
         where = shipped.pr_url or f"local branch {shipped.branch} in the workspace (not pushed)"
         return f"Fixed and verified {cx.cx_id} (rule {cx.rule.id}); committed to {where}."
 

@@ -66,7 +66,7 @@ rook/                           # repo root (github.com/tony19053000/rook)
 │  ├─ engine/          runner.py, generator.py, executor.py (HTTP), judge.py, shrinker.py, replayer.py, verifier.py, testrunner.py, isolation.py, dryrun.py (MAP dry-run)
 │  ├─ sandbox/         base.py, docker.py, process.py, allowlist.py
 │  ├─ store/           db.py (schema + migrations), repo.py (queries)
-│  ├─ github/          app.py (JWT, installation tokens), repos.py, pr.py, pr_comment.py (Action: rook-report.md → one marked PR comment)
+│  ├─ github/          app.py (App JWT, installation tokens, installation repos, OAuth check), pr.py (GitHubShipper: push + PR), pr_comment.py (Action: rook-report.md → one marked PR comment)
 │  ├─ auth/            cli_login.py (localhost callback + device code), tokens.py, verify.py (Supabase JWT)
 │  ├─ export/          counterexample.py (JSON), tests.py (native test via Bob + validation, fallback HTTP pytest)
 │  ├─ server/          app.py (FastAPI), routes/*.py, sse.py, guest.py (quotas)
@@ -398,10 +398,10 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 | POST | `/auth/device/start` · `/auth/device/poll` | none | device-code flow |
 | GET | `/auth/device/verify?code=C[&confirm=1]` | none | the device-code page: a confirmation page, then (`confirm=1`) Google OAuth |
 | POST | `/auth/logout` | user | revokes the caller's Supabase session → `{ok}` |
-| GET | `/github/install-url` | user | → `{url}` |
-| GET | `/github/callback` | user | stores the `installation_id` |
-| POST | `/github/token` | user | → a short-lived installation token for the CLI (scoped to the user's installation) |
-| POST | `/github/webhook` | signature | installation events |
+| GET | `/github/install-url` | user | → `{url}`: `https://github.com/apps/<slug>/installations/new?state=S` (one-time `S`, bound to the caller) |
+| GET | `/github/callback?installation_id=I&state=S[&setup_action=A][&code=C]` | user | links installation `I` to the caller after verifying it → `{ok}` |
+| POST | `/github/token` | user | `{repo: "owner/name"}` → `{token, expires_at, repo}`: an installation token of the caller's own installation, scoped to that one repo |
+| POST | `/github/webhook` | signature | installation events → `{ok}` |
 
 **Auth:** `Authorization: Bearer <Supabase JWT>` (the web app and the CLI), or a `rook_guest` signed cookie. Every run route checks the owner.
 
@@ -413,7 +413,9 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 - **Repos and runs.** The hosted server runs **only allowlisted demo repos** (03 §3), for users and guests alike:
   `POST /runs` takes `repo.kind: demo` with a `ref` from the demo catalog; `github` (and any unknown demo `ref`) is a
   403 whose `detail` says to run arbitrary repos with the CLI. `request` is at most 2000 chars; `options` has only
-  `auto`. `GET /repos` lists the demo catalog, plus the user's GitHub repos once ROOK-031 is in.
+  `auto`. `GET /repos` lists the user's GitHub repos (those shared with the App, once connected) first, then the
+  demo catalog. The web picker shows them, but picking one gives the `rook run owner/name` CLI command instead of a
+  run (the hosted server never runs them).
 - **Run status:** `queued | running | done | failed | cancelled`. At most 3 runs execute at once; later runs wait as
   `queued` (a bounded queue; when it is full, 429).
 - **`RunSummary`** (each item of `GET /runs`, newest first, at most 50, and `run` in `GET /runs/{id}`):
@@ -436,7 +438,8 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
   finished run it sends the stored events after `N` and ends. The owner is re-checked on every connect.
 - **Errors** are `{detail: str}` and never echo the request: 400 invalid input, 401 bad or missing auth, 403 not
   allowed (guest or non-demo repo), 404 missing run **or not the owner**, 413 body over 64 KB, 429 rate limit /
-  guest quota / queue full / daily coin cap (with `Retry-After`), 501 not available yet.
+  guest quota / queue full / daily coin cap (with `Retry-After`), 501 not available yet. The GitHub webhook alone
+  may send up to 1 MB (installation events list the repos).
 - **Sign-in (ROOK-030, `server/supabase.py`, `server/logins.py`, `routes/auth.py`).** A bearer token is a Supabase
   access token. `SUPABASE_URL` turns verification on: `alg` HS256 is checked with `SUPABASE_JWT_SECRET` (refused
   when it is unset), ES256 / RS256 with the key of that `kid` from `<SUPABASE_URL>/auth/v1/.well-known/jwks.json`
@@ -453,6 +456,34 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
   `{device_code}` → `{status: pending}` | `{status: done, token, refresh_token, expires_at}` (once) |
   `{status: expired}`. A user code starts one sign-in. At most 1000 flows and 1000 device codes are pending
   (in memory, one process; 429 beyond).
+- **GitHub App (ROOK-031, `github/app.py`, `server/github_link.py`, `routes/github.py`).** On when `GITHUB_APP_ID` and
+  `GITHUB_APP_PRIVATE_KEY` are set (else every `/github/*` route answers 501 and `github_connected` is false). The App
+  JWT is RS256 (`iss` = the App id, `iat` 60 s back, `exp` 9 min). Installation tokens come from
+  `POST /app/installations/{id}/access_tokens`, are cached in memory (handed out with ≥ 30 min left), registered with
+  the redaction filter and never logged; `/github/token` asks for one scoped to the one repo with `contents: write,
+  pull_requests: write, metadata: read` (`Cache-Control: no-store`). Errors: 403 not connected (or the App was
+  uninstalled: the link is dropped), 404 the repo is not shared with the App, 502 GitHub unreachable. The link is
+  `users.github_installation_id` (§10). **Linking** (`/github/callback`, called by the web's `/github/setup` page
+  with GitHub's Setup URL query and the user's bearer token): the `state` must be one this user got from
+  `/github/install-url` (one-time, 15 min, at most 5 pending per user; else 400); the installation must exist for
+  this App (`GET /app/installations/{id}` with the App JWT), not be suspended and not be linked to another user; then
+  either (a) with `GITHUB_CLIENT_ID` + `GITHUB_CLIENT_SECRET` set (and "Request user authorization (OAuth) during
+  installation" on in the App), the `code` is exchanged at `https://github.com/login/oauth/access_token` and the
+  installation must be in that GitHub user's `GET /user/installations` (the user token is then dropped), or (b)
+  without them, the installation must have been created after that `state` was issued (a fresh install in this
+  flow, 120 s clock skew). Re-linking the caller's own installation is always allowed. Any failure is a 403 with a
+  generic message; 5 failures per user per hour give 429. **Webhook:** `X-Hub-Signature-256: sha256=<hex
+  HMAC-SHA256(raw body, GITHUB_WEBHOOK_SECRET)>`, compared in constant time before the body is parsed (missing or
+  wrong: 401; no secret configured: 501). `installation.deleted` unlinks every user of that installation and drops
+  its cached tokens; `installation.suspend` drops the tokens; `installation_repositories` drops the cached repo list;
+  `installation.created` and every other event are acknowledged and ignored (linking happens only in the callback).
+  `GET /repos` caches an installation's repo list for 60 s (at most 500 repos). Settings: `GITHUB_APP_SLUG`
+  (non-secret, default `rook-invariants`), `GITHUB_CLIENT_ID` (public). **CLI:** `rook run owner/name` needs
+  `rook login`; it asks `/github/token` for the clone and again at SHIP, where `GitHubShipper` commits
+  `rook/fix-<cx>`, pushes it (never forced, never the default or base branch; to `https://github.com/<repo>.git`
+  with the token only in the git child env) and opens a PR (`POST /repos/{repo}/pulls`, base = the cloned branch or
+  the default branch) whose body is the run's evidence (rule, counterexample, regression test, verification) plus
+  the changed files; the Session then publishes `pr.opened`.
 - **Web access** goes through a same-origin Vercel rewrite (`/api/v1/*` → the EC2 server), so the guest cookie is
   first-party. The web middleware adds the `X-Rook-Proxy-Secret` header (`ROOK_PROXY_SECRET`) to these requests, so
   the server can trust the client IP Vercel forwards (03 §8). CORS still allows only the configured web origins (never `*`), with credentials and the
@@ -474,7 +505,10 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 
 ## 13. Web architecture
 
-- Next.js App Router with these pages: `/` (home and composer), `/runs/[id]` (the chat column with cards), `/login`.
+- Next.js App Router with these pages: `/` (home and composer), `/runs/[id]` (the chat column with cards), `/login`,
+  `/github/setup` (the GitHub App's Setup URL: forwards GitHub's query to `GET /github/callback` once, then shows
+  "GitHub connected" or the error; a setup return that lands on `/` is sent there). "Connect GitHub" gets the install
+  URL from `GET /github/install-url` and navigates only to `https://github.com/apps/<slug>/installations/new?state=…`.
 - `lib/events.ts` holds TS types that mirror section 9, and `lib/sse.ts` handles reconnecting to the SSE stream with `after`.
 - `lib/session.ts`: Google sign-in with `@supabase/auth-js` (PKCE, `detectSessionInUrl: false`, storage key `rook-auth`, only the `apikey` header: the `sb_publishable_…` key is never a bearer). `/login` starts `signInWithOAuth` with `redirectTo = <origin>/login` and, back from Google, exchanges `?code=` once and goes to `/`. `getToken()` returns the (auto-refreshed) access token for `Authorization: Bearer`, or null for a guest. `useSession` is the guest until Supabase reports a user, then checks `GET /me` (a 401 signs the browser out). Sign-out is local to the browser (`scope: local`). Without `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` at build time the site is guest-only.
 - `lib/runStore.ts` is a reducer from events to UI state, the **same logic** as the TUI.
@@ -489,7 +523,7 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 | Web | Vercel project `rook`, <https://rook-weld-six.vercel.app> (Git-connected: every push to `main` redeploys) | env: `ROOK_API_PROXY_TARGET` = the server origin, e.g. `https://203-0-113-7.sslip.io` (public; build-time: it sets the `/api/v1/*` rewrite, so set it before the build and redeploy after changing it; origin only, no path), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public), and **`ROOK_PROXY_SECRET`** (a secret: mark it Sensitive, never `NEXT_PUBLIC_`; read at runtime by the middleware only; the same value as on the server, at least 32 chars, e.g. `openssl rand -hex 32`). `NEXT_PUBLIC_API_URL` stays **unset** on Vercel so the browser uses same-origin `/api/v1` through the rewrite. The server's `ROOK_WEB_ORIGINS` should list the Vercel origin (CORS for direct calls). Check the secret end to end with `curl https://<web>/api/v1/health` → `"proxied": true` |
 | Server | AWS EC2 (`us-west-2`, one `t3.small`, Ubuntu 24.04, 30 GB gp3, IMDSv2, Elastic IP), `deploy/docker-compose.yml` | Two containers. **caddy** (`caddy:2.11.4-alpine`, ports 80/443) gets a Let's Encrypt certificate for `ROOK_HOST` = `<ip-dashes>.sslip.io` and proxies only `/api/v1/*` (SSE unbuffered, `flush_interval -1`). **rook** (`deploy/Dockerfile`: Python 3.12 + uv, Node 22, Go, optional Bob Shell 2.0.5 on Node 24, non-root user `rook`, tini, `uvicorn rook.server.app:app --port 8000`) is not published: only Caddy reaches it. The database and workspaces live on the `rook-data` volume (`ROOK_DB_PATH=/data/rook.db`, `ROOK_WORKSPACES=/data/workspaces`). `ROOK_BOB_MODE` defaults to `replay` |
 | Server config | `deploy/.env` on the host (non-secret, written by `deploy/aws/deploy.sh`) | `ROOK_HOST`, `ROOK_WEB_ORIGINS`, `ROOK_BOB_MODE`, `ROOK_DAILY_COIN_CAP` (default 2). Fixed in the compose file: `ROOK_PUBLIC_URL=https://${ROOK_HOST}` (the `rook login` OAuth callback); `ROOK_TRUSTED_PROXY_HOPS=2` (browser → Vercel → Caddy → rook: Vercel overwrites `X-Forwarded-For` with the client IP and Caddy, which trusts every peer because Vercel has no fixed egress IPs, appends Vercel's IP, so the client is the 2nd entry from the right). In the image: `ROOK_ALLOWLIST=/opt/rook/config/allowlist.yaml`, `ROOK_DEMO_REPOS=/opt/rook/config/demos.yaml` (from `deploy/demos/`) |
-| Server secrets | `/etc/rook/rook.env` on the host only (root, `600`), compose `env_file` | Set one at a time with `deploy/aws/scripts/set-secret.sh NAME` (value over ssh stdin; allowlist: `BOB_API_KEY`, `ROOK_GUEST_SECRET`, `ROOK_PROXY_SECRET`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (public, but kept with the Supabase settings), `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`). Never in the image, the repo, user-data or argv. `deploy.sh` generates `ROOK_GUEST_SECRET` on the host when it is missing. The server process sees `GITHUB_APP_PRIVATE_KEY` as the PEM with **real newlines** (it is stored `\n`-escaped in double quotes, which compose expands) |
+| Server secrets | `/etc/rook/rook.env` on the host only (root, `600`), compose `env_file` | Set one at a time with `deploy/aws/scripts/set-secret.sh NAME` (value over ssh stdin; allowlist: `BOB_API_KEY`, `ROOK_GUEST_SECRET`, `ROOK_PROXY_SECRET`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (public, but kept with the Supabase settings), `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_ID` (public, kept with the GitHub settings), `GITHUB_CLIENT_SECRET`). Never in the image, the repo, user-data or argv. `deploy.sh` generates `ROOK_GUEST_SECRET` on the host when it is missing. The server process sees `GITHUB_APP_PRIVATE_KEY` as the PEM with **real newlines** (it is stored `\n`-escaped in double quotes, which compose expands) |
 | Demo apps | `deploy/demos/` baked into the image | `repos.txt` lists the demo repos (`owner/name`, pinned 40-char SHA, https URL, build recipe `none/npm/go/uv`), cloned and pre-built by `build-demos.sh` into `/opt/rook/demos/<name>`; each needs matching entries in `allowlist.yaml` and `demos.yaml`. Interim demo until ROOK-039: `rook-demo/minishop` (the `tests/fixtures/minishop` app, pseudo-SHA `sha1("rook-demo-minishop")`) with its Bob recordings in `/home/rook/.rook/recordings` for replay. An entry may name its native test command (`commands: {test: [...]}`, `command_timeout`), run only in replay mode from the workspace copy (§8); the image installs the `sandbox` dependency group (pytest, pytest-asyncio) for the minishop and fallback regression tests |
 | Bob Shell | `deploy/vendor/bobshell-2.0.5.tgz` (gitignored, packed by `deploy/pack-bob.sh`) | Never committed (licence unknown). Without it the image builds replay-only and `start.sh` refuses `live`/`record` mode; `live` also needs `BOB_API_KEY` |
 | Uptime | none needed | EC2 does not sleep, so there is no keep-alive job. Optional: any external uptime monitor on `https://<host>/api/v1/health` (rate-limit exempt) |

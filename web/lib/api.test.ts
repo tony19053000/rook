@@ -59,6 +59,7 @@ describe("createApiClient", () => {
     await api.cancel("r_1");
     await api.replayCounterexample("r_1_cx_001");
     await api.githubInstallUrl();
+    await api.githubCallback({ installation_id: "42", state: "s".repeat(43), setup_action: "install" });
     expect(m.calls.map((c) => `${c.method} ${c.url.replace("https://api.test/api/v1", "")}`)).toEqual([
       "GET /health",
       "GET /me",
@@ -71,6 +72,7 @@ describe("createApiClient", () => {
       "POST /runs/r_1/cancel",
       "POST /counterexamples/r_1_cx_001/replay",
       "GET /github/install-url",
+      `GET /github/callback?installation_id=42&state=${"s".repeat(43)}&setup_action=install`,
     ]);
     expect(m.calls[3]!.body).toEqual({ repo: { kind: "demo", ref: "shop-app" }, request: "find bugs", options: { auto: true } });
     expect(m.calls[6]!.body).toEqual({ question_id: "q_1", answer: ["rule_a"] });

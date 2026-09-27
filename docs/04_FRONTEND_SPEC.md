@@ -155,10 +155,11 @@ Exit codes: `0` every approved rule held, `1` an approved rule is broken, `2` th
 | `/` | Home: greeting + composer. Choosing a repo and sending creates a run → `/runs/[id]` |
 | `/runs/[id]` | The live run: chat column rendered from the SSE events, with the composer active for chat |
 | `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook", "Sign out". The sidebar account line shows the user's name with "Sign out" (a guest: "Sign in") |
-| `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority) |
+| `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority); `/repositories` offers "Connect GitHub" to a signed-in user without GitHub |
+| `/github/setup` | Where GitHub returns after the App install: "Connecting GitHub…", then "GitHub connected" (+ "Go to Rook") or the error with "Connect GitHub again" |
 
 ### 3.3 Repo picker
-A dropdown above the composer with **"Your GitHub repositories"** (after connecting) and **"Demo repositories"** (always; the only option for guests). Each item shows its name, `private/public` and the language. If GitHub isn't connected, it offers a "Connect GitHub" item.
+A dropdown above the composer with **"Your GitHub repositories"** (after connecting) and **"Demo repositories"** (always; the only option for guests). Each item shows its name, `private/public` and the language. If GitHub isn't connected, it offers a "Connect GitHub" item (it opens the GitHub App's install page). The hosted server runs only the demo repos, so sending with a GitHub repo selected shows the CLI command (`rook run owner/name`) instead of starting a run.
 
 ### 3.4 Inline cards (web versions of the CLI components)
 - **RulesCard:** a header pill `Needs your OK` → `Approved`, rows with rule text + source + pill (`Approved` / `Rejected` with strike-through and reason), and buttons **Approve N rules** and **Edit**. Edit makes the text editable and requires re-validation.

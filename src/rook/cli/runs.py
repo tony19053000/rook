@@ -64,5 +64,20 @@ def check_loopback(base_url: str) -> str:
     return base_url.rstrip("/")
 
 
+CREDENTIALS = Path.home() / ".rook" / "credentials.json"
+
+
 def build_session(repo: RepoSpec, request: str, options: SessionOptions) -> Session:
-    return Session(repo, request, options)
+    """A GitHub repo gets a token from the Rook server (for the clone) and ships with a push + PR; a local
+    folder ships to a local branch only."""
+    if repo.kind != "github":
+        return Session(repo, request, options)
+    from rook.cli.github import GitHubTokenError, ServerTokens
+    from rook.github.pr import GitHubShipper
+
+    tokens = ServerTokens(repo.ref, CREDENTIALS)
+    try:
+        token = tokens.fetch()
+    except GitHubTokenError as exc:
+        raise CliError(str(exc)) from None
+    return Session(repo, request, options, token=token, shipper=GitHubShipper(repo.ref, tokens, base=repo.branch))

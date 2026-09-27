@@ -83,17 +83,19 @@ class BodySizeLimit:
     """Refuses bodies over `max_bytes` with 413: by Content-Length up front, else while reading (chunked).
     The (small) body is buffered, then handed to the app."""
 
-    def __init__(self, app: ASGIApp, max_bytes: int) -> None:
+    def __init__(self, app: ASGIApp, max_bytes: int, overrides: dict[str, int] | None = None) -> None:
         self.app = app
         self.max_bytes = max_bytes
+        self.overrides = overrides or {}  # exact path -> its own limit (e.g. the GitHub webhook)
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http" or scope["method"] not in _BODY_METHODS:
             await self.app(scope, receive, send)
             return
+        max_bytes = self.overrides.get(scope.get("path", ""), self.max_bytes)
         too_big = "Request body is larger than the limit"
         length = dict(scope["headers"]).get(b"content-length")
-        if length is not None and (not length.isdigit() or int(length) > self.max_bytes):
+        if length is not None and (not length.isdigit() or int(length) > max_bytes):
             await send_json(send, 413, too_big)
             return
         chunks: list[bytes] = []
@@ -104,7 +106,7 @@ class BodySizeLimit:
                 return
             chunk = message.get("body", b"")
             size += len(chunk)
-            if size > self.max_bytes:
+            if size > max_bytes:
                 await send_json(send, 413, too_big)
                 return
             chunks.append(chunk)

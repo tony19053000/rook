@@ -2,6 +2,8 @@
 // Only the routes the web app calls are here; the CLI auth, device-code, GitHub token and webhook routes
 // are for other clients.
 
+import type { SetupParams } from "./github";
+
 export const API_PREFIX = "/api/v1";
 
 export interface Health {
@@ -243,6 +245,8 @@ export function createApiClient(options: ApiClientOptions) {
     replayCounterexample: (cxId: string) =>
       request<{ run_id: string }>("POST", `/counterexamples/${encodeURIComponent(cxId)}/replay`),
     githubInstallUrl: () => request<{ url: string }>("GET", "/github/install-url"),
+    githubCallback: (params: SetupParams) =>
+      request<Ok>("GET", `/github/callback?${new URLSearchParams({ ...params }).toString()}`),
   };
 }
 

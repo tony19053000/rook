@@ -13,7 +13,7 @@ export interface RepoPickerProps {
   groups: PickerGroups;
   selected: RepoOption | null;
   onSelect: (repo: RepoOption) => void;
-  /** "Connect GitHub" (ROOK-031 wires the install URL). */
+  /** "Connect GitHub": goes to the GitHub App's install page (ROOK-031). */
   onConnectGithub?: () => void;
   loading?: boolean;
   /** Shown in the menu when the repos couldn't load. */

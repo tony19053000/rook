@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { Composer } from "./Composer";
 import { ErrorCard } from "./ErrorCard";
+import { GithubSetupView } from "./GithubSetupView";
 import { HomeView } from "./HomeView";
 import { RepoPicker } from "./RepoPicker";
 import { RunPageView } from "./RunPage";
@@ -84,6 +85,9 @@ describe("repo picker (04 §3.3)", () => {
     const out = html(<RepoPicker groups={pickerGroups([DEMO], USER_NO_GH)} selected={null} onSelect={() => {}} defaultOpen />);
     expect(out).toContain("Your GitHub repositories");
     expect(out).toContain("Connect GitHub");
+    const wired = html(<RepoPicker groups={pickerGroups([DEMO], USER_NO_GH)} selected={null} onSelect={() => {}} onConnectGithub={() => {}} defaultOpen />);
+    expect(wired).toMatch(/<button(?![^>]*disabled="")[^>]*>Connect GitHub<\/button>/);
+    expect(wired).not.toContain("coming soon");
   });
 
   it("a connected user sees GitHub repos first and the selection is marked", () => {
@@ -213,6 +217,30 @@ describe("login and repositories", () => {
     expect(out).toContain("Aayush · a@example.com");
     expect(out).toMatch(/<button[^>]*>Sign out<\/button>/);
     expect(out).not.toContain("Continue with Google");
+  });
+
+  it("repositories: a signed-in user without GitHub gets 'Connect GitHub'; a connected one sees their repos", () => {
+    const connect = async () => null;
+    const out = html(<RepositoriesView session={USER_NO_GH} runs={noRuns} repos={[DEMO]} loading={false} error={null} connectGithub={connect} />);
+    expect(out).toContain("data-connect-github");
+    expect(out).toMatch(/<button(?![^>]*disabled="")[^>]*>Connect GitHub<\/button>/);
+    const connected: Session = { ...USER_NO_GH, githubConnected: true };
+    const withGh = html(<RepositoriesView session={connected} runs={noRuns} repos={[GH, DEMO]} loading={false} error={null} connectGithub={connect} />);
+    expect(withGh).not.toContain("data-connect-github");
+    expect(withGh).toContain('data-repo="github:aayush/billing"');
+  });
+
+  it("github setup: working, connected and failed states", () => {
+    expect(html(<GithubSetupView session={USER_NO_GH} runs={noRuns} status={{ kind: "working" }} />)).toContain("Connecting GitHub…");
+    const done = html(<GithubSetupView session={USER_NO_GH} runs={noRuns} status={{ kind: "done" }} />);
+    expect(done).toContain("GitHub connected");
+    expect(done).toContain("rook run owner/name");
+    const failed = html(
+      <GithubSetupView session={USER_NO_GH} runs={noRuns} status={{ kind: "error", message: "<b>nope</b>" }} connectGithub={async () => null} />,
+    );
+    expect(failed).toContain('role="alert"');
+    expect(failed).toContain("&lt;b&gt;nope&lt;/b&gt;");
+    expect(failed).toContain("Connect GitHub again");
   });
 
   it("repositories: a guest sees the demo list only", () => {

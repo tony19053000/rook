@@ -18,7 +18,7 @@ from rook.cli import ci, cx, runs, scaffold
 from rook.core.session import SessionOptions
 
 app = typer.Typer(add_completion=False, no_args_is_help=False)
-CREDENTIALS = Path.home() / ".rook" / "credentials.json"
+CREDENTIALS = runs.CREDENTIALS
 
 RepoOpt = Annotated[Path, typer.Option("--repo", help="The repo folder that holds rook/ (default: here).")]
 ModelOpt = Annotated[Path | None, typer.Option("--model", help="The rook.yaml to use (default: <repo>/rook/rook.yaml).")]
@@ -93,7 +93,10 @@ def run(
     if not ci_mode:
         launch_tui(_session_backend(repo=spec.ref, options=options, start_request=request))
         return
-    session = runs.build_session(spec, request, options)
+    try:
+        session = runs.build_session(spec, request, options)
+    except runs.CliError as exc:
+        _fail(str(exc))
     console = ci.plain_console()
     report = asyncio.run(ci.run_ci(session, console, report_dir))
     typer.echo(f"Wrote {report_dir / ci.REPORT_JSON} and {report_dir / ci.REPORT_MD}")

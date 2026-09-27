@@ -1,7 +1,10 @@
-// The small pages (04 §3.2): /login, /runs, /repositories, /counterexamples and /rules. Presentational only;
-// the hooks live in PageClients.tsx so these render in tests.
+"use client";
+
+// The small pages (04 §3.2): /login, /runs, /repositories, /counterexamples and /rules. Presentational (local UI
+// state only); the data hooks live in PageClients.tsx so these render in tests.
 
 import Link from "next/link";
+import { useState } from "react";
 import { AppShell } from "./AppShell";
 import { ErrorCard } from "./ErrorCard";
 import { RunsList } from "./RunsList";
@@ -137,6 +140,8 @@ export interface RepositoriesViewProps {
   loading: boolean;
   error: unknown;
   onRetry?: () => void;
+  /** "Connect GitHub" for a signed-in user without GitHub: resolves to an error message, or null. */
+  connectGithub?: () => Promise<string | null>;
 }
 
 function RepoList({ repos }: { repos: RepoOption[] }) {
@@ -152,8 +157,15 @@ function RepoList({ repos }: { repos: RepoOption[] }) {
   );
 }
 
-export function RepositoriesView({ session, runs, repos, loading, error, onRetry }: RepositoriesViewProps) {
+export function RepositoriesView({ session, runs, repos, loading, error, onRetry, connectGithub }: RepositoriesViewProps) {
   const groups = pickerGroups(repos, session);
+  const [connectError, setConnectError] = useState<string | null>(null);
+  const onConnect = connectGithub
+    ? () => {
+        setConnectError(null);
+        void connectGithub().then(setConnectError);
+      }
+    : undefined;
   let body;
   if (loading) body = <div className="h-14 animate-pulse rounded-xl border border-line bg-surface" aria-busy="true" />;
   else if (error !== null && error !== undefined) body = <ErrorCard view={errorView(error, "repos")} onRetry={onRetry} />;
@@ -164,6 +176,19 @@ export function RepositoriesView({ session, runs, repos, loading, error, onRetry
           <section className="flex flex-col gap-2">
             <h2 className="text-[13px] font-semibold text-muted">Your GitHub repositories</h2>
             {groups.github.length === 0 ? <p className="text-muted">No repositories shared with Rook yet.</p> : <RepoList repos={groups.github} />}
+          </section>
+        )}
+        {groups.connectGithub && (
+          <section className="flex flex-col items-start gap-2" data-connect-github>
+            <h2 className="text-[13px] font-semibold text-muted">Your GitHub repositories</h2>
+            <button type="button" onClick={onConnect} disabled={!onConnect} className="rounded-lg border border-line bg-surface px-3 py-1.5 text-[13.5px] font-medium hover:bg-hover disabled:opacity-50">
+              Connect GitHub
+            </button>
+            {connectError !== null && (
+              <p role="alert" className="text-[12.5px] text-bad">
+                {clean(connectError)}
+              </p>
+            )}
           </section>
         )}
         <section className="flex flex-col gap-2">

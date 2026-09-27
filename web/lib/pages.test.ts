@@ -139,6 +139,10 @@ describe("new run body (02 §11 POST /runs)", () => {
   it("refuses a request over 2000 chars", () => {
     expect(newRunBody(DEMO, "x".repeat(2001), false)).toHaveProperty("error");
     expect(newRunBody(DEMO, "x".repeat(2000), false)).toHaveProperty("body");
+    // the hosted server runs only demo repos: a GitHub repo gets the CLI command instead of a 403
+    expect(newRunBody({ kind: "github", ref: "alice/shop" }, "find bugs", false)).toEqual({
+      error: "The hosted server runs only the demo repositories. Run this one with the CLI: rook run alice/shop",
+    });
   });
 });
 

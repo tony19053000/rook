@@ -23,7 +23,7 @@ Rook runs **other people's code**, holds **API keys**, can **edit code** and can
 | Secret | Lives in | Never in |
 |---|---|---|
 | `BOB_API_KEY` | `~/.bob-key.env` (chmod 600) locally, `/etc/rook/rook.env` on the EC2 host when hosted (root, chmod 600) | git, logs, events, prompts, the web bundle, error messages |
-| `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET` | `/etc/rook/rook.env` on the EC2 host only | the CLI, the web, git |
+| `GITHUB_APP_PRIVATE_KEY`, `GITHUB_APP_ID`, `GITHUB_WEBHOOK_SECRET`, `GITHUB_CLIENT_SECRET` | `/etc/rook/rook.env` on the EC2 host only | the CLI, the web, git |
 | `SUPABASE_JWT_SECRET` / service key | `/etc/rook/rook.env` on the EC2 host only | the web (the web only gets `NEXT_PUBLIC_SUPABASE_URL` + the **anon** key) |
 | User tokens (Supabase session, GitHub installation token) | `~/.rook/credentials.json` (chmod 600), in memory on the server | logs, events, workspaces |
 
@@ -96,7 +96,9 @@ Rules:
 **GitHub App**
 - Minimum permissions: **Contents: read & write**, **Pull requests: read & write**, **Metadata: read**. For CI comments: **Issues: write** (only if needed).
 - The private key lives only on the server. The server mints **installation tokens** (1 hour) and gives them to the CLI via `POST /github/token`, only for the user's own installation.
-- Webhooks are verified with HMAC `X-Hub-Signature-256`.
+- Webhooks are verified with HMAC `X-Hub-Signature-256` (constant-time, over the raw body, before parsing).
+- **Linking an installation to a user** can't be forged or hijacked (installation ids are guessable): a one-time `state` bound to the signed-in user (CSRF), the installation must belong to this App and be unlinked, and either the OAuth `code` proves the GitHub user can access it (with `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET`) or it must be a fresh install made after that `state` was issued; 5 failures per user per hour lock the callback. Details in 02 §11.
+- CLI tokens from `POST /github/token` are scoped to **one repo** (contents + pull requests), live in memory only, and are fetched again at SHIP.
 - Rook **never pushes to the default branch**. It always uses `rook/fix-<cx_id>` plus a PR.
 
 ## 7. Authorization (T7)

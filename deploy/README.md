@@ -39,7 +39,9 @@ deploy/aws/scripts/set-secret.sh BOB_API_KEY         # only needed for live mode
 #    sign-in (ROOK-030): SUPABASE_URL (https://<ref>.supabase.co), SUPABASE_JWT_SECRET (legacy HS256 secret;
 #    tokens signed with the project's ES256/RS256 keys are checked against its public JWKS), SUPABASE_ANON_KEY
 #    (the public sb_publishable_... key, used by `rook login`'s code exchange)
-#    later (ROOK-031): GITHUB_APP_ID, GITHUB_WEBHOOK_SECRET and
+#    GitHub App (ROOK-031): GITHUB_APP_ID, GITHUB_WEBHOOK_SECRET and the private key (piped). Optional, stronger
+#    installation check: GITHUB_CLIENT_ID + GITHUB_CLIENT_SECRET with "Request user authorization (OAuth) during
+#    installation" on (see docs/02 §11). The App slug defaults to rook-invariants (GITHUB_APP_SLUG to change it).
 deploy/aws/scripts/set-secret.sh GITHUB_APP_PRIVATE_KEY < path/to/app.pem
 
 # 5. verify: a guest replay demo run through Caddy (0 Bobcoins); it must end `done` with a reviewed diagnosis

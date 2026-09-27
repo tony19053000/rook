@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+from rook.github.app import valid_repo
 
 RunStatusName = Literal["queued", "running", "done", "failed", "cancelled"]
 
@@ -110,3 +112,26 @@ class DevicePoll(BaseModel):
     token: str | None = None
     refresh_token: str | None = None
     expires_at: int | None = None
+
+
+class InstallUrl(BaseModel):
+    url: str
+
+
+class GitHubTokenBody(_Request):
+    repo: str = Field(min_length=3, max_length=200)
+
+    @field_validator("repo")
+    @classmethod
+    def _repo(cls, v: str) -> str:
+        if not valid_repo(v):
+            raise ValueError("must be a GitHub repo 'owner/name'")
+        return v
+
+
+class GitHubToken(BaseModel):
+    """`POST /github/token`: an installation token scoped to one repo (contents + pull requests), ~1 hour."""
+
+    token: str
+    expires_at: int
+    repo: str

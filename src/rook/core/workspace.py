@@ -10,8 +10,8 @@ ever touch:
   hosted server runs nothing else (`hosted=True` refuses every other kind).
 
 SHIP in test mode (`LocalBranchShipper`) commits the verified fix, the regression test and Rook's files
-to a new local branch `rook/fix-<cx>` and never pushes. The real push + PR (ROOK-031) implements the
-same `Shipper` interface. Git always runs with an arg list, a minimal env, no user or system config and
+to a new local branch `rook/fix-<cx>` and never pushes. The real push + PR (`github/pr.py`, ROOK-031)
+implements the same `Shipper` interface. Git always runs with an arg list, a minimal env, no user or system config and
 no hooks (the workspace is untrusted).
 
 Symlinks (03 section 3): Bob runs on the host with the workspace as cwd, so no link in the workspace may
@@ -248,18 +248,23 @@ def _remove_escaping_links(ws: Path) -> list[str]:
     return removed
 
 
+def git_auth_env(token: str, base: str) -> dict[str, str]:
+    """The child env that gives git the installation token for `base` only (an `http.<base>/.extraheader`),
+    so it never appears in argv or `.git/config`. Both the token and its basic form are registered secrets."""
+    basic = base64.b64encode(f"x-access-token:{token}".encode()).decode()
+    register_secret(token)
+    register_secret(basic)
+    return {"GIT_CONFIG_COUNT": "2", "GIT_CONFIG_KEY_0": f"http.{base}/.extraheader",
+            "GIT_CONFIG_VALUE_0": f"AUTHORIZATION: basic {basic}",
+            "GIT_CONFIG_KEY_1": "http.sslVerify", "GIT_CONFIG_VALUE_1": "true"}
+
+
 def _clone(repo: RepoSpec, ws: Path, token: str | None, github_url: str,
            cancel: threading.Event | None = None) -> str:
     if not _REPO_RE.fullmatch(repo.ref) or repo.ref.startswith(("-", ".")):
         raise PrepareError(f"a GitHub repo must look like 'owner/name', not {repo.ref!r}")
     base = github_url.rstrip("/")
-    env: dict[str, str] = {}
-    if token:
-        basic = base64.b64encode(f"x-access-token:{token}".encode()).decode()
-        register_secret(token)
-        register_secret(basic)
-        env = {"GIT_CONFIG_COUNT": "1", "GIT_CONFIG_KEY_0": f"http.{base}/.extraheader",
-               "GIT_CONFIG_VALUE_0": f"AUTHORIZATION: basic {basic}"}
+    env = git_auth_env(token, base) if token else {}
     # core.symlinks=false (kept in the clone's config): links are checked out as plain text files.
     args = ["clone", "-q", "--depth", "1", "--no-tags", "-c", "core.symlinks=false"]
     if repo.branch:

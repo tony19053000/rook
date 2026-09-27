@@ -63,3 +63,44 @@ class ServerDb:
             return None
         request = json.loads(row["data"]).get("request")
         return request if isinstance(request, str) else None
+
+    # --- GitHub installations (ROOK-031): `users.github_installation_id` ---
+
+    def installation_of(self, user_id: str) -> int | None:
+        with self._lock:
+            row = self._conn.execute("SELECT github_installation_id FROM users WHERE id = ?", (user_id,)).fetchone()
+        return int(row[0]) if row is not None and row[0] is not None else None
+
+    def installation_owner(self, installation_id: int) -> str | None:
+        with self._lock:
+            row = self._conn.execute("SELECT id FROM users WHERE github_installation_id = ?",
+                                     (installation_id,)).fetchone()
+        return str(row[0]) if row is not None else None
+
+    def bind_installation(self, user_id: str, email: str, installation_id: int, created_at: str) -> bool:
+        """Link the installation to the user, only if no other user has it (atomic). False otherwise."""
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = self._conn.execute("SELECT id FROM users WHERE github_installation_id = ? AND id != ?",
+                                         (installation_id, user_id)).fetchone()
+                if row is not None:
+                    self._conn.execute("ROLLBACK")
+                    return False
+                self._conn.execute(
+                    "INSERT INTO users(id, email, github_installation_id, created_at) VALUES (?, ?, ?, ?)"
+                    " ON CONFLICT(id) DO UPDATE SET email = excluded.email,"
+                    " github_installation_id = excluded.github_installation_id",
+                    (user_id, email, installation_id, created_at))
+                self._conn.execute("COMMIT")
+                return True
+            except BaseException:
+                self._conn.execute("ROLLBACK")
+                raise
+
+    def unbind_installation(self, installation_id: int) -> int:
+        """Forget a deleted installation for every user who had it; the number of users changed."""
+        with self._lock:
+            cursor = self._conn.execute("UPDATE users SET github_installation_id = NULL"
+                                        " WHERE github_installation_id = ?", (installation_id,))
+        return cursor.rowcount
