@@ -152,21 +152,21 @@ Exit codes: `0` every approved rule held, `1` an approved rule is broken, `2` th
 ### 3.2 Pages
 | Route | Content |
 |---|---|
-| `/` | Home: greeting + composer. Choosing a repo and sending creates a run → `/runs/[id]` |
+| `/` | Home: greeting + composer. Choosing a repo and sending creates a run → `/runs/[id]`. A signed-in user's own GitHub repo starts the same kind of run when `GET /me` says `can_run_github` (ROOK-041) |
 | `/runs/[id]` | The live run: chat column rendered from the SSE events, with the composer active for chat |
 | `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook", "Sign out". The sidebar account line shows the user's name with "Sign out" (a guest: "Sign in") |
 | `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority); `/repositories` offers "Connect GitHub" to a signed-in user without GitHub |
 | `/github/setup` | Where GitHub returns after the App install: "Connecting GitHub…", then "GitHub connected" (+ "Go to Rook") or the error with "Connect GitHub again" |
 
 ### 3.3 Repo picker
-A dropdown above the composer with **"Your GitHub repositories"** (after connecting) and **"Demo repositories"** (always; the only option for guests). Each item shows its name, `private/public` and the language. If GitHub isn't connected, it offers a "Connect GitHub" item (it opens the GitHub App's install page). The hosted server runs only the demo repos, so sending with a GitHub repo selected shows the CLI command (`rook run owner/name`) instead of starting a run.
+A dropdown above the composer with **"Your GitHub repositories"** (after connecting) and **"Demo repositories"** (always; the only option for guests). Each item shows its name, `private/public` and the language. If GitHub isn't connected, it offers a "Connect GitHub" item (it opens the GitHub App's install page). **Hosted GitHub runs (ROOK-041):** when `GET /me` returns `can_run_github: true` (signed in, GitHub linked, server configured), sending with a GitHub repo selected starts a real run (`POST /runs` with `repo: {kind: "github", ref: "owner/name"}`) and opens `/runs/[id]`, exactly like a demo; while that repo is selected the composer shows the muted note "Runs live on Rook's server with IBM Bob · costs coins". The user answers the questions themselves (no guest countdown). When `can_run_github` is false or missing (an older server, or GitHub not linked) sending shows the CLI command (`rook run owner/name`) instead. Guests see only the demo repos. Start errors become an error card: 401 "Your session expired…", 403 the server's reason (fallback: "Rook can't run this repository for you. Check that it is shared with the Rook GitHub App."), 429 the server's message plus the `Retry-After` wait when the message doesn't already say when (with a **Try again** button), 503 "Not available on this server" with the server's message (no retry).
 
 ### 3.4 Inline cards (web versions of the CLI components)
 - **RulesCard:** a header pill `Needs your OK` → `Approved`, rows with rule text + source + pill (`Approved` / `Rejected` with strike-through and reason), and buttons **Approve N rules** and **Edit**. Edit makes the text editable and requires re-validation.
 - **SearchCard:** three stats (Sequences, Speed, Broken x/4) that update live, and the pill `Running` → `Rule broken`.
 - **CounterexampleCard:** a red border, shrink chips `12 → 8 → 5 → 3` (the current one in red), the numbered steps, a **Paid / Refunded** duo (the red box is the violated value), the reproduced pill, and the buttons **Replay** and **Download test**.
 - **FixCard:** the root cause file:line + explanation, a diff block, reviewer pills, and the buttons **Apply fix and verify** / **Not now**.
-- **VerifyCard:** a Before (red) / After (green) duo, rows for each verify check with pills, and after `pr.opened` a **View pull request** button.
+- **VerifyCard:** a Before (red) / After (green) duo, rows for each verify check with pills, and after `pr.opened` a **View pull request** button (a link only for an `https://github.com/` URL; anything else is plain text).
 - **QuestionCard:** a generic card for `setup_value` and `menu` questions.
 
 The question buttons send `POST /runs/{id}/answers`, and the card then shows `✓ <answer>`. In **guest demo mode**, unanswered questions auto-answer "yes" after 6 s with a visible countdown, so judges see the full flow. On the RulesCard a guest's default selection (pre-ticked, and what the countdown sends) is only the rule(s) the approve_rules payload marks `featured: true` (the demo's recorded, verifiable bug), falling back to every accepted, unflagged rule; a signed-in user always starts from every rule.
@@ -191,7 +191,7 @@ Default is dark, with a light theme via `prefers-color-scheme` and `[data-theme]
 Fonts: **Newsreader** (the greeting and wordmark only), **IBM Plex Sans** (UI) and **IBM Plex Mono** (code, numbers, details). Use tabular numbers for all counters.
 
 ### 3.6 States
-- **Run finished:** a final card above the composer: a headline from the engine's events (✓ "Fixed and verified" in green; ! "Bug proven · fix not verified" in amber, never red, when `verify.done` is false or a fix was never verified; ! "Rule broken · counterexample saved"; ✓ "Every approved rule held"; ✗ "Run failed"), one plain sentence, then the server's `run.finished` summary as-is.
+- **Run finished:** a final card above the composer: a headline from the engine's events (✓ "Fixed and verified" in green; ! "Bug proven · fix not verified" in amber, never red, when `verify.done` is false or a fix was never verified; ! "Rule broken · counterexample saved"; ✓ "Every approved rule held"; ✗ "Run failed"), one plain sentence, then the server's `run.finished` summary as-is, and after `pr.opened` the `✓ PR #N opened` line with **View pull request** (ROOK-041).
 - **Loading** a run: skeleton rows. **Reconnecting** the SSE: a thin banner "Reconnecting…" with a retry that resumes with `after`.
 - **Errors:** an inline card with a clear cause and next step (for example: "The app didn't start: port 3000 never answered. Check the logs or edit the start command.").
 - **Empty recents:** "No runs yet. Pick a repository to start."
@@ -226,7 +226,7 @@ Each run replays for real through DIAGNOSE (approving the refund rule, the refun
 | `violation.found`, `shrink.step`, `counterexample.saved` | shrink line + Counterexample card | CounterexampleCard |
 | `diagnosis.ready`, `fix.ready` | Diagnosis card | FixCard |
 | `verify.step`, `verify.done` | verify block | VerifyCard |
-| `pr.opened` | PR line | VerifyCard button + recents update |
+| `pr.opened` | PR line | VerifyCard button + the final card's PR line + recents update |
 | `chat.message` | `> text` (user) / `◆ Guide` line | bubbles |
 | `cost.update` | footer coins | sidebar coins |
 | `log` (warn/error) | dim or red line | small inline note |

@@ -1,7 +1,7 @@
 // Pure logic behind the pages (04 §3.2, §3.3, §3.6): the recents, the repo picker groups, the new-run body,
 // and how every API failure reads. Kept free of React so it is unit-tested directly.
 
-import { ApiError, type CreateRunBody, type RepoOption, type RunSummary } from "./api";
+import { ApiError, type ApiClient, type CreateRunBody, type RepoOption, type RunSummary } from "./api";
 import { short } from "./cardText";
 import type { RecentRun, RecentStatus, SidebarProps } from "@/components/Sidebar";
 import { clean } from "./safeText";
@@ -12,6 +12,8 @@ export const REQUEST_MAX = 2000;
 export const DEFAULT_REQUEST = "Find bugs";
 /** 04 §3.6, the guest limit copy; the command is shown as code. */
 export const CLI_INSTALL = "uv tool install rook-cli";
+/** 04 §3.3: the composer note under a picked GitHub repo when the server runs it (ROOK-041). */
+export const HOSTED_GITHUB_NOTE = "Runs live on Rook's server with IBM Bob · costs coins";
 /** How often the recents refresh while a run is queued or running. */
 export const RECENTS_POLL_MS = 5000;
 
@@ -139,17 +141,50 @@ export function moveIndex(current: number, delta: number, count: number): number
 // New run
 // ---------------------------------------------------------------------------
 
+/** The CLI hint for a GitHub repo this server won't run (an older server, or GitHub not linked). */
+export function cliHint(ref: string): string {
+  return `The hosted server runs only the demo repositories. Run this one with the CLI: rook run ${ref}`;
+}
+
+/**
+ * The POST /runs body, or why not. A GitHub repo runs on the server only when GET /me said `can_run_github`
+ * (ROOK-041); otherwise it gets the CLI hint (03 §3: guests and older servers run only the demo repos).
+ */
 export function newRunBody(
   repo: Pick<RepoOption, "kind" | "ref"> | null,
   text: string,
   auto: boolean,
+  canRunGithub = false,
 ): { body: CreateRunBody } | { error: string } {
   if (repo === null) return { error: "Pick a repository first." };
-  // The hosted server runs only the allowlisted demo repos (03 §3); your own repos run with the CLI.
-  if (repo.kind === "github") return { error: `The hosted server runs only the demo repositories. Run this one with the CLI: rook run ${repo.ref}` };
+  if (repo.kind === "github" && !canRunGithub) return { error: cliHint(repo.ref) };
   const request = text.trim();
   if (request.length > REQUEST_MAX) return { error: `Requests are at most ${REQUEST_MAX.toLocaleString("en-US")} characters.` };
   return { body: { repo: { kind: repo.kind, ref: repo.ref }, request, options: { auto } } };
+}
+
+export type StartOutcome =
+  /** Nothing was sent: show this in the composer (no repo, too long, or the CLI hint). */
+  | { kind: "hint"; message: string }
+  | { kind: "started"; runId: string; href: string }
+  | { kind: "error"; error: ErrorView };
+
+/** The home composer's send: check the body, POST /runs, and say where to go or what went wrong. */
+export async function startRun(
+  api: Pick<ApiClient, "createRun">,
+  repo: Pick<RepoOption, "kind" | "ref"> | null,
+  text: string,
+  auto: boolean,
+  canRunGithub = false,
+): Promise<StartOutcome> {
+  const checked = newRunBody(repo, text, auto, canRunGithub);
+  if ("error" in checked) return { kind: "hint", message: checked.error };
+  try {
+    const { run_id } = await api.createRun(checked.body);
+    return { kind: "started", runId: run_id, href: runHref(run_id) };
+  } catch (e) {
+    return { kind: "error", error: errorView(e, "create") };
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -201,16 +236,36 @@ export function errorView(error: unknown, action: ErrorAction): ErrorView {
           retryable: false,
         };
       }
-      // The busy queue and the daily AI budget: the server's own words (they say when to come back).
-      const fallback = `Too many requests right now. ${retryText(error.retryAfter) || "Wait a moment and try again."}`;
-      return { kind: "busy", title, message: detailOf(error, fallback), retryable: true };
+      // The busy queue, the daily AI budget and the hosted-run limits: the server's own words.
+      const retry = retryText(error.retryAfter);
+      const fallback = `Too many requests right now. ${retry || "Wait a moment and try again."}`;
+      const detail = detailOf(error, "");
+      if (!detail) return { kind: "busy", title, message: fallback, retryable: true };
+      // Add the Retry-After wait only when the server's words don't already say when to come back.
+      const saysWhen = /try again|retry|tomorrow/i.test(detail);
+      return { kind: "busy", title, message: saysWhen || !retry ? detail : `${detail}${/[.!?]$/.test(detail) ? "" : "."} ${retry}`, retryable: true };
     }
+    case 503:
+      return {
+        kind: "unavailable",
+        title: "Not available on this server",
+        message: detailOf(error, "The server isn't set up to do this right now. Try a demo repository."),
+        retryable: false,
+      };
     case 501:
       return { kind: "unavailable", title: "Not available yet", message: detailOf(error, "The server can't do this yet."), retryable: false };
     case 401:
       return { kind: "auth", title, message: "Your session expired. Sign in again, or continue as a guest.", retryable: false };
     case 403:
-      return { kind: "denied", title, message: detailOf(error, "You aren't allowed to do that."), retryable: false };
+      return {
+        kind: "denied",
+        title,
+        message: detailOf(
+          error,
+          action === "create" ? "Rook can't run this repository for you. Check that it is shared with the Rook GitHub App." : "You aren't allowed to do that.",
+        ),
+        retryable: false,
+      };
     case 404:
       return action === "run"
         ? { kind: "missing", title, message: "This run doesn't exist, or it belongs to someone else.", retryable: false }

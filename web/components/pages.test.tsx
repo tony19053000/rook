@@ -11,8 +11,9 @@ import { Sidebar } from "./Sidebar";
 import { CounterexamplesView, LoginView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
 import { ApiError, type RepoOption, type RunSummary } from "@/lib/api";
 import { minishopRun } from "@/lib/fixtures/minishop";
-import { CLI_INSTALL, errorView, pickerGroups } from "@/lib/pages";
+import { CLI_INSTALL, errorView, HOSTED_GITHUB_NOTE, pickerGroups, startRun } from "@/lib/pages";
 import { initialRunState, reduceEvents } from "@/lib/runStore";
+import { RunView } from "./RunView";
 import { GUEST, type Session } from "@/lib/session";
 
 const html = (node: React.ReactElement) => renderToStaticMarkup(node);
@@ -301,4 +302,67 @@ describe("home landing (ROOK-040 polish)", () => {
 it("home: Try the demo says the demos are loading while GET /repos is in flight", () => {
   const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([], { loading: true })} navigate={() => {}} />);
   expect(out).toContain("Loading the demos…");
+});
+
+describe("hosted GitHub runs (ROOK-041)", () => {
+  const USER_RUNS: Session = { kind: "user", name: "Aayush", email: "a@example.com", githubConnected: true, canRunGithub: true };
+  const USER_CLI: Session = { ...USER_RUNS, canRunGithub: false };
+  const recorder = () => {
+    const bodies: unknown[] = [];
+    return { bodies, api: { createRun: async (body: unknown) => (bodies.push(body), { run_id: "r_gh" }) } };
+  };
+
+  it("picking a GitHub repo starts a real run when the server can run it", async () => {
+    const { bodies, api } = recorder();
+    const outcome = await startRun(api, GH, "find bugs", false, true);
+    expect(outcome).toEqual({ kind: "started", runId: "r_gh", href: "/runs/r_gh" });
+    expect(bodies).toEqual([{ repo: { kind: "github", ref: "aayush/billing" }, request: "find bugs", options: { auto: false } }]);
+  });
+
+  it("falls back to the CLI hint otherwise, and sends nothing", async () => {
+    const { bodies, api } = recorder();
+    const outcome = await startRun(api, GH, "find bugs", false, false);
+    expect(outcome).toMatchObject({ kind: "hint" });
+    expect(outcome.kind === "hint" && outcome.message).toContain("rook run aayush/billing");
+    expect(bodies).toEqual([]);
+  });
+
+  it("maps 401, 403, 429 and 503 to friendly error cards", async () => {
+    const failing = (error: ApiError) => ({ createRun: async () => Promise.reject(error) });
+    const view = async (error: ApiError) => {
+      const outcome = await startRun(failing(error), GH, "x", false, true);
+      if (outcome.kind !== "error") throw new Error("expected an error");
+      return outcome.error;
+    };
+    expect((await view(new ApiError(401, "Sign in"))).kind).toBe("auth");
+    expect(await view(new ApiError(403, "Not your repository"))).toMatchObject({ kind: "denied", message: "Not your repository", retryable: false });
+    expect(await view(new ApiError(429, "Rook is busy", 120))).toMatchObject({ kind: "busy", message: "Rook is busy. Try again in about 2 minutes.", retryable: true });
+    const na = await view(new ApiError(503, "Hosted GitHub runs are not configured"));
+    expect(na).toMatchObject({ kind: "unavailable", retryable: false });
+    const out = html(<ErrorCard view={na} onRetry={() => {}} />);
+    expect(out).toContain("Hosted GitHub runs are not configured");
+    expect(out).not.toContain("Try again");
+  });
+
+  it("the composer says a picked GitHub repo runs on Rook's server and costs coins", () => {
+    const on = html(<HomeView api={fakeApi} session={USER_RUNS} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={GH} />);
+    expect(on).toContain("data-hosted-note");
+    expect(on).toContain(HOSTED_GITHUB_NOTE.replace("'", "&#x27;"));
+    const cli = html(<HomeView api={fakeApi} session={USER_CLI} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={GH} />);
+    expect(cli).not.toContain("data-hosted-note");
+    const demo = html(<HomeView api={fakeApi} session={USER_RUNS} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={DEMO} />);
+    expect(demo).not.toContain("data-hosted-note");
+  });
+
+  it("the final card links the opened PR (only a github.com URL)", () => {
+    const pr = { url: "https://github.com/aayush/billing/pull/7", number: 7, branch: "rook/fix" };
+    const state = { ...initialRunState, status: "done" as const, summary: "1 rule broken, fixed and verified", pr };
+    const out = html(<RunView state={state} runId="r_gh" api={fakeApi} />);
+    expect(out).toMatch(/data-run-summary="done"[\s\S]*PR #(<!-- -->)?7(<!-- -->)? opened[\s\S]*href="https:\/\/github.com\/aayush\/billing\/pull\/7"/);
+    expect(out).toContain("View pull request");
+    const evil = html(<RunView state={{ ...state, pr: { ...pr, url: "javascript:alert(1)" } }} runId="r_gh" api={fakeApi} />);
+    expect(evil).not.toContain('href="javascript');
+    const none = html(<RunView state={{ ...state, pr: null }} runId="r_gh" api={fakeApi} />);
+    expect(none).not.toContain("data-pr");
+  });
 });

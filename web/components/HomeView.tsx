@@ -1,7 +1,9 @@
 "use client";
 
 // Home (04 §3.2 `/`): the greeting and the composer with the repo picker. Choosing a repo and sending creates
-// a run (POST /runs) and opens `/runs/[id]`. Guests see only the demo repos and get "Try the demo".
+// a run (POST /runs) and opens `/runs/[id]`. Guests see only the demo repos and get "Try the demo". A signed-in
+// user whose server said `can_run_github` (GET /me) runs their own GitHub repos the same way (ROOK-041);
+// otherwise a GitHub repo gets the `rook run` CLI hint.
 
 import { useCallback, useState } from "react";
 import { AppShell } from "./AppShell";
@@ -10,9 +12,19 @@ import { ErrorCard } from "./ErrorCard";
 import { RepoPicker } from "./RepoPicker";
 import { Note } from "./cards/ui";
 import type { ApiClient, RepoOption, RunSummary } from "@/lib/api";
-import { DEFAULT_REQUEST, errorView, newRunBody, pickerGroups, repoKey, runHref, shellProps, type ErrorView } from "@/lib/pages";
+import {
+  DEFAULT_REQUEST,
+  errorView,
+  HOSTED_GITHUB_NOTE,
+  newRunBody,
+  pickerGroups,
+  repoKey,
+  shellProps,
+  startRun,
+  type ErrorView,
+} from "@/lib/pages";
 import { clean } from "@/lib/safeText";
-import type { Session } from "@/lib/session";
+import { canRunGithub, type Session } from "@/lib/session";
 import type { ReposView } from "@/lib/useShell";
 
 /** What Rook is, in one line (also the page description in app/layout.tsx). */
@@ -29,10 +41,12 @@ export interface HomeViewProps {
   navigate: (href: string) => void;
   /** "Connect GitHub" (ROOK-031): goes to GitHub's install page; resolves to an error message, or null. */
   connectGithub?: () => Promise<string | null>;
+  /** The repo picked on first render (tests; nothing by default). */
+  defaultSelected?: RepoOption | null;
 }
 
-export function HomeView({ api, session, runs, repos, navigate, connectGithub }: HomeViewProps) {
-  const [selected, setSelected] = useState<RepoOption | null>(null);
+export function HomeView({ api, session, runs, repos, navigate, connectGithub, defaultSelected = null }: HomeViewProps) {
+  const [selected, setSelected] = useState<RepoOption | null>(defaultSelected);
   const [auto, setAuto] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<ErrorView | null>(null);
@@ -42,29 +56,31 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub }:
   const reposError = repos.error === null || repos.error === undefined ? null : errorView(repos.error, "repos");
   const groups = pickerGroups(repos.repos, session);
   const guest = session.kind === "guest";
+  const hostedGithub = canRunGithub(session);
 
   const start = useCallback(
     async (repo: RepoOption | null, text: string): Promise<boolean> => {
-      const checked = newRunBody(repo, text || DEFAULT_REQUEST, auto);
-      if ("error" in checked) {
-        setHint(checked.error);
+      const request = text || DEFAULT_REQUEST;
+      const body = newRunBody(repo, request, auto, hostedGithub);
+      if ("error" in body) {
+        setHint(body.error);
         return false;
       }
       setHint(null);
       setCreateError(null);
-      setLastRequest(text || DEFAULT_REQUEST);
+      setLastRequest(request);
       setCreating(true);
-      try {
-        const { run_id } = await api.createRun(checked.body);
-        navigate(runHref(run_id));
+      const outcome = await startRun(api, repo, request, auto, hostedGithub);
+      if (outcome.kind === "started") {
+        navigate(outcome.href);
         return true;
-      } catch (e) {
-        setCreateError(errorView(e, "create"));
-        setCreating(false);
-        return false;
       }
+      if (outcome.kind === "hint") setHint(outcome.message);
+      else setCreateError(outcome.error);
+      setCreating(false);
+      return false;
     },
-    [api, auto, navigate],
+    [api, auto, navigate, hostedGithub],
   );
 
   // "Try the demo" uses the demo picked in the picker or the chips, else the first one the server lists.
@@ -80,7 +96,12 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub }:
     <div className="flex flex-col gap-1.5">
       {hint !== null && (
         <div className="mx-auto w-full max-w-[760px] px-1">
-          <Note tone="warn">{hint}</Note>
+          <Note tone="warn">{clean(hint)}</Note>
+        </div>
+      )}
+      {hint === null && hostedGithub && selected !== null && selected.kind === "github" && (
+        <div className="mx-auto w-full max-w-[760px] px-1" data-hosted-note>
+          <Note tone="muted">{HOSTED_GITHUB_NOTE}</Note>
         </div>
       )}
       <Composer

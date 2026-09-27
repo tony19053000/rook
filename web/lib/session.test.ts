@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { GUEST, displayName, getToken, oauthReturn, sessionFromUser, signInRedirect, SIGN_IN_AVAILABLE, supabaseConfig } from "./session";
+import { GUEST, canRunGithub, displayName, getToken, oauthReturn, sessionFromUser, signInRedirect, SIGN_IN_AVAILABLE, supabaseConfig } from "./session";
 
 const KEY = "sb_publishable_abcdefghijklmnopqrstuvwxyz";
 
@@ -28,10 +28,19 @@ describe("supabase config (03 §6)", () => {
 describe("session helpers", () => {
   it("names the user from Google, else the email", () => {
     const user = sessionFromUser({ email: "a@example.com", user_metadata: { full_name: "Aayush K", name: "ak" } }, true);
-    expect(user).toEqual({ kind: "user", name: "Aayush K", email: "a@example.com", githubConnected: true });
+    expect(user).toEqual({ kind: "user", name: "Aayush K", email: "a@example.com", githubConnected: true, canRunGithub: false });
     expect(displayName(sessionFromUser({ email: "a@example.com", user_metadata: {} }))).toBe("a@example.com");
     expect(displayName(sessionFromUser({ email: "a@example.com", user_metadata: { name: 7 } }))).toBe("a@example.com");
     expect(displayName(GUEST)).toBe("guest");
+  });
+
+  it("hosted GitHub runs need a signed-in, linked user whose server said can_run_github (ROOK-041)", () => {
+    const u = { email: "a@example.com", user_metadata: {} };
+    expect(canRunGithub(sessionFromUser(u, true, true))).toBe(true);
+    expect(canRunGithub(sessionFromUser(u, true, false))).toBe(false);
+    expect(canRunGithub(sessionFromUser(u, false, true))).toBe(false);
+    expect(canRunGithub(sessionFromUser(u, true))).toBe(false); // an older /me without the field
+    expect(canRunGithub(GUEST)).toBe(false);
   });
 
   it("reads what Supabase put on /login", () => {

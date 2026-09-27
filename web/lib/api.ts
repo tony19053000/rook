@@ -18,6 +18,8 @@ export interface Me {
   id: string;
   email: string;
   github_connected: boolean;
+  /** The server runs this user's own GitHub repos (ROOK-041). Missing on older servers: treat as false. */
+  can_run_github?: boolean;
 }
 
 export type RepoKind = "github" | "demo";

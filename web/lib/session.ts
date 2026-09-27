@@ -6,7 +6,14 @@ import { GoTrueClient, type User } from "@supabase/auth-js";
 
 export type Session =
   | { kind: "guest" }
-  | { kind: "user"; name: string; email: string; githubConnected: boolean };
+  | {
+      kind: "user";
+      name: string;
+      email: string;
+      githubConnected: boolean;
+      /** GET /me `can_run_github`: picking a GitHub repo starts a hosted run instead of the CLI hint. */
+      canRunGithub?: boolean;
+    };
 
 export const GUEST: Session = { kind: "guest" };
 
@@ -71,11 +78,20 @@ function metaString(meta: Record<string, unknown> | undefined, key: string): str
 }
 
 /** The signed-in user as the UI sees them: the Google name, else the email. */
-export function sessionFromUser(user: Pick<User, "email" | "user_metadata">, githubConnected = false): Session {
+export function sessionFromUser(
+  user: Pick<User, "email" | "user_metadata">,
+  githubConnected = false,
+  canRunGithub = false,
+): Session {
   const meta = user.user_metadata as Record<string, unknown> | undefined;
   const email = user.email ?? "";
   const name = metaString(meta, "full_name") || metaString(meta, "name") || email;
-  return { kind: "user", name, email, githubConnected };
+  return { kind: "user", name, email, githubConnected, canRunGithub };
+}
+
+/** Whether this session may start hosted runs of its own GitHub repos (signed in, linked, server says yes). */
+export function canRunGithub(session: Session): boolean {
+  return session.kind === "user" && session.githubConnected && session.canRunGithub === true;
 }
 
 /** Where Google sends the browser back: /login on this origin (in the Supabase redirect allowlist). */

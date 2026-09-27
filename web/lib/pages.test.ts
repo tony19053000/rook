@@ -3,6 +3,7 @@ import { ApiError, type RepoOption, type RunSummary } from "./api";
 import {
   anyActive,
   canPick,
+  cliHint,
   CLI_INSTALL,
   errorView,
   formatWhen,
@@ -143,6 +144,49 @@ describe("new run body (02 §11 POST /runs)", () => {
     expect(newRunBody({ kind: "github", ref: "alice/shop" }, "find bugs", false)).toEqual({
       error: "The hosted server runs only the demo repositories. Run this one with the CLI: rook run alice/shop",
     });
+  });
+});
+
+describe("hosted GitHub runs (ROOK-041)", () => {
+  const gh = { kind: "github" as const, ref: "alice/shop" };
+
+  it("a GitHub repo becomes a POST /runs body when the server can run it", () => {
+    expect(newRunBody(gh, " find bugs ", false, true)).toEqual({
+      body: { repo: { kind: "github", ref: "alice/shop" }, request: "find bugs", options: { auto: false } },
+    });
+  });
+
+  it("falls back to the CLI hint otherwise (older server, or not linked)", () => {
+    expect(newRunBody(gh, "find bugs", false, false)).toEqual({ error: cliHint("alice/shop") });
+    expect(cliHint("alice/shop")).toContain("rook run alice/shop");
+  });
+
+  it("403 not your repo: the server's reason, else a friendly fallback", () => {
+    expect(errorView(new ApiError(403, "This repository is not linked to your account"), "create")).toMatchObject({
+      kind: "denied",
+      message: "This repository is not linked to your account",
+      retryable: false,
+    });
+    expect(errorView(new ApiError(403, "HTTP 403"), "create").message).toContain("shared with the Rook GitHub App");
+  });
+
+  it("429 busy or daily limit: the server's message plus the Retry-After wait", () => {
+    expect(errorView(new ApiError(429, "You have used today's hosted runs", 7200), "create")).toMatchObject({
+      kind: "busy",
+      message: "You have used today's hosted runs. Try again in about 2 hours.",
+      retryable: true,
+    });
+    expect(errorView(new ApiError(429, "Another run of yours is still going"), "create").message).toBe("Another run of yours is still going");
+  });
+
+  it("503 not configured: the server's message, no retry", () => {
+    expect(errorView(new ApiError(503, "Hosted GitHub runs are not configured on this server"), "create")).toMatchObject({
+      kind: "unavailable",
+      title: "Not available on this server",
+      message: "Hosted GitHub runs are not configured on this server",
+      retryable: false,
+    });
+    expect(errorView(new ApiError(503, "HTTP 503"), "create").message).toContain("isn't set up");
   });
 });
 

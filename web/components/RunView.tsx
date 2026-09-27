@@ -9,6 +9,7 @@ import { AppShell, type AppShellProps } from "./AppShell";
 import { Composer } from "./Composer";
 import { Transcript } from "./Transcript";
 import { Note, RunActionsContext, type RunActions } from "./cards/ui";
+import { PrLink } from "./cards/VerifyCard";
 import type { ApiClient } from "@/lib/api";
 import { GUEST_AUTO_SECONDS, sendAnswer, sendChat, type SendOutcome } from "@/lib/questions";
 import type { RunState } from "@/lib/runStore";
@@ -22,7 +23,7 @@ const OUTCOME_STYLE: Record<Outcome["tone"], { box: string; mark: string }> = {
   idle: { box: "border-line bg-surface", mark: "bg-sunk text-muted" },
 };
 
-/** The run's final card (04 §3.6): the outcome headline, then the server's summary line. */
+/** The run's final card (04 §3.6): the outcome headline, the server's summary line, and the PR once opened. */
 function OutcomeCard({ state, summary }: { state: RunState; summary: string }) {
   const outcome = runOutcome(state);
   const style = OUTCOME_STYLE[outcome?.tone ?? "idle"];
@@ -40,6 +41,7 @@ function OutcomeCard({ state, summary }: { state: RunState; summary: string }) {
         <p className="text-[15px] font-semibold">{outcome?.title ?? "Run finished"}</p>
         {outcome !== null && outcome.lead !== "" && <p className="text-[13.5px]">{outcome.lead}</p>}
         <p className="break-words text-[13px] text-muted">{clean(summary)}</p>
+        {state.pr !== null && <PrLink url={state.pr.url} number={state.pr.number} />}
       </div>
     </div>
   );

@@ -14,7 +14,8 @@ export function useApi(): ApiClient {
 }
 
 /**
- * The guest until Supabase reports a signed-in user; then the user, with `githubConnected` from GET /me. /me also
+ * The guest until Supabase reports a signed-in user; then the user, with `githubConnected` and `canRunGithub`
+ * from GET /me. /me also
  * proves the server accepts the token: a 401 there means every call would fail, so the browser signs out and
  * goes on as a guest.
  */
@@ -36,14 +37,16 @@ export function useSession(api: Pick<ApiClient, "me">): Session {
         return;
       }
       const user = current.user;
-      setSession((prev) => sessionFromUser(user, prev.kind === "user" && prev.githubConnected));
+      setSession((prev) =>
+        prev.kind === "user" ? sessionFromUser(user, prev.githubConnected, prev.canRunGithub === true) : sessionFromUser(user),
+      );
       if (checkedUser === user.id) return;
       checkedUser = user.id;
       // Deferred: auth-js must not be called back from inside its own callback (getToken would wait on it).
       setTimeout(() => {
         api.me().then(
           (me) => {
-            if (!cancelled) setSession(sessionFromUser(user, me.github_connected));
+            if (!cancelled) setSession(sessionFromUser(user, me.github_connected, me.can_run_github === true));
           },
           (e: unknown) => {
             if (!cancelled && e instanceof ApiError && e.status === 401) void signOut();
