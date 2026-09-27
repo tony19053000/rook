@@ -129,37 +129,47 @@ Exit codes: `0` every approved rule held, `1` an approved rule is broken, `2` th
 
 ## 3. B. Web app (Next.js)
 
-### 3.1 Layout (see `4-web-app.html`)
+### 3.1 Layout (app shell, modelled on a chat-app shell; `4-web-app.html` is the older mockup)
 ```
-┌ Sidebar 260px ───────────┬ Main ─────────────────────────────────────────┐
-│ [mascot] Rook            │  (home) mascot + "What should we try to break  │
-│ [ Home | Runs ]          │   today?" + sub-line                           │
-│ + New run                │  (run)  chat column, max-width 760px, centred  │
-│ ▢ Counterexamples        │         user bubbles right, agents/cards left  │
-│ ≡ Rules                  │                                                │
-│ ⬡ Repositories           │                                                │
-│ ⌄ More                   │  ┌ composer ─────────────────────────────────┐ │
-│ Recents                  │  │ [Docker sandbox] [+ Select repository…]  🟠│ │
-│ ● shop-app · finding…    │  │ Describe what to check, or "find bugs"  ↵ │ │
-│ ● billing · 2 broken     │  │ + Auto-approve: off     Bob · 13 agents   │ │
-│ …                        │  └───────────────────────────────────────────┘ │
-│ [Add to CI]  A aayush ·  │                                                │
-└──────────────────────────┴────────────────────────────────────────────────┘
+┌ Sidebar 280px (bg --side) ─┬ Main (bg --app) ──────────────────────────────┐
+│ ♜ Rook              [▯]    │  (home) greeting + composer                    │
+│ (+) New run                │  (run)  chat column, max-width 760px, centred  │
+│ ⚗ Counterexamples          │         user bubbles right, agents/cards left  │
+│ ☑ Rules                    │                                                │
+│ ▤ Repositories             │                                                │
+│                            │                                                │
+│ Recents         All runs   │  (signed in only)                              │
+│ ● shop-app · finding…      │                                                │
+│ ● billing · rule broken    │  ┌ composer (sticky) ───────────────────────┐  │
+│ … (scrolls)                │  └──────────────────────────────────────────┘  │
+│────────────────────────────│                                                │
+│ (A) Aayush            ⇅    │  signed out: a full-width [ Sign in ] button   │
+│     0.35 coins today       │  instead of the account row                    │
+└────────────────────────────┴────────────────────────────────────────────────┘
 ```
-- Under 820px the sidebar becomes a drawer (hamburger). The composer is sticky at the bottom.
+- **Top:** Rook's mark and the Newsreader wordmark (links to `/`), and a collapse button. Collapsed, the sidebar is a 52px icon rail (expand button, New run, the three list icons with labels as tooltips, the avatar or a Sign in icon). The collapsed state is remembered per browser in `localStorage` (`rook.sidebar.collapsed`; read after mount, every access in try/catch).
+- **Nav:** 16px line icons, muted. **New run** has an accent circle with `+`. The current page's entry is highlighted.
+- **Recents** (signed in only): the viewer's runs from `GET /runs`, one line each (`repo · status`, truncated with an ellipsis, full label as the tooltip), a status dot plus a screen-reader status word, the open run highlighted; skeleton rows while loading; "No runs yet. Pick a repository to start." when empty; **All runs** links to `/runs`. The list scrolls; the header and account row stay put.
+- **Account row** (signed in): avatar with the initial, the display name and "N coins today" (the coins of the viewer's runs started today, UTC), and a chevron button that opens a menu above it: the email, **Connect GitHub** (the GitHub App install flow, `GET /github/install-url`; its error shows in the menu) or **GitHub connected ✓** (links to `/repositories`), and **Sign out** (this browser only, then reload as a guest). Escape or a click outside closes it.
+- **Signed out:** no recents and no account row; a prominent **Sign in** button (to `/login`) at the bottom.
+- The "Add to CI" hint is a small section at the bottom of `/repositories`, not in the shell.
+- Under 768px the sidebar is a drawer behind a menu button (a top bar with the menu button, the wordmark and a New run `+`), over a dimmed overlay; Escape, the overlay or the collapse button close it. The composer is sticky at the bottom.
 - Recents dots: pulsing accent = running, green = fixed/holding, red = broken.
 
 ### 3.2 Pages
 | Route | Content |
 |---|---|
-| `/` | Home: greeting + composer. Choosing a repo and sending creates a run → `/runs/[id]`. A signed-in user's own GitHub repo starts the same kind of run when `GET /me` says `can_run_github` (ROOK-041) |
+| `/` | Home, laid out like Claude Code on the web. **Signed in:** a small Rook mark and the serif greeting "What should Rook check next, <first name>?" near the top; the rest of the main column stays empty; the composer sits at the bottom centre (max 760px; 16px gutters on mobile). **Signed out:** "Find the bug. Prove it. Verify the fix.", the one-line tagline, a primary **Sign in with Google** (the `/login` OAuth flow) and a small text link **Try an example without signing in** that starts the first example repo (for judges without an account). No demo hero, step strip or demo chips. Choosing a repo and sending creates a run → `/runs/[id]`. A signed-in user's own GitHub repo starts the same kind of run when `GET /me` says `can_run_github` (ROOK-041) |
 | `/runs/[id]` | The live run: chat column rendered from the SSE events, with the composer active for chat |
-| `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook", "Sign out". The sidebar account line shows the user's name with "Sign out" (a guest: "Sign in") |
-| `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority); `/repositories` offers "Connect GitHub" to a signed-in user without GitHub |
+| `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook", "Sign out". The sidebar account row shows the user's name with a menu holding "Sign out" (a guest: the "Sign in" button, §3.1) |
+| `/runs` | Every run of the viewer, newest first (reached from **All runs** next to the recents) |
+| `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority); `/repositories` offers "Connect GitHub" to a signed-in user without GitHub, and ends with the small "Add to CI" note (`rook run --ci`) |
 | `/github/setup` | Where GitHub returns after the App install: "Connecting GitHub…", then "GitHub connected" (+ "Go to Rook") or the error with "Connect GitHub again" |
 
 ### 3.3 Repo picker
-A dropdown above the composer with **"Your GitHub repositories"** (after connecting) and **"Demo repositories"** (always; the only option for guests). Each item shows its name, `private/public` and the language. If GitHub isn't connected, it offers a "Connect GitHub" item (it opens the GitHub App's install page). **Hosted GitHub runs (ROOK-041):** when `GET /me` returns `can_run_github: true` (signed in, GitHub linked, server configured), sending with a GitHub repo selected starts a real run (`POST /runs` with `repo: {kind: "github", ref: "owner/name"}`) and opens `/runs/[id]`, exactly like a demo; while that repo is selected the composer shows the muted note "Runs live on Rook's server with IBM Bob · costs coins". The user answers the questions themselves (no guest countdown). When `can_run_github` is false or missing (an older server, or GitHub not linked) sending shows the CLI command (`rook run owner/name`) instead. Guests see only the demo repos. Start errors become an error card: 401 "Your session expired…", 403 the server's reason (fallback: "Rook can't run this repository for you. Check that it is shared with the Rook GitHub App."), 429 the server's message plus the `Retry-After` wait when the message doesn't already say when (with a **Try again** button), 503 "Not available on this server" with the server's message (no retry).
+**The composer (home):** a row of small pill chips (the environment chip **IBM Bob** and the repo chip), the input "Describe what to check, or ask a question" with a send-arrow button (disabled until a repo is selected; Enter sends, Shift+Enter adds a line), and a thin row under it: left an **Auto** switch (tooltip: Rook answers its own questions instead of waiting for you), right the Bob mode, "IBM Bob · live" (your repo) or "IBM Bob · replay" (an example).
+
+**The repo chip** reads "Select repository…", then the picked repo with a repo icon. Clicking it opens a popover above the composer: a search box (filters by name or `owner/name`), **"Your repositories"** (from GitHub, once connected), and **"Examples"** (the demo repos, always last; the only group for guests). Each item shows its name, `private/public` and the language. The popover footer offers **"Connect GitHub"** (signed in, not linked; opens the GitHub App's install page), **"Add repositories"** (linked; the same install page, to share more repos) or **"Sign in to use your repositories"** (a guest). Keyboard: ↑/↓ from the chip opens it, the search box keeps focus, ↑/↓ move, Enter picks, Esc closes. **Hosted GitHub runs (ROOK-041):** when `GET /me` returns `can_run_github: true` (signed in, GitHub linked, server configured), sending with a GitHub repo selected starts a real run (`POST /runs` with `repo: {kind: "github", ref: "owner/name"}`) and opens `/runs/[id]`, exactly like a demo; while that repo is selected the composer shows the muted note "Runs live on Rook's server with IBM Bob · costs coins". The user answers the questions themselves (no guest countdown). When `can_run_github` is false or missing (an older server, or GitHub not linked) sending shows the CLI command (`rook run owner/name`) instead. Guests see only the demo repos. Start errors become an error card: 401 "Your session expired…", 403 the server's reason (fallback: "Rook can't run this repository for you. Check that it is shared with the Rook GitHub App."), 429 the server's message plus the `Retry-After` wait when the message doesn't already say when (with a **Try again** button), 503 "Not available on this server" with the server's message (no retry).
 
 ### 3.4 Inline cards (web versions of the CLI components)
 - **RulesCard:** a header pill `Needs your OK` → `Approved`, rows with rule text + source + pill (`Approved` / `Rejected` with strike-through and reason), and buttons **Approve N rules** and **Edit**. Edit makes the text editable and requires re-validation.
@@ -176,13 +186,13 @@ Default is dark, with a light theme via `prefers-color-scheme` and `[data-theme]
 
 | Token | Dark | Light |
 |---|---|---|
-| `--page` | `#0B0B0B` | `#EDEFEE` |
-| `--app` | `#1A1A1A` | `#F7F8F7` |
-| `--side` | `#141414` | `#EEF0EF` |
-| `--surface` | `#222222` | `#FFFFFF` |
-| `--ink` | `#ECECEA` | `#1A1F1D` |
-| `--muted` | `#A8A8A3` | `#5E6864` |
-| `--line` | `#2E2E2E` | `#DCE1DE` |
+| `--page` | `#1A1918` | `#F0EEE6` |
+| `--app` | `#262624` | `#FAF9F5` |
+| `--side` | `#1F1E1D` | `#F3F1EA` |
+| `--surface` | `#30302E` | `#FFFFFF` |
+| `--ink` | `#F0EEE6` | `#1F1E1D` |
+| `--muted` | `#AEABA2` | `#5F5E59` |
+| `--line` | `#3A3935` | `#E3E0D6` |
 | `--accent` (brand) | `#E0563F` | `#D9452F` |
 | `--good` | `#6BD9A0` | `#1C8A55` |
 | `--bad` | `#FF8C83` | `#C2372F` |

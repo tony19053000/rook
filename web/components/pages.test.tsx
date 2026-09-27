@@ -1,13 +1,12 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
-import { Composer } from "./Composer";
+import { AUTO_TOOLTIP, Composer } from "./Composer";
 import { ErrorCard } from "./ErrorCard";
 import { GithubSetupView } from "./GithubSetupView";
-import { HomeView } from "./HomeView";
+import { HomeView, SIGNED_OUT_TITLE } from "./HomeView";
 import { RepoPicker } from "./RepoPicker";
 import { RunPageView } from "./RunPage";
 import { RunsList } from "./RunsList";
-import { Sidebar } from "./Sidebar";
 import { CounterexamplesView, LoginView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
 import { ApiError, type RepoOption, type RunSummary } from "@/lib/api";
 import { minishopRun } from "@/lib/fixtures/minishop";
@@ -40,24 +39,68 @@ const fakeApi = { createRun: async () => ({ run_id: "r_new" }), answer: async ()
 const repos = (list: RepoOption[], patch: Partial<{ loading: boolean; error: unknown }> = {}) => ({ repos: list, loading: false, error: null, retry: () => {}, ...patch });
 
 describe("home (04 §3.2 /)", () => {
+  const USER: Session = { kind: "user", name: "Aayush Kumar", email: "a@example.com", githubConnected: true };
   const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} />);
+  const sendButton = (markup: string) => markup.match(/<button[^>]*aria-label="Send"[^>]*>/)?.[0] ?? "";
 
-  it("shows the greeting, the composer with the picker and the auto-approve toggle", () => {
-    expect(out).toContain("What should we try to break today?");
+  it("signed out: the title, what Rook is, Sign in with Google and the example link", () => {
+    expect(out).toContain("data-signed-out");
+    expect(out).toContain(SIGNED_OUT_TITLE);
+    expect(out).toContain("smallest sequence of actions that breaks a business rule");
+    expect(out).toMatch(/<a[^>]*href="\/login"[^>]*>Sign in with Google<\/a>/);
+    expect(out).toMatch(/<button[^>]*data-try-example(?![^>]*disabled="")[^>]*>Try an example without signing in<\/button>/);
+    const wired = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} signIn={async () => null} />);
+    expect(wired).toMatch(/<button[^>]*>Sign in with Google<\/button>/);
+  });
+
+  it("signed out: no old demo hero (steps, big demo button, chips)", () => {
+    expect(out).not.toContain("data-steps");
+    expect(out).not.toContain("data-demo-chips");
+    expect(out).not.toContain("Try the demo on");
+    expect(out).not.toContain("What should we try to break today?");
+  });
+
+  it("the example link is disabled with no example repos", () => {
+    const empty = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([])} navigate={() => {}} />);
+    expect(empty).toMatch(/<button[^>]*disabled=""[^>]*>Try an example without signing in<\/button>/);
+  });
+
+  it("signed in: the greeting uses the first name, no sign-in pitch", () => {
+    const user = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} />);
+    expect(user).toContain("data-greeting");
+    expect(user).toContain("What should Rook check next, Aayush?");
+    expect(user).not.toContain("Sign in with Google");
+    expect(user).not.toContain("Try an example without signing in");
+    const hostile = html(<HomeView api={fakeApi} session={{ ...USER, name: "<b>Eve</b>\x1b[2J x" }} runs={noRuns} repos={repos([])} navigate={() => {}} />);
+    expect(hostile).not.toContain("<b>");
+    expect(hostile).not.toContain("\x1b");
+  });
+
+  it("the composer: IBM Bob chip, the repo chip, the Auto switch and the placeholder", () => {
+    expect(out).toContain("data-env");
+    expect(out).toContain("IBM Bob");
     expect(out).toContain("Select repository…");
     expect(out).toContain('aria-haspopup="listbox"');
-    expect(out).toContain("Auto-approve: off");
-    expect(out).toContain("Docker sandbox");
+    expect(out).toMatch(/role="switch" aria-checked="false"/);
+    expect(out).toContain("Describe what to check, or ask a question");
   });
 
-  it("offers the guest demo", () => {
-    expect(out).toContain("data-guest");
-    expect(out).toContain("Try the demo");
-    expect(out).toMatch(/Sign in<\/a>/);
+  it("send stays disabled until a repository is chosen", () => {
+    expect(sendButton(out)).toContain('disabled=""');
+    const picked = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} defaultSelected={DEMO} />);
+    expect(sendButton(picked)).not.toContain('disabled=""');
   });
 
-  it("shows the empty recents", () => {
-    expect(out).toContain("No runs yet. Pick a repository to start.");
+  it("the mode line says replay for an example and live for your own repo", () => {
+    const demo = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={DEMO} />);
+    expect(demo).toContain("IBM Bob · replay");
+    const gh = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={GH} />);
+    expect(gh).toContain("IBM Bob · live");
+  });
+
+  it("a guest's sidebar offers Sign in instead of recents", () => {
+    expect(out).toContain("data-sign-in");
+    expect(out).not.toContain("No runs yet. Pick a repository to start.");
   });
 
   it("a repos failure shows an error card with a retry", () => {
@@ -71,32 +114,46 @@ describe("home (04 §3.2 /)", () => {
 });
 
 describe("repo picker (04 §3.3)", () => {
-  it("a guest sees only 'Demo repositories', with private/public and the language", () => {
+  it("a guest sees only the Examples, with private/public and the language, and a sign-in footer", () => {
     const out = html(<RepoPicker groups={pickerGroups([GH, DEMO], GUEST)} selected={null} onSelect={() => {}} defaultOpen />);
     expect(out).toContain('role="listbox"');
-    expect(out).toContain("Demo repositories");
-    expect(out).not.toContain("Your GitHub repositories");
+    expect(out).toContain('aria-label="Search repositories"');
+    expect(out).toContain("Examples");
+    expect(out).not.toContain("Your repositories");
     expect(out).not.toContain("aayush/billing");
     expect(out).toContain("shop-app");
     expect(out).toContain("public · Node.js");
     expect(out.match(/role="option"/g)).toHaveLength(1);
+    expect(out).toMatch(/href="\/login"[^>]*>Sign in to use your repositories</);
+    expect(out).not.toContain("Connect GitHub");
   });
 
   it("a signed-in user without GitHub gets 'Connect GitHub'", () => {
     const out = html(<RepoPicker groups={pickerGroups([DEMO], USER_NO_GH)} selected={null} onSelect={() => {}} defaultOpen />);
-    expect(out).toContain("Your GitHub repositories");
     expect(out).toContain("Connect GitHub");
+    expect(out).toContain("coming soon");
     const wired = html(<RepoPicker groups={pickerGroups([DEMO], USER_NO_GH)} selected={null} onSelect={() => {}} onConnectGithub={() => {}} defaultOpen />);
     expect(wired).toMatch(/<button(?![^>]*disabled="")[^>]*>Connect GitHub<\/button>/);
     expect(wired).not.toContain("coming soon");
   });
 
-  it("a connected user sees GitHub repos first and the selection is marked", () => {
+  it("a connected user sees 'Your repositories' from GitHub first, Examples last, and 'Add repositories'", () => {
     const session: Session = { ...USER_NO_GH, githubConnected: true };
-    const out = html(<RepoPicker groups={pickerGroups([DEMO, GH], session)} selected={DEMO} onSelect={() => {}} defaultOpen />);
+    const out = html(<RepoPicker groups={pickerGroups([DEMO, GH], session)} selected={DEMO} onSelect={() => {}} onConnectGithub={() => {}} defaultOpen />);
+    expect(out).toContain("Your repositories");
+    expect(out.indexOf("Your repositories")).toBeLessThan(out.indexOf("Examples"));
     expect(out.indexOf('data-repo="github:aayush/billing"')).toBeLessThan(out.indexOf('data-repo="demo:tony19053000/shop-app"'));
     expect(out).toContain("private · Python");
     expect(out).toMatch(/aria-selected="true"[^>]*data-repo="demo:tony19053000\/shop-app"/);
+    expect(out).toMatch(/<button(?![^>]*disabled="")[^>]*>Add repositories<\/button>/);
+    expect(out).not.toContain("Connect GitHub");
+  });
+
+  it("the chip shows the picked repo", () => {
+    const out = html(<RepoPicker groups={pickerGroups([GH], { ...USER_NO_GH, githubConnected: true })} selected={GH} onSelect={() => {}} />);
+    expect(out).toContain("aayush/billing");
+    expect(out).not.toContain("Select repository…");
+    expect(out).not.toContain('role="listbox"');
   });
 
   it("shows loading and error states", () => {
@@ -185,7 +242,9 @@ describe("run page (04 §3.2 /runs/[id])", () => {
 
   it("renders the recorded run and marks it current in the recents", () => {
     const state = reduceEvents(minishopRun);
-    const out = html(<RunPageView {...props} runs={{ runs: [run({ id: "r_1" })], loading: false }} state={state} status="closed" info={{ attempt: 0, reason: "finished" }} />);
+    const out = html(
+      <RunPageView {...props} session={USER_NO_GH} runs={{ runs: [run({ id: "r_1" })], loading: false }} state={state} status="closed" info={{ attempt: 0, reason: "finished" }} />,
+    );
     expect(out).toContain('data-card="counterexample"');
     expect(out).toMatch(/aria-current="page"[^>]*href="\/runs\/r_1"|href="\/runs\/r_1"[^>]*aria-current="page"/);
   });
@@ -253,55 +312,19 @@ describe("login and repositories", () => {
 });
 
 describe("sidebar and composer", () => {
-  it("sidebar: nav links, recents link to their run, skeleton while loading", () => {
-    const out = html(<Sidebar recents={[{ id: "r_9", label: "shop-app · fixed", status: "ok" }]} coins={0.5} userName="guest" active="runs" />);
-    for (const href of ["/", "/runs", "/counterexamples", "/rules", "/repositories", "/runs/r_9", "/login"]) expect(out).toContain(`href="${href}"`);
-    expect(out).toContain("(passed)");
-    expect(html(<Sidebar recents={[]} coins={0} userName="guest" recentsLoading />)).toContain('data-skeleton="recents"');
-    const user = html(<Sidebar recents={[]} coins={0} userName="Aayush" signedIn />);
-    expect(user).not.toContain('href="/login"');
-    expect(user).toMatch(/<button[^>]*>Sign out<\/button>/);
-    expect(user).toContain(">Aayush<");
-    expect(html(<Sidebar recents={[]} coins={0} userName="guest" />)).not.toContain("Sign out");
-  });
-
-  it("composer: the toggle only with a handler, the picker slot replaces the label", () => {
-    expect(html(<Composer />)).not.toContain("Auto-approve");
-    expect(html(<Composer auto onAutoChange={() => {}} />)).toContain("Auto-approve: on");
+  it("composer: the Auto switch only with a handler (with its tooltip), the picker slot replaces the label", () => {
+    expect(html(<Composer />)).not.toContain('role="switch"');
+    const on = html(<Composer auto onAutoChange={() => {}} />);
+    expect(on).toMatch(/role="switch" aria-checked="true"/);
+    expect(on).toContain(AUTO_TOOLTIP);
     expect(html(<Composer picker={<span data-slot />} repoLabel="x" />)).toContain("data-slot");
-  });
-});
-
-describe("home landing (ROOK-040 polish)", () => {
-  const SECOND: RepoOption = { kind: "demo", ref: "tony19053000/wallet-api", name: "wallet-api", private: false, language: "Go" };
-  const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO, SECOND, HOSTILE])} navigate={() => {}} />);
-
-  it("says what Rook is in one line", () => {
-    expect(out).toContain("data-tagline");
-    expect(out).toContain("smallest sequence of actions that breaks a business rule");
+    expect(html(<Composer status="IBM Bob · replay" />)).toContain("IBM Bob · replay");
   });
 
-  it("lists every demo repo from the API as a chip, cleaned", () => {
-    expect(out).toContain("data-demo-chips");
-    expect(out).toContain(">shop-app<");
-    expect(out).toContain(">wallet-api<");
-    expect(out).not.toContain("<img");
+  it("composer: canSend=false keeps the send arrow disabled even with allowEmpty", () => {
+    expect(html(<Composer allowEmpty canSend={false} />)).toMatch(/<button type="submit" disabled=""[^>]*aria-label="Send"/);
+    expect(html(<Composer allowEmpty />)).not.toMatch(/<button type="submit" disabled=""/);
   });
-
-  it("names the demo the Try the demo button will start", () => {
-    expect(out).toContain("Try the demo on shop-app");
-  });
-
-  it("disables Try the demo and hides the chips with no demo repos", () => {
-    const empty = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([])} navigate={() => {}} />);
-    expect(empty).not.toContain("data-demo-chips");
-    expect(empty).toMatch(/<button[^>]*disabled=""[^>]*>Try the demo<\/button>/);
-  });
-});
-
-it("home: Try the demo says the demos are loading while GET /repos is in flight", () => {
-  const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([], { loading: true })} navigate={() => {}} />);
-  expect(out).toContain("Loading the demos…");
 });
 
 describe("hosted GitHub runs (ROOK-041)", () => {

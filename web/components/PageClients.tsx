@@ -25,7 +25,18 @@ export function HomeClient() {
   }, [router]);
 
   const connectGithub = useCallback(() => startGithubConnect(api, (url) => window.location.assign(url)), [api]);
-  return <HomeView api={api} session={session} runs={runs} repos={repos} navigate={(href) => router.push(href)} connectGithub={connectGithub} />;
+  const signIn = useCallback(() => signInWithGoogle(window.location.origin), []);
+  return (
+    <HomeView
+      api={api}
+      session={session}
+      runs={runs}
+      repos={repos}
+      navigate={(href) => router.push(href)}
+      connectGithub={connectGithub}
+      signIn={SIGN_IN_AVAILABLE ? signIn : undefined}
+    />
+  );
 }
 
 export function GithubSetupClient() {

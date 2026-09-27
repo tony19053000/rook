@@ -203,6 +203,12 @@ export function RepositoriesView({ session, runs, repos, loading, error, onRetry
             to connect GitHub, or run Rook on any repo with the CLI.
           </p>
         )}
+        <section className="flex flex-col gap-1 border-t border-line pt-4 text-[13px] text-muted" data-add-to-ci>
+          <h2 className="text-[13px] font-semibold text-muted">Add to CI</h2>
+          <p>
+            Run Rook on every pull request with <code className="font-mono">rook run --ci</code>.
+          </p>
+        </section>
       </div>
     );
   return (

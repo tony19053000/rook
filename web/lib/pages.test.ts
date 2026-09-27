@@ -72,12 +72,22 @@ describe("recents (04 §3.1 status dots)", () => {
     expect(anyActive([run(), run({ status: "queued" })])).toBe(true);
   });
 
-  it("shellProps: guest name, sign-in link, summed coins", () => {
-    const props = shellProps(GUEST, { runs: [run({ coins: 0.1 }), run({ id: "r_2", coins: 0.25 })], loading: false });
-    expect(props).toMatchObject({ userName: "guest", signedIn: false, recentsLoading: false });
+  it("shellProps: guest name, no account details, today's coins only", () => {
+    const now = Date.parse("2026-09-26T18:00:00Z");
+    const list = [run({ coins: 0.1 }), run({ id: "r_2", coins: 0.25 }), run({ id: "r_3", coins: 5, created_at: "2026-09-25T23:00:00Z" })];
+    const props = shellProps(GUEST, { runs: list, loading: false }, now);
+    expect(props).toMatchObject({ userName: "guest", email: "", signedIn: false, githubConnected: false, recentsLoading: false });
     expect(props.coins).toBeCloseTo(0.35);
-    expect(props.recents).toHaveLength(2);
-    expect(shellProps(USER, { runs: [], loading: true })).toMatchObject({ userName: "Aayush", signedIn: true, recentsLoading: true });
+    expect(props.recents).toHaveLength(3);
+    expect(shellProps(USER, { runs: [], loading: true })).toMatchObject({
+      userName: "Aayush",
+      email: "a@example.com",
+      signedIn: true,
+      githubConnected: true,
+      recentsLoading: true,
+      coins: 0,
+    });
+    expect(shellProps(USER_NO_GH, { runs: [], loading: false }).githubConnected).toBe(false);
   });
 
   it("formats when and encodes the run link", () => {

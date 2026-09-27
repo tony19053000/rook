@@ -1,22 +1,26 @@
 "use client";
 
-// The repo picker (04 §3.3): a dropdown above the composer with "Your GitHub repositories" (once connected)
-// and "Demo repositories" (always; the only group for a guest). Each item shows its name, private/public and
-// the language. Keyboard: Enter/Space/↓ open it, ↑/↓ move, Enter picks, Esc closes.
+// The repo picker (04 §3.3): a pill chip above the composer ("Select repository…", then the picked repo) that
+// opens a popover with a search box, "Your repositories" (GitHub, once connected), the "Examples" (the demo
+// repos, last), and a footer: "Connect GitHub" (signed in, not linked), "Add repositories" (linked; the App's
+// install page) or "Sign in to use your repositories" (a guest). Keyboard: the search box keeps the focus;
+// ↑/↓ move, Enter picks, Esc closes.
 
-import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import Link from "next/link";
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { RepoIcon } from "./Composer";
 import type { RepoOption } from "@/lib/api";
-import { moveIndex, pickerOptions, repoKey, repoMeta, type PickerGroups } from "@/lib/pages";
+import { filterGroups, moveIndex, pickerOptions, repoKey, repoMeta, type PickerGroups } from "@/lib/pages";
 import { clean } from "@/lib/safeText";
 
 export interface RepoPickerProps {
   groups: PickerGroups;
   selected: RepoOption | null;
   onSelect: (repo: RepoOption) => void;
-  /** "Connect GitHub": goes to the GitHub App's install page (ROOK-031). */
+  /** "Connect GitHub" / "Add repositories": goes to the GitHub App's install page (ROOK-031). */
   onConnectGithub?: () => void;
   loading?: boolean;
-  /** Shown in the menu when the repos couldn't load. */
+  /** Shown in the popover when the repos couldn't load. */
   error?: string | null;
   onRetry?: () => void;
   defaultOpen?: boolean;
@@ -24,16 +28,21 @@ export interface RepoPickerProps {
 
 export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loading = false, error = null, onRetry, defaultOpen = false }: RepoPickerProps) {
   const [open, setOpen] = useState(defaultOpen);
-  const options = pickerOptions(groups);
-  const selectedIndex = selected === null ? -1 : options.findIndex((o) => repoKey(o) === repoKey(selected));
-  const [active, setActive] = useState(selectedIndex);
-  const listRef = useRef<HTMLDivElement>(null);
+  const [query, setQuery] = useState("");
+  const shown = filterGroups(groups, query);
+  const options = pickerOptions(shown);
+  const selectedKey = selected === null ? null : repoKey(selected);
+  const [active, setActive] = useState(-1);
+  const searchRef = useRef<HTMLInputElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const id = useId();
+  const listId = `${id}-list`;
+  // pickerGroups leaves both GitHub fields empty only for a guest.
+  const guest = groups.github === null && !groups.connectGithub;
 
   useEffect(() => {
-    if (open) listRef.current?.focus();
+    if (open) searchRef.current?.focus();
   }, [open]);
 
   useEffect(() => {
@@ -47,6 +56,7 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
 
   const close = () => {
     setOpen(false);
+    setQuery("");
     buttonRef.current?.focus();
   };
   const pick = (repo: RepoOption) => {
@@ -54,7 +64,9 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
     close();
   };
   const openMenu = () => {
-    setActive(selectedIndex >= 0 ? selectedIndex : options.length > 0 ? 0 : -1);
+    const all = pickerOptions(groups);
+    const at = selectedKey === null ? -1 : all.findIndex((o) => repoKey(o) === selectedKey);
+    setActive(at >= 0 ? at : all.length > 0 ? 0 : -1);
     setOpen(true);
   };
 
@@ -64,19 +76,18 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
       openMenu();
     }
   };
-  const onListKey = (e: KeyboardEvent<HTMLDivElement>) => {
+  const onSearchKey = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
       setActive((i) => moveIndex(i, e.key === "ArrowDown" ? 1 : -1, options.length));
-    } else if (e.key === "Home" || e.key === "End") {
-      e.preventDefault();
-      setActive(options.length === 0 ? -1 : e.key === "Home" ? 0 : options.length - 1);
-    } else if (e.key === "Enter" || e.key === " ") {
+    } else if (e.key === "Enter") {
       e.preventDefault();
       const repo = options[active];
       if (repo !== undefined) pick(repo);
-    } else if (e.key === "Escape" || e.key === "Tab") {
-      if (e.key === "Escape") e.preventDefault();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    } else if (e.key === "Tab") {
       close();
     }
   };
@@ -86,7 +97,7 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
   const item = (repo: RepoOption) => {
     index += 1;
     const i = index;
-    const isSelected = i === selectedIndex;
+    const isSelected = repoKey(repo) === selectedKey;
     return (
       <div
         key={repoKey(repo)}
@@ -97,22 +108,28 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => pick(repo)}
         onMouseEnter={() => setActive(i)}
-        className={`flex cursor-pointer items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-[13.5px] ${i === active ? "bg-hover" : ""}`}
+        className={`flex cursor-pointer items-center gap-2 rounded-lg px-2.5 py-1.5 text-[13.5px] ${i === active ? "bg-hover" : ""}`}
       >
-        <span className="flex items-center gap-1.5 overflow-hidden text-ellipsis whitespace-nowrap">
-          {isSelected && <span aria-hidden>✓</span>}
-          {clean(repo.name)}
+        <RepoIcon />
+        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap">{clean(repo.name)}</span>
+        <span className="flex-none text-[12px] text-faint">{repoMeta(repo)}</span>
+        <span aria-hidden className={`w-3 flex-none text-accent ${isSelected ? "" : "invisible"}`}>
+          ✓
         </span>
-        <span className="flex-none text-[12px] text-muted">{repoMeta(repo)}</span>
       </div>
     );
   };
 
-  const heading = (text: string) => (
-    <div role="presentation" className="px-2.5 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-[.08em] text-faint">
-      {text}
+  const group = (label: string, body: ReactNode) => (
+    <div role="group" aria-label={label} className="flex flex-col">
+      <div role="presentation" className="px-2.5 pb-1 pt-2 text-[11px] font-medium text-faint">
+        {label}
+      </div>
+      {body}
     </div>
   );
+  const note = (text: string) => <p className="px-2.5 py-1.5 text-[13px] text-muted">{text}</p>;
+  const footerButton = "w-full rounded-lg px-2.5 py-1.5 text-left text-[13.5px] hover:bg-hover disabled:cursor-not-allowed disabled:text-muted";
 
   return (
     <div ref={rootRef} className="relative">
@@ -121,59 +138,77 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-controls={`${id}-list`}
         onClick={() => (open ? close() : openMenu())}
         onKeyDown={onButtonKey}
-        className={`inline-flex items-center gap-1.5 rounded-lg border bg-app px-2.5 py-1 text-[13px] hover:bg-hover ${selected ? "border-accent" : "border-line"}`}
+        className="inline-flex max-w-[70vw] items-center gap-1.5 rounded-full border border-line bg-surface px-2.5 py-1 text-[12.5px] text-ink hover:bg-hover"
       >
-        <span aria-hidden>{selected ? "▢" : "+"}</span>
-        {selected ? clean(selected.name) : "Select repository…"}
-        <span aria-hidden className="text-faint">
-          ⌄
-        </span>
+        {selected !== null && <RepoIcon />}
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{selected !== null ? clean(selected.name) : "Select repository…"}</span>
+        <svg aria-hidden viewBox="0 0 16 16" className="size-3 flex-none text-faint" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="m4 6 4 4 4-4" />
+        </svg>
       </button>
       {open && (
         <div
-          ref={listRef}
-          id={`${id}-list`}
-          role="listbox"
-          tabIndex={-1}
-          aria-label="Repositories"
-          aria-activedescendant={active >= 0 ? optionId(active) : undefined}
-          onKeyDown={onListKey}
-          className="absolute bottom-full left-0 z-10 mb-1.5 flex max-h-[320px] w-[min(420px,85vw)] flex-col overflow-y-auto rounded-xl border border-line bg-surface p-1.5 shadow-lg outline-none"
+          data-repo-popover
+          className="absolute bottom-full left-0 z-10 mb-1.5 flex w-[min(400px,calc(100vw-32px))] flex-col overflow-hidden rounded-xl border border-line bg-surface shadow-lg"
         >
-          {groups.github !== null && (
-            <>
-              {heading("Your GitHub repositories")}
-              {groups.github.length === 0 ? <p className="px-2.5 py-1 text-[13px] text-muted">No repositories shared with Rook yet.</p> : groups.github.map(item)}
-            </>
-          )}
-          {groups.connectGithub && (
-            <>
-              {heading("Your GitHub repositories")}
-              <button type="button" onClick={onConnectGithub} disabled={!onConnectGithub} className="rounded-md px-2.5 py-1.5 text-left text-[13.5px] text-link hover:bg-hover disabled:text-muted">
-                Connect GitHub{!onConnectGithub && " (coming soon)"}
+          <div className="border-b border-line p-1.5">
+            <input
+              ref={searchRef}
+              type="text"
+              role="combobox"
+              aria-expanded
+              aria-controls={listId}
+              aria-autocomplete="list"
+              aria-activedescendant={active >= 0 && active < options.length ? optionId(active) : undefined}
+              aria-label="Search repositories"
+              placeholder="Search repositories"
+              value={query}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setActive(0);
+              }}
+              onKeyDown={onSearchKey}
+              className="w-full rounded-lg bg-transparent px-2 py-1.5 text-[13.5px] text-ink outline-none placeholder:text-faint"
+            />
+          </div>
+          <div id={listId} role="listbox" aria-label="Repositories" className="flex max-h-[280px] flex-col overflow-y-auto p-1.5">
+            {loading ? (
+              note("Loading…")
+            ) : error !== null ? (
+              <p role="alert" className="flex items-center gap-2 px-2.5 py-1.5 text-[13px] text-bad">
+                {clean(error)}
+                {onRetry && (
+                  <button type="button" onClick={onRetry} className="text-link underline">
+                    Retry
+                  </button>
+                )}
+              </p>
+            ) : (
+              <>
+                {shown.github !== null &&
+                  group(
+                    "Your repositories",
+                    shown.github.length > 0 ? shown.github.map(item) : note(query.trim() ? "No matches." : "No repositories shared with Rook yet."),
+                  )}
+                {shown.demo.length > 0 && group("Examples", shown.demo.map(item))}
+                {options.length === 0 && shown.github === null && note(query.trim() ? "No matches." : "No repositories on this server yet.")}
+              </>
+            )}
+          </div>
+          <div className="border-t border-line p-1.5" data-picker-footer>
+            {guest ? (
+              <Link href="/login" className={`${footerButton} block text-link`}>
+                Sign in to use your repositories
+              </Link>
+            ) : (
+              <button type="button" onClick={onConnectGithub} disabled={!onConnectGithub} className={`${footerButton} text-link`}>
+                {groups.connectGithub ? "Connect GitHub" : "Add repositories"}
+                {!onConnectGithub && " (coming soon)"}
               </button>
-            </>
-          )}
-          {heading("Demo repositories")}
-          {loading ? (
-            <p className="px-2.5 py-1 text-[13px] text-muted">Loading…</p>
-          ) : error !== null ? (
-            <p role="alert" className="flex items-center gap-2 px-2.5 py-1 text-[13px] text-bad">
-              {clean(error)}
-              {onRetry && (
-                <button type="button" onClick={onRetry} className="text-link underline">
-                  Retry
-                </button>
-              )}
-            </p>
-          ) : groups.demo.length === 0 ? (
-            <p className="px-2.5 py-1 text-[13px] text-muted">No demo repositories on this server.</p>
-          ) : (
-            groups.demo.map(item)
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>

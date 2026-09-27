@@ -57,7 +57,7 @@ export interface RunViewProps {
   banner?: ReactNode;
   header?: ReactNode;
   /** Sidebar props from the page (recents, account, active entry). */
-  shell?: Omit<Partial<AppShellProps>, "children" | "composer" | "banner" | "coins">;
+  shell?: Omit<Partial<AppShellProps>, "children" | "composer" | "banner">;
 }
 
 export function isLive(state: Pick<RunState, "status">): boolean {
@@ -99,7 +99,7 @@ export function RunView({ state, runId, api, guest = false, autoSeconds = GUEST_
 
   return (
     <RunActionsContext.Provider value={actions}>
-      <AppShell {...shell} banner={banner} coins={state.coins} composer={composer}>
+      <AppShell {...shell} banner={banner} composer={composer}>
         {header}
         <Transcript state={state} />
         {state.summary !== null && <OutcomeCard state={state} summary={state.summary} />}

@@ -75,17 +75,26 @@ export function runHref(id: string): string {
   return `/runs/${encodeURIComponent(id)}`;
 }
 
+/** Coins spent by the runs started today (UTC, so the server's day and the label agree). */
+export function coinsToday(runs: readonly Pick<RunSummary, "coins" | "created_at">[], now: number = Date.now()): number {
+  const today = new Date(now).toISOString().slice(0, 10);
+  return runs.reduce((sum, run) => (run.created_at.slice(0, 10) === today ? sum + run.coins : sum), 0);
+}
+
 /** The sidebar props every page passes to AppShell. */
 export function shellProps(
   session: Session,
   runs: { runs: readonly RunSummary[]; loading: boolean },
-): Pick<SidebarProps, "recents" | "userName" | "recentsLoading" | "signedIn" | "coins"> {
+  now: number = Date.now(),
+): Pick<SidebarProps, "recents" | "userName" | "email" | "recentsLoading" | "signedIn" | "githubConnected" | "coins"> {
   return {
     recents: recentsFrom(runs.runs),
     userName: displayName(session),
+    email: session.kind === "user" ? session.email : "",
     recentsLoading: runs.loading,
     signedIn: session.kind === "user",
-    coins: runs.runs.reduce((sum, run) => sum + run.coins, 0),
+    githubConnected: session.kind === "user" && session.githubConnected,
+    coins: coinsToday(runs.runs, now),
   };
 }
 
@@ -123,6 +132,27 @@ export function repoMeta(repo: Pick<RepoOption, "private" | "language">): string
   const parts = [repo.private ? "private" : "public"];
   if (repo.language) parts.push(short(repo.language, 30));
   return parts.join(" · ");
+}
+
+/** The picker's search: keeps the repos whose name or `owner/name` contains the query (case-insensitive). */
+export function filterGroups(groups: PickerGroups, query: string): PickerGroups {
+  const q = query.trim().toLowerCase();
+  if (q === "") return groups;
+  const hit = (r: RepoOption) => r.name.toLowerCase().includes(q) || r.ref.toLowerCase().includes(q);
+  return { ...groups, github: groups.github === null ? null : groups.github.filter(hit), demo: groups.demo.filter(hit) };
+}
+
+/** The composer's mode line: examples replay a recorded Bob session, a user's own repo runs Bob live. */
+export function bobModeLabel(repo: Pick<RepoOption, "kind"> | null): string {
+  return repo !== null && repo.kind === "demo" ? "IBM Bob · replay" : "IBM Bob · live";
+}
+
+/** The first name for the home greeting ("Aayush Kumar" → "Aayush", an email → its local part), cleaned. */
+export function firstName(session: Session): string {
+  if (session.kind === "guest") return "";
+  const raw = (session.name || session.email).trim();
+  const first = (raw.includes("@") && !raw.includes(" ") ? raw.split("@")[0] : raw.split(/\s+/)[0]) ?? "";
+  return short(first, 40);
 }
 
 /** Whether the picker may offer this repo to this session (a guest: demo only). */

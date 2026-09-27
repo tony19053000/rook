@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
-/* Visual tokens (04 §3.5; extra shades from docs/mockups/4-web-app.html). Dark is the default; light comes
+/* Visual tokens (04 §3.5): warm dark neutrals with a slightly darker sidebar. Dark is the default; light comes
    from prefers-color-scheme or [data-theme="light"], and [data-theme="dark"] forces dark. */
 :root {
   color-scheme: dark;
-  --page: #0b0b0b;
-  --app: #1a1a1a;
-  --side: #141414;
-  --surface: #222222;
-  --sunk: #1e1e1e;
-  --ink: #ececea;
-  --muted: #a8a8a3;
-  --faint: #74746f;
-  --line: #2e2e2e;
-  --hover: #2a2a2a;
+  --page: #1a1918;
+  --app: #262624;
+  --side: #1f1e1d;
+  --surface: #30302e;
+  --sunk: #1f1e1d;
+  --ink: #f0eee6;
+  --muted: #aeaba2;
+  --faint: #807e76;
+  --line: #3a3935;
+  --hover: #34332f;
   --accent: #e0563f;
   --accent-ink: #ffffff;
   --link: #8aa6ff;
@@ -28,16 +28,16 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
     color-scheme: light;
-    --page: #edefee;
-    --app: #f7f8f7;
-    --side: #eef0ef;
+    --page: #f0eee6;
+    --app: #faf9f5;
+    --side: #f3f1ea;
     --surface: #ffffff;
-    --sunk: #f0f2f1;
-    --ink: #1a1f1d;
-    --muted: #5e6864;
-    --faint: #8c9692;
-    --line: #dce1de;
-    --hover: #e4e8e6;
+    --sunk: #f0eee6;
+    --ink: #1f1e1d;
+    --muted: #5f5e59;
+    --faint: #8f8d85;
+    --line: #e3e0d6;
+    --hover: #ebe8df;
     --accent: #d9452f;
     --link: #2f5bd3;
     --good: #1c8a55;
@@ -51,16 +51,16 @@
 
 :root[data-theme="light"] {
   color-scheme: light;
-  --page: #edefee;
-  --app: #f7f8f7;
-  --side: #eef0ef;
+  --page: #f0eee6;
+  --app: #faf9f5;
+  --side: #f3f1ea;
   --surface: #ffffff;
-  --sunk: #f0f2f1;
-  --ink: #1a1f1d;
-  --muted: #5e6864;
-  --faint: #8c9692;
-  --line: #dce1de;
-  --hover: #e4e8e6;
+  --sunk: #f0eee6;
+  --ink: #1f1e1d;
+  --muted: #5f5e59;
+  --faint: #8f8d85;
+  --line: #e3e0d6;
+  --hover: #ebe8df;
   --accent: #d9452f;
   --link: #2f5bd3;
   --good: #1c8a55;
