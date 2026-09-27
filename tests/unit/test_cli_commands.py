@@ -255,11 +255,6 @@ def test_serve_starts_uvicorn_with_the_app_factory(monkeypatch: pytest.MonkeyPat
     assert runner.invoke(app, ["serve", "--port", "0"]).exit_code == 2
 
 
-def test_login_is_not_available_yet() -> None:
-    result = runner.invoke(app, ["login"])
-    assert result.exit_code == 1 and "not available" in result.output
-
-
 def test_logout_deletes_the_credentials(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     creds = tmp_path / "credentials.json"
     creds.write_text(json.dumps({"token": "x"}))

@@ -15,7 +15,7 @@ dependencies = [
     "textual",
     "rich",
     "pyyaml",
-    "pyjwt",
+    "pyjwt[crypto]",
 ]
 
 [project.scripts]

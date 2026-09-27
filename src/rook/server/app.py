@@ -25,8 +25,10 @@ from rook.server.db import ServerDb
 from rook.server.deps import ServerState
 from rook.server.github_link import GitHubLink, NoGitHub
 from rook.server.limits import BodySizeLimit, RateLimit
-from rook.server.routes import meta, runs
+from rook.server.logins import LoginFlows
+from rook.server.routes import auth, meta, runs
 from rook.server.runs import ReplayFactory, RunManager, SessionFactory, default_session_factory
+from rook.server.supabase import SupabaseOAuth, SupabaseVerifier
 from rook.store.repo import Store
 
 API_PREFIX = "/api/v1"
@@ -50,6 +52,7 @@ def create_app(
     session_factory: SessionFactory | None = None,
     replay_factory: ReplayFactory | None = None,
     allowlist: Allowlist | None = None,
+    oauth: SupabaseOAuth | None = None,
 ) -> FastAPI:
     settings = settings or ServerSettings.from_env()
     if allowlist is None:
@@ -58,11 +61,16 @@ def create_app(
     bus = EventBus(store)
     manager = RunManager(store, bus, session_factory or default_session_factory(settings, allowlist),
                          max_concurrent=settings.max_concurrent_runs, max_queued=settings.max_queued_runs)
+    if verifier is None and settings.supabase_url:
+        secret = settings.supabase_jwt_secret.get_secret_value() if settings.supabase_jwt_secret else None
+        verifier = SupabaseVerifier(settings.supabase_url, secret)
+    if oauth is None and settings.supabase_url and settings.supabase_anon_key and settings.public_url:
+        oauth = SupabaseOAuth(settings.supabase_url, settings.supabase_anon_key)
+    guest_secret = settings.guest_secret.get_secret_value()
     state = ServerState(
         settings=settings, store=store, db=ServerDb(settings.db_path), bus=bus, runs=manager,
-        verifier=verifier or RejectAllTokens(), cookies=GuestCookies(settings.guest_secret.get_secret_value(),
-                                                                     secure=settings.cookie_secure),
-        github=github or NoGitHub(), replay_factory=replay_factory)
+        verifier=verifier or RejectAllTokens(), cookies=GuestCookies(guest_secret, secure=settings.cookie_secure),
+        github=github or NoGitHub(), replay_factory=replay_factory, logins=LoginFlows(guest_secret), oauth=oauth)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -86,6 +94,7 @@ def create_app(
 
     app.include_router(meta.router, prefix=API_PREFIX)
     app.include_router(runs.router, prefix=API_PREFIX)
+    app.include_router(auth.router, prefix=API_PREFIX)
 
     # Starlette runs the last-added middleware first: CORS, then rate limits, then the body size limit.
     app.add_middleware(BodySizeLimit, max_bytes=settings.max_body_bytes)

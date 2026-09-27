@@ -139,7 +139,7 @@ class RookApp(App[None]):
         self.transcript.write(
             Text(f"  ✓ Signed in as {user} (Google)", style=GOOD)
             if user
-            else Text("  · Sign-in isn't available yet. Continuing offline.", style=DIM)
+            else Text("  · Not signed in (optional): run `rook login` any time. Continuing offline.", style=DIM)
         )
         self.transcript.write(Text("2/2 Connect GitHub", style="bold"))
         repos = None

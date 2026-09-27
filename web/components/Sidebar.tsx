@@ -6,6 +6,7 @@ import { AgentSprite } from "./AgentSprite";
 import { MASCOT } from "@/lib/agents";
 import { runHref } from "@/lib/pages";
 import { clean } from "@/lib/safeText";
+import { signOutAndReload } from "@/lib/session";
 
 export type RecentStatus = "running" | "ok" | "broken" | "idle";
 
@@ -111,11 +112,15 @@ export function Sidebar({ recents, coins, userName, active, currentRunId, recent
         <span aria-hidden className="grid size-6 place-items-center rounded-full bg-hover text-[11px] font-semibold">
           {name.slice(0, 1).toUpperCase()}
         </span>
-        <span>{name}</span>
+        <span className="min-w-0 truncate" title={name}>{name}</span>
         <span className="text-faint">
           · <span className="num">{coins.toFixed(2)}</span> coins
         </span>
-        {!signedIn && (
+        {signedIn ? (
+          <button type="button" onClick={() => void signOutAndReload()} className="ml-auto text-[12.5px] text-link underline-offset-2 hover:underline">
+            Sign out
+          </button>
+        ) : (
           <Link href="/login" className="ml-auto text-[12.5px] text-link underline-offset-2 hover:underline">
             Sign in
           </Link>

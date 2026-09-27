@@ -10,7 +10,7 @@ export interface CspOptions {
   nonce: string;
   /** `next dev` needs eval (React debugging) and a websocket (hot reload). */
   dev: boolean;
-  /** Extra origins the browser may call: NEXT_PUBLIC_API_URL in local dev, Supabase later (ROOK-030). */
+  /** Extra origins the browser may call: NEXT_PUBLIC_API_URL in local dev, and the Supabase origin (token exchange and refresh). */
   connect: (string | undefined)[];
 }
 

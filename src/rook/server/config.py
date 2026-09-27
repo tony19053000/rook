@@ -21,6 +21,8 @@ _ORIGIN = re.compile(r"https?://[A-Za-z0-9.-]+(:\d{1,5})?")
 _REPO = re.compile(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+")
 _SHA = re.compile(r"[0-9a-f]{40}")
 
+_LOCAL = re.compile(r"http://(127\.0\.0\.1|localhost)(:\d{1,5})?$")
+
 DEFAULT_ORIGINS = ("http://localhost:3000",)
 
 
@@ -79,6 +81,12 @@ class ServerSettings(BaseModel):
     max_concurrent_runs: int = Field(default=3, gt=0)
     max_queued_runs: int = Field(default=6, ge=0)
     daily_coin_cap: float | None = Field(default=None, ge=0)
+    # Supabase auth (03 §6). SUPABASE_URL alone turns on JWT verification (JWKS; plus HS256 with the secret);
+    # the CLI sign-in also needs the public API key and this server's public URL (for the OAuth callback).
+    supabase_url: str | None = None
+    supabase_jwt_secret: SecretStr | None = None
+    supabase_anon_key: str | None = None  # public (the web has it too), sent as `apikey` to Supabase
+    public_url: str | None = None  # e.g. https://203-0-113-7.sslip.io
     ping_seconds: float = Field(default=15.0, gt=0)
     flush_seconds: float = Field(default=0.25, gt=0)
 
@@ -89,6 +97,17 @@ class ServerSettings(BaseModel):
         for origin in v:
             if not _ORIGIN.fullmatch(origin):
                 raise ValueError(f"web origin must be scheme://host[:port] (never '*'), not {origin!r}")
+        return v
+
+    @field_validator("supabase_url", "public_url")
+    @classmethod
+    def _url(cls, v: str | None) -> str | None:
+        """An origin only (no path), https except for localhost; stored without a trailing slash."""
+        if v is None:
+            return None
+        v = v.strip().rstrip("/")
+        if not _ORIGIN.fullmatch(v) or not (v.startswith("https://") or _LOCAL.match(v)):
+            raise ValueError(f"must be an https origin like https://example.com, not {v!r}")
         return v
 
     @field_validator("guest_secret")
@@ -112,7 +131,7 @@ class ServerSettings(BaseModel):
     def from_env(cls, env: dict[str, str] | None = None) -> ServerSettings:
         """ROOK_WEB_ORIGINS (comma list), ROOK_DB_PATH, ROOK_WORKSPACES, ROOK_BOB_MODE, ROOK_DEMO_REPOS (a YAML
         file), ROOK_ALLOWLIST, ROOK_GUEST_SECRET (else a random key per process), ROOK_PROXY_SECRET, ROOK_TRUSTED_PROXY_HOPS,
-        ROOK_DAILY_COIN_CAP."""
+        ROOK_DAILY_COIN_CAP, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY, ROOK_PUBLIC_URL."""
         env = dict(os.environ) if env is None else env
         values: dict[str, object] = {}
         if origins := env.get("ROOK_WEB_ORIGINS"):
@@ -135,6 +154,14 @@ class ServerSettings(BaseModel):
             values["trusted_proxy_hops"] = int(hops)
         if cap := env.get("ROOK_DAILY_COIN_CAP"):
             values["daily_coin_cap"] = float(cap)
+        if supabase_url := env.get("SUPABASE_URL"):
+            values["supabase_url"] = supabase_url
+        if jwt_secret := env.get("SUPABASE_JWT_SECRET"):
+            values["supabase_jwt_secret"] = SecretStr(jwt_secret)
+        if anon_key := env.get("SUPABASE_ANON_KEY"):
+            values["supabase_anon_key"] = anon_key.strip()
+        if public_url := env.get("ROOK_PUBLIC_URL"):
+            values["public_url"] = public_url
         return cls.model_validate(values)
 
     def demo(self, ref: str) -> DemoRepo | None:

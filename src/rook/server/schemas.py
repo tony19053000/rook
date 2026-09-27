@@ -87,3 +87,26 @@ class ChatBody(_Request):
 
 class Ok(BaseModel):
     ok: bool
+
+
+class DeviceStart(BaseModel):
+    """`POST /auth/device/start`: the CLI shows `user_code` and `verification_url`, then polls every `interval` s."""
+
+    device_code: str
+    user_code: str
+    verification_url: str
+    expires_in: int
+    interval: int
+
+
+class DevicePollBody(_Request):
+    device_code: str = Field(min_length=20, max_length=100)
+
+
+class DevicePoll(BaseModel):
+    """`pending` until the browser sign-in finishes; `done` carries the tokens (once); `expired` otherwise."""
+
+    status: Literal["pending", "done", "expired"]
+    token: str | None = None
+    refresh_token: str | None = None
+    expires_at: int | None = None

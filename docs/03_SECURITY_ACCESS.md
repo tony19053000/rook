@@ -78,13 +78,14 @@ Rules:
 
 **Web**
 - Supabase Google OAuth. The web holds only the anon key.
-- The server verifies the Supabase JWT (HS256 with `SUPABASE_JWT_SECRET`, or JWKS), checking `exp` and `aud`.
+- The web uses the PKCE flow; its session lives in `localStorage` (key `rook-auth`), and sign-out is local to the browser.
+- The server verifies the Supabase JWT (HS256 with `SUPABASE_JWT_SECRET`, or ES256/RS256 with the project's JWKS fetched only from `SUPABASE_URL`, never from a URL in the token), checking `exp`, `aud`, `iss` and that the key type matches the `alg` (no `none`, no alg confusion). Details in 02 §11.
 - **Guest mode** ("Try the demo") uses a signed, httpOnly, SameSite=Lax cookie `rook_guest`. It's limited to demo repos only, 3 runs per day per guest, a global concurrency of 3, and the daily coin cap.
 
 **CLI**
-- **Localhost callback flow:** the CLI opens a one-shot listener on `127.0.0.1:<random>` and opens the browser at `/auth/cli/start?port&state`. A random `state` guards against CSRF. It accepts exactly one callback and then closes.
-- **Device-code fallback** for headless machines.
-- Tokens are stored in `~/.rook/credentials.json` with chmod 600. `rook logout` deletes the file and revokes the session.
+- **Localhost callback flow:** the CLI opens a one-shot listener on `127.0.0.1:<random>` and opens the browser at `/auth/cli/start?port&state`. A random `state` guards against CSRF. It accepts exactly one callback and then closes (a wrong `state` fails the login). The server keeps the PKCE verifier; the browser only carries a signed 10-minute `rook_login` cookie, and tokens are only ever redirected to `127.0.0.1`. The listener never logs request lines (they hold the token).
+- **Device-code fallback** (`rook login --device`) for headless machines. The verification page asks the user to check that the code matches their terminal before it starts Google sign-in (device-code phishing), and each code starts one sign-in.
+- Tokens are stored in `~/.rook/credentials.json` with chmod 600 (written to a 600 temp file, then renamed; the folder is 700). `rook logout` revokes the session (`POST /auth/logout`, best effort) and deletes the file. The hosted server is the default (`--server` / `ROOK_SERVER` to change it).
 
 **GitHub App**
 - Minimum permissions: **Contents: read & write**, **Pull requests: read & write**, **Metadata: read**. For CI comments: **Issues: write** (only if needed).

@@ -187,12 +187,32 @@ describe("run page (04 §3.2 /runs/[id])", () => {
 });
 
 describe("login and repositories", () => {
-  it("login: Google is a disabled stub, the demo works", () => {
+  it("login: without Supabase config Google is disabled, the demo works", () => {
     const out = html(<LoginView session={GUEST} runs={noRuns} />);
     expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Continue with Google<\/button>/);
-    expect(out).toContain("coming soon");
+    expect(out).toContain("not set up on this site");
     expect(out).toMatch(/<a (?=[^>]*href="\/")(?=[^>]*data-try-demo)[^>]*>/);
     expect(out).toContain("Try the demo without signing in");
+  });
+
+  it("login: with sign-in configured the Google button is live; busy and errors show", () => {
+    const signIn = { available: true, onSignIn: () => undefined };
+    const out = html(<LoginView session={GUEST} runs={noRuns} signIn={signIn} />);
+    expect(out).toMatch(/<button(?![^>]*disabled="")[^>]*>Continue with Google<\/button>/);
+    expect(out).not.toContain("not set up");
+    expect(out).toContain("data-try-demo");
+    const busy = html(<LoginView session={GUEST} runs={noRuns} signIn={{ ...signIn, busy: true, error: "<b>nope</b>" }} />);
+    expect(busy).toMatch(/<button[^>]*disabled=""[^>]*>Signing in…<\/button>/);
+    expect(busy).toContain('role="alert"');
+    expect(busy).toContain("&lt;b&gt;nope&lt;/b&gt;");
+  });
+
+  it("login: a signed-in user sees who they are and can sign out", () => {
+    const out = html(<LoginView session={USER_NO_GH} runs={noRuns} signIn={{ available: true, onSignOut: () => undefined }} />);
+    expect(out).toContain("You&#x27;re signed in");
+    expect(out).toContain("Aayush · a@example.com");
+    expect(out).toMatch(/<button[^>]*>Sign out<\/button>/);
+    expect(out).not.toContain("Continue with Google");
   });
 
   it("repositories: a guest sees the demo list only", () => {
@@ -209,7 +229,11 @@ describe("sidebar and composer", () => {
     for (const href of ["/", "/runs", "/counterexamples", "/rules", "/repositories", "/runs/r_9", "/login"]) expect(out).toContain(`href="${href}"`);
     expect(out).toContain("(passed)");
     expect(html(<Sidebar recents={[]} coins={0} userName="guest" recentsLoading />)).toContain('data-skeleton="recents"');
-    expect(html(<Sidebar recents={[]} coins={0} userName="Aayush" signedIn />)).not.toContain('href="/login"');
+    const user = html(<Sidebar recents={[]} coins={0} userName="Aayush" signedIn />);
+    expect(user).not.toContain('href="/login"');
+    expect(user).toMatch(/<button[^>]*>Sign out<\/button>/);
+    expect(user).toContain(">Aayush<");
+    expect(html(<Sidebar recents={[]} coins={0} userName="guest" />)).not.toContain("Sign out");
   });
 
   it("composer: the toggle only with a handler, the picker slot replaces the label", () => {

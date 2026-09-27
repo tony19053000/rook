@@ -29,8 +29,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DEPLOY = ROOT / "deploy"
 AWS = DEPLOY / "aws"
 SCRIPTS = sorted([*AWS.glob("*.sh"), *AWS.glob("scripts/*.sh"), *DEPLOY.glob("*.sh"), DEPLOY / "demos/build-demos.sh"])
-SECRET_NAMES = ("BOB_API_KEY", "ROOK_GUEST_SECRET", "ROOK_PROXY_SECRET", "SUPABASE_JWT_SECRET", "SUPABASE_URL", "GITHUB_APP_ID",
-                "GITHUB_APP_PRIVATE_KEY", "GITHUB_WEBHOOK_SECRET")
+SECRET_NAMES = ("BOB_API_KEY", "ROOK_GUEST_SECRET", "ROOK_PROXY_SECRET", "SUPABASE_JWT_SECRET", "SUPABASE_URL",
+                "SUPABASE_ANON_KEY", "GITHUB_APP_ID", "GITHUB_APP_PRIVATE_KEY", "GITHUB_WEBHOOK_SECRET")
 # Built at runtime so no PEM marker sits in the repo.
 DASH = "-" * 5
 PEM = f"{DASH}BEGIN TEST KEY{DASH}\nQUJDREVG+/0123\nR0hJSktM==\n{DASH}END TEST KEY{DASH}\n"
@@ -148,6 +148,7 @@ def test_rook_settings_and_secret_source() -> None:
     rook = compose()["services"]["rook"]
     env = rook["environment"]
     assert env["ROOK_TRUSTED_PROXY_HOPS"] == "2"
+    assert env["ROOK_PUBLIC_URL"].startswith("https://${ROOK_HOST:?")  # the `rook login` OAuth callback
     assert env["ROOK_BOB_MODE"] == "${ROOK_BOB_MODE:-replay}"
     assert env["ROOK_DB_PATH"].startswith("/data/") and "rook-data:/data" in rook["volumes"]
     assert "ROOK_DAILY_COIN_CAP" in env and "ROOK_WEB_ORIGINS" in env

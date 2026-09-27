@@ -1,8 +1,9 @@
-"""First-run auth seam. ROOK-030 replaces `StubAuth` with the real Google + GitHub flow."""
+"""First-run auth seam: `SavedAuth` reads the credentials `rook login` saved (ROOK-030); GitHub is ROOK-031."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 
 
@@ -48,3 +49,14 @@ class StubAuth:
 
     async def connect_github(self) -> int | None:
         return None
+
+
+class SavedAuth(StubAuth):
+    """Signed in when `rook login` saved credentials. The shell never opens a browser by itself: signing in
+    is optional (everything runs locally without it), so the first run points at `rook login` instead."""
+
+    def __init__(self, credentials: Path) -> None:
+        from rook.cli.login import load_credentials
+
+        creds = load_credentials(credentials)
+        super().__init__(AuthState(user=(creds.email or "you") if creds else None))

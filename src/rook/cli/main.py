@@ -39,9 +39,10 @@ def _version_callback(value: bool) -> None:
 def launch_tui(backend: Any) -> None:
     """Open the shell with `backend`, and stop its run (and sandboxes) when the shell quits."""
     from rook.cli.tui.app import run_tui
+    from rook.cli.tui.auth import SavedAuth
 
     try:
-        run_tui(backend=backend)
+        run_tui(backend=backend, auth=SavedAuth(CREDENTIALS))
     finally:
         backend.close()
 
@@ -191,16 +192,47 @@ def serve(
 
 
 @app.command()
-def login() -> None:
-    """Sign in with Google and connect GitHub."""
-    _fail("sign-in is not available in this build yet; Rook runs locally without it.", 1)
+def login(
+    device: Annotated[bool, typer.Option("--device", help="No browser here: sign in on another device with a code.")] = False,
+    server: Annotated[str | None, typer.Option("--server", help="The Rook server (default: ROOK_SERVER or the hosted one).")] = None,
+) -> None:
+    """Sign in with Google (saved to ~/.rook/credentials.json, readable only by you)."""
+    import httpx
+
+    from rook.cli import login as auth
+
+    try:
+        base = auth.server_url(server)
+        with auth.http_client() as client:
+            tokens = (auth.login_with_device_code(base, client, typer.echo) if device
+                      else auth.login_in_browser(base, typer.echo))
+            email = auth.fetch_email(base, client, tokens.access_token)
+    except auth.LoginError as exc:
+        _fail(str(exc), 1)
+    except httpx.HTTPError as exc:
+        _fail(f"could not reach the server ({type(exc).__name__})", 1)
+    auth.save_credentials(CREDENTIALS, auth.Credentials(server=base, email=email, access_token=tokens.access_token,
+                                                        refresh_token=tokens.refresh_token,
+                                                        expires_at=tokens.expires_at))
+    typer.echo(f"Signed in as {email or 'your Google account'}.")
 
 
 @app.command()
 def logout() -> None:
-    """Sign out: delete the saved credentials on this machine."""
-    if CREDENTIALS.is_file() or CREDENTIALS.is_symlink():
-        CREDENTIALS.unlink()
-        typer.echo("Signed out: removed the saved credentials.")
-    else:
+    """Sign out: revoke the session on the server and delete the saved credentials on this machine."""
+    from rook.cli import login as auth
+
+    if not (CREDENTIALS.is_file() or CREDENTIALS.is_symlink()):
         typer.echo("You were not signed in.")
+        return
+    creds = auth.load_credentials(CREDENTIALS)
+    revoked = False
+    if creds is not None:
+        try:
+            with auth.http_client() as client:
+                revoked = auth.revoke(auth.server_url(creds.server), client, creds.access_token)
+        except auth.LoginError:
+            revoked = False
+    CREDENTIALS.unlink()
+    typer.echo("Signed out: removed the saved credentials." if revoked
+               else "Signed out: removed the saved credentials (the server session could not be revoked; it expires on its own).")

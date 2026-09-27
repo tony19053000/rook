@@ -8,7 +8,7 @@ import { RunsList } from "./RunsList";
 import type { RepoOption, RunSummary } from "@/lib/api";
 import { errorView, pickerGroups, repoKey, repoMeta, shellProps } from "@/lib/pages";
 import { clean } from "@/lib/safeText";
-import { SIGN_IN_AVAILABLE, type Session } from "@/lib/session";
+import { displayName, SIGN_IN_AVAILABLE, type Session } from "@/lib/session";
 
 type RunsData = { runs: RunSummary[]; loading: boolean; error: unknown; refresh?: () => void };
 
@@ -21,29 +21,65 @@ function Title({ children, sub }: { children: string; sub?: string }) {
   );
 }
 
-export function LoginView({ session, runs }: { session: Session; runs: RunsData }) {
+export interface SignInControls {
+  /** Google sign-in is configured (the Supabase URL and public key were set at build time). */
+  available: boolean;
+  /** Waiting for the redirect to Google, or finishing the sign-in after it. */
+  busy?: boolean;
+  error?: string | null;
+  onSignIn?: () => void;
+  onSignOut?: () => void;
+}
+
+export function LoginView({ session, runs, signIn = { available: SIGN_IN_AVAILABLE } }: { session: Session; runs: RunsData; signIn?: SignInControls }) {
+  const { available, busy = false, error = null, onSignIn, onSignOut } = signIn;
   return (
     <AppShell {...shellProps(session, runs)} active="login">
       <div className="mx-auto flex w-full max-w-[380px] flex-col items-center gap-3 pt-16 text-center">
         <span aria-hidden className="size-8 rounded-full bg-accent" />
-        <h1 className="font-serif text-[28px] font-normal tracking-tight">Sign in to Rook</h1>
-        <p className="text-muted">Sign in to keep your runs across devices and connect GitHub.</p>
-        <button
-          type="button"
-          disabled={!SIGN_IN_AVAILABLE}
-          aria-describedby="signin-note"
-          className="w-full rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Continue with Google
-        </button>
-        {!SIGN_IN_AVAILABLE && (
-          <p id="signin-note" className="text-[12.5px] text-muted">
-            Google sign-in is coming soon. You can use everything below as a guest.
-          </p>
+        {session.kind === "user" ? (
+          <>
+            <h1 className="font-serif text-[28px] font-normal tracking-tight">You&apos;re signed in</h1>
+            <p className="text-muted" data-signed-in>
+              {clean(displayName(session))}
+              {session.email && session.email !== session.name ? ` · ${clean(session.email)}` : ""}
+            </p>
+            <Link href="/" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">
+              Go to Rook
+            </Link>
+            <button type="button" onClick={onSignOut} className="w-full rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:bg-hover">
+              Sign out
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 className="font-serif text-[28px] font-normal tracking-tight">Sign in to Rook</h1>
+            <p className="text-muted">Sign in to keep your runs across devices and connect GitHub.</p>
+            <button
+              type="button"
+              disabled={!available || busy || !onSignIn}
+              onClick={onSignIn}
+              aria-describedby="signin-note"
+              aria-busy={busy || undefined}
+              className="w-full rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:bg-hover disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {busy ? "Signing in…" : "Continue with Google"}
+            </button>
+            {error && (
+              <p role="alert" className="text-[12.5px] text-bad">
+                {clean(error)}
+              </p>
+            )}
+            {!available && (
+              <p id="signin-note" className="text-[12.5px] text-muted">
+                Google sign-in is not set up on this site. You can use everything below as a guest.
+              </p>
+            )}
+            <Link href="/" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink" data-try-demo>
+              Try the demo without signing in
+            </Link>
+          </>
         )}
-        <Link href="/" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink" data-try-demo>
-          Try the demo without signing in
-        </Link>
         <p className="text-[12.5px] text-muted">
           Guests can run the demo repositories a few times a day. To run on your own repos, install the CLI:{" "}
           <code className="font-mono">uv tool install rook-cli</code>

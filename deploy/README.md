@@ -35,7 +35,10 @@ deploy/aws/deploy.sh
 # 4. secrets (each one prompts with hidden input and restarts rook)
 deploy/aws/scripts/set-secret.sh ROOK_GUEST_SECRET   # optional: deploy.sh already made one on the host
 deploy/aws/scripts/set-secret.sh BOB_API_KEY         # only needed for live mode
-#    later (ROOK-030/031): SUPABASE_URL, SUPABASE_JWT_SECRET, GITHUB_APP_ID, GITHUB_WEBHOOK_SECRET and
+#    sign-in (ROOK-030): SUPABASE_URL (https://<ref>.supabase.co), SUPABASE_JWT_SECRET (legacy HS256 secret;
+#    tokens signed with the project's ES256/RS256 keys are checked against its public JWKS), SUPABASE_ANON_KEY
+#    (the public sb_publishable_... key, used by `rook login`'s code exchange)
+#    later (ROOK-031): GITHUB_APP_ID, GITHUB_WEBHOOK_SECRET and
 deploy/aws/scripts/set-secret.sh GITHUB_APP_PRIVATE_KEY < path/to/app.pem
 
 # 5. verify: a guest replay demo run through Caddy (0 Bobcoins); it must end `done` with a reviewed diagnosis

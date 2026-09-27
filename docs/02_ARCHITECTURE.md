@@ -392,8 +392,10 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 | POST | `/runs/{id}/cancel` | owner | → `{ok}` |
 | POST | `/counterexamples/{id}/replay` | owner | → `{run_id}` |
 | GET | `/auth/cli/start?port=P&state=S` | none | redirects to Supabase Google OAuth |
-| GET | `/auth/cli/callback` | none | redirects to `http://127.0.0.1:P/cb?token=…&state=S` |
+| GET | `/auth/cli/callback` | none | redirects to `http://127.0.0.1:P/cb?token=…&refresh_token=…&expires_at=…&state=S` (or `?error=sign_in_failed&state=S`); for a device sign-in, an HTML "signed in" page |
 | POST | `/auth/device/start` · `/auth/device/poll` | none | device-code flow |
+| GET | `/auth/device/verify?code=C[&confirm=1]` | none | the device-code page: a confirmation page, then (`confirm=1`) Google OAuth |
+| POST | `/auth/logout` | user | revokes the caller's Supabase session → `{ok}` |
 | GET | `/github/install-url` | user | → `{url}` |
 | GET | `/github/callback` | user | stores the `installation_id` |
 | POST | `/github/token` | user | → a short-lived installation token for the CLI (scoped to the user's installation) |
@@ -433,6 +435,22 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 - **Errors** are `{detail: str}` and never echo the request: 400 invalid input, 401 bad or missing auth, 403 not
   allowed (guest or non-demo repo), 404 missing run **or not the owner**, 413 body over 64 KB, 429 rate limit /
   guest quota / queue full / daily coin cap (with `Retry-After`), 501 not available yet.
+- **Sign-in (ROOK-030, `server/supabase.py`, `server/logins.py`, `routes/auth.py`).** A bearer token is a Supabase
+  access token. `SUPABASE_URL` turns verification on: `alg` HS256 is checked with `SUPABASE_JWT_SECRET` (refused
+  when it is unset), ES256 / RS256 with the key of that `kid` from `<SUPABASE_URL>/auth/v1/.well-known/jwks.json`
+  (cached 10 min; an unknown `kid` refetches at most every 30 s; the key type must match the `alg`); any other
+  `alg` (and `none`) is refused, and `jku`/`x5u`/`jwk` headers are ignored. Required claims: `exp` (10 s leeway),
+  `sub`, `aud = "authenticated"`, `iss = <SUPABASE_URL>/auth/v1`. The user id is `sub`; `/me` returns its `email`.
+  The CLI routes also need `SUPABASE_ANON_KEY` (the public key, sent as `apikey`) and `ROOK_PUBLIC_URL`, else they
+  answer 501. Both flows use Supabase OAuth with **PKCE**: the server keeps the code verifier and sets a signed,
+  httpOnly `rook_login` cookie (path `/api/v1/auth`, 10 min) that points at the pending flow, and `redirect_to` is
+  exactly `<ROOK_PUBLIC_URL>/api/v1/auth/cli/callback` (it must be in the Supabase redirect allowlist). The
+  callback consumes the flow once and exchanges the code (`POST <SUPABASE_URL>/auth/v1/token?grant_type=pkce`).
+  `start`: `port` 1024-65535, `state` 16-128 chars of `[A-Za-z0-9_-]`. `POST /auth/device/start` →
+  `{device_code, user_code: "ABCD-EFGH", verification_url, expires_in: 600, interval: 5}`; `POST /auth/device/poll`
+  `{device_code}` → `{status: pending}` | `{status: done, token, refresh_token, expires_at}` (once) |
+  `{status: expired}`. A user code starts one sign-in. At most 1000 flows and 1000 device codes are pending
+  (in memory, one process; 429 beyond).
 - **Web access** goes through a same-origin Vercel rewrite (`/api/v1/*` → the EC2 server), so the guest cookie is
   first-party. The web middleware adds the `X-Rook-Proxy-Secret` header (`ROOK_PROXY_SECRET`) to these requests, so
   the server can trust the client IP Vercel forwards (03 §8). CORS still allows only the configured web origins (never `*`), with credentials and the
@@ -456,6 +474,7 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 
 - Next.js App Router with these pages: `/` (home and composer), `/runs/[id]` (the chat column with cards), `/login`.
 - `lib/events.ts` holds TS types that mirror section 9, and `lib/sse.ts` handles reconnecting to the SSE stream with `after`.
+- `lib/session.ts`: Google sign-in with `@supabase/auth-js` (PKCE, `detectSessionInUrl: false`, storage key `rook-auth`, only the `apikey` header: the `sb_publishable_…` key is never a bearer). `/login` starts `signInWithOAuth` with `redirectTo = <origin>/login` and, back from Google, exchanges `?code=` once and goes to `/`. `getToken()` returns the (auto-refreshed) access token for `Authorization: Bearer`, or null for a guest. `useSession` is the guest until Supabase reports a user, then checks `GET /me` (a 401 signs the browser out). Sign-out is local to the browser (`scope: local`). Without `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` at build time the site is guest-only.
 - `lib/runStore.ts` is a reducer from events to UI state, the **same logic** as the TUI.
 - Components: `AgentSprite` (a canvas that ports the sprite shapes), `AgentRow`, `EngineRow`, `QuestionCard`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, `Sidebar`, `Composer`, `RepoPicker`.
 - **`middleware.ts`** (03 §8): on `/api/*` it replaces any client-sent `X-Rook-Proxy-Secret` with `ROOK_PROXY_SECRET` (a server-only env var; unset = no header) before the rewrite; on pages it sets a per-request nonce Content-Security-Policy (`lib/security.ts`), which Next.js puts on its scripts. So every page renders per request (`dynamic = "force-dynamic"` in the root layout). Static security headers come from `next.config.ts` `headers()`. `e2e/console.mjs <origin> [--run]` loads the pages in headless Chrome and fails on any console error, CSP violation or failed request.
@@ -467,8 +486,8 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 |---|---|---|
 | Web | Vercel project `rook`, <https://rook-weld-six.vercel.app> (Git-connected: every push to `main` redeploys) | env: `ROOK_API_PROXY_TARGET` = the server origin, e.g. `https://203-0-113-7.sslip.io` (public; build-time: it sets the `/api/v1/*` rewrite, so set it before the build and redeploy after changing it; origin only, no path), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public), and **`ROOK_PROXY_SECRET`** (a secret: mark it Sensitive, never `NEXT_PUBLIC_`; read at runtime by the middleware only; the same value as on the server, at least 32 chars, e.g. `openssl rand -hex 32`). `NEXT_PUBLIC_API_URL` stays **unset** on Vercel so the browser uses same-origin `/api/v1` through the rewrite. The server's `ROOK_WEB_ORIGINS` should list the Vercel origin (CORS for direct calls). Check the secret end to end with `curl https://<web>/api/v1/health` → `"proxied": true` |
 | Server | AWS EC2 (`us-west-2`, one `t3.small`, Ubuntu 24.04, 30 GB gp3, IMDSv2, Elastic IP), `deploy/docker-compose.yml` | Two containers. **caddy** (`caddy:2.11.4-alpine`, ports 80/443) gets a Let's Encrypt certificate for `ROOK_HOST` = `<ip-dashes>.sslip.io` and proxies only `/api/v1/*` (SSE unbuffered, `flush_interval -1`). **rook** (`deploy/Dockerfile`: Python 3.12 + uv, Node 22, Go, optional Bob Shell 2.0.5 on Node 24, non-root user `rook`, tini, `uvicorn rook.server.app:app --port 8000`) is not published: only Caddy reaches it. The database and workspaces live on the `rook-data` volume (`ROOK_DB_PATH=/data/rook.db`, `ROOK_WORKSPACES=/data/workspaces`). `ROOK_BOB_MODE` defaults to `replay` |
-| Server config | `deploy/.env` on the host (non-secret, written by `deploy/aws/deploy.sh`) | `ROOK_HOST`, `ROOK_WEB_ORIGINS`, `ROOK_BOB_MODE`, `ROOK_DAILY_COIN_CAP` (default 2). Fixed in the compose file: `ROOK_TRUSTED_PROXY_HOPS=2` (browser → Vercel → Caddy → rook: Vercel overwrites `X-Forwarded-For` with the client IP and Caddy, which trusts every peer because Vercel has no fixed egress IPs, appends Vercel's IP, so the client is the 2nd entry from the right). In the image: `ROOK_ALLOWLIST=/opt/rook/config/allowlist.yaml`, `ROOK_DEMO_REPOS=/opt/rook/config/demos.yaml` (from `deploy/demos/`) |
-| Server secrets | `/etc/rook/rook.env` on the host only (root, `600`), compose `env_file` | Set one at a time with `deploy/aws/scripts/set-secret.sh NAME` (value over ssh stdin; allowlist: `BOB_API_KEY`, `ROOK_GUEST_SECRET`, `ROOK_PROXY_SECRET`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`). Never in the image, the repo, user-data or argv. `deploy.sh` generates `ROOK_GUEST_SECRET` on the host when it is missing. The server process sees `GITHUB_APP_PRIVATE_KEY` as the PEM with **real newlines** (it is stored `\n`-escaped in double quotes, which compose expands) |
+| Server config | `deploy/.env` on the host (non-secret, written by `deploy/aws/deploy.sh`) | `ROOK_HOST`, `ROOK_WEB_ORIGINS`, `ROOK_BOB_MODE`, `ROOK_DAILY_COIN_CAP` (default 2). Fixed in the compose file: `ROOK_PUBLIC_URL=https://${ROOK_HOST}` (the `rook login` OAuth callback); `ROOK_TRUSTED_PROXY_HOPS=2` (browser → Vercel → Caddy → rook: Vercel overwrites `X-Forwarded-For` with the client IP and Caddy, which trusts every peer because Vercel has no fixed egress IPs, appends Vercel's IP, so the client is the 2nd entry from the right). In the image: `ROOK_ALLOWLIST=/opt/rook/config/allowlist.yaml`, `ROOK_DEMO_REPOS=/opt/rook/config/demos.yaml` (from `deploy/demos/`) |
+| Server secrets | `/etc/rook/rook.env` on the host only (root, `600`), compose `env_file` | Set one at a time with `deploy/aws/scripts/set-secret.sh NAME` (value over ssh stdin; allowlist: `BOB_API_KEY`, `ROOK_GUEST_SECRET`, `ROOK_PROXY_SECRET`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `SUPABASE_ANON_KEY` (public, but kept with the Supabase settings), `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`). Never in the image, the repo, user-data or argv. `deploy.sh` generates `ROOK_GUEST_SECRET` on the host when it is missing. The server process sees `GITHUB_APP_PRIVATE_KEY` as the PEM with **real newlines** (it is stored `\n`-escaped in double quotes, which compose expands) |
 | Demo apps | `deploy/demos/` baked into the image | `repos.txt` lists the demo repos (`owner/name`, pinned 40-char SHA, https URL, build recipe `none/npm/go/uv`), cloned and pre-built by `build-demos.sh` into `/opt/rook/demos/<name>`; each needs matching entries in `allowlist.yaml` and `demos.yaml`. Interim demo until ROOK-039: `rook-demo/minishop` (the `tests/fixtures/minishop` app, pseudo-SHA `sha1("rook-demo-minishop")`) with its Bob recordings in `/home/rook/.rook/recordings` for replay |
 | Bob Shell | `deploy/vendor/bobshell-2.0.5.tgz` (gitignored, packed by `deploy/pack-bob.sh`) | Never committed (licence unknown). Without it the image builds replay-only and `start.sh` refuses `live`/`record` mode; `live` also needs `BOB_API_KEY` |
 | Uptime | none needed | EC2 does not sleep, so there is no keep-alive job. Optional: any external uptime monitor on `https://<host>/api/v1/health` (rate-limit exempt) |

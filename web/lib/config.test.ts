@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { apiBase, apiRewrites, devPagesEnabled, proxyTarget } from "./config";
-import { currentSession, getToken, isGuest, SIGN_IN_AVAILABLE } from "./session";
 
 describe("API base (02 §13)", () => {
   it("defaults to same-origin", () => {
@@ -46,13 +45,5 @@ describe("dev pages", () => {
     expect(devPagesEnabled("test")).toBe(true);
     expect(devPagesEnabled("production")).toBe(false);
     expect(devPagesEnabled(undefined)).toBe(false);
-  });
-});
-
-describe("session stub until ROOK-030", () => {
-  it("everyone is a guest with no bearer token", () => {
-    expect(isGuest(currentSession())).toBe(true);
-    expect(getToken()).toBeNull();
-    expect(SIGN_IN_AVAILABLE).toBe(false);
   });
 });

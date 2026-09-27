@@ -13,7 +13,9 @@ from rook.server.auth import Caller, GuestCookies, TokenVerifier, resolve_caller
 from rook.server.config import ServerSettings
 from rook.server.db import ServerDb
 from rook.server.github_link import GitHubLink
+from rook.server.logins import LoginFlows
 from rook.server.runs import ReplayFactory, RunManager
+from rook.server.supabase import SupabaseOAuth
 from rook.store.repo import Store
 
 _RUN_ID = re.compile(r"r_[a-z2-7]{12}")
@@ -31,6 +33,8 @@ class ServerState:
     cookies: GuestCookies
     github: GitHubLink
     replay_factory: ReplayFactory | None
+    logins: LoginFlows
+    oauth: SupabaseOAuth | None  # None: the CLI sign-in routes answer 501
 
 
 def get_state(request: Request) -> ServerState:

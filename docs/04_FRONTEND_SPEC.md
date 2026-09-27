@@ -154,7 +154,7 @@ Exit codes: `0` every approved rule held, `1` an approved rule is broken, `2` th
 |---|---|
 | `/` | Home: greeting + composer. Choosing a repo and sending creates a run → `/runs/[id]` |
 | `/runs/[id]` | The live run: chat column rendered from the SSE events, with the composer active for chat |
-| `/login` | "Continue with Google", "Try the demo without signing in" |
+| `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook", "Sign out". The sidebar account line shows the user's name with "Sign out" (a guest: "Sign in") |
 | `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority) |
 
 ### 3.3 Repo picker
