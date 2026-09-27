@@ -10,7 +10,7 @@ proxies `/api/v1/*` to it. Design and settings: `docs/02_ARCHITECTURE.md` §14; 
 | `docker-compose.yml`, `Caddyfile` | rook + Caddy |
 | `demos/` | the sandbox allowlist, the demo catalog, and the pinned demo repos (`repos.txt`, `build-demos.sh`) |
 | `pack-bob.sh`, `vendor/` | the optional Bob Shell for live mode (gitignored, never committed) |
-| `smoke.py` | checks a running server like a guest would (health, repos, one replay demo run) |
+| `smoke.py` | checks a running server like a guest would (health, repos, one replay demo run that must end `done` with a reviewed diagnosis; the fix is printed, not required) |
 | `aws/` | `create.sh`, `deploy.sh`, `destroy.sh`, `ssh.sh`, `scripts/set-secret.sh` (+ `remote/set_env.py`, `user-data.sh`) |
 
 All AWS calls use `uvx --from awscli aws --profile rook --region us-west-2`.
@@ -38,7 +38,7 @@ deploy/aws/scripts/set-secret.sh BOB_API_KEY         # only needed for live mode
 #    later (ROOK-030/031): SUPABASE_URL, SUPABASE_JWT_SECRET, GITHUB_APP_ID, GITHUB_WEBHOOK_SECRET and
 deploy/aws/scripts/set-secret.sh GITHUB_APP_PRIVATE_KEY < path/to/app.pem
 
-# 5. verify: a guest replay demo run through Caddy (0 Bobcoins)
+# 5. verify: a guest replay demo run through Caddy (0 Bobcoins); it must end `done` with a reviewed diagnosis
 uv run python deploy/smoke.py https://<ip-dashes>.sslip.io
 
 # live Bob (after steps 1 and BOB_API_KEY): redeploy in live mode, with the daily coin cap

@@ -16,11 +16,13 @@
 //     then checks the run is listed by GET /runs with the same status.
 // Child processes are killed and the temp dir removed on success, failure or Ctrl-C.
 //
-// Expected outcome: the run goes PREPARE -> ... -> SAVE on real replayed Bob output and the real engine (it finds
-// and saves the refund counterexample), then ends `failed` at DIAGNOSE. The Detective's prompt holds the demo
-// app's sandbox logs (ports, timings), which differ from the recording's in-process run, so its recording
-// misses; that is a replay limit, not a web bug. The smoke test checks the web path (pages, proxy, SSE,
-// answers, recents), so any terminal status is accepted as long as GET /runs agrees with run.finished.
+// Expected outcome: the run goes PREPARE -> ... -> SAVE -> DIAGNOSE on real replayed Bob output and the real
+// engine (it finds, saves and diagnoses the refund counterexample; the Diagnosis Reviewer approves) and ends
+// `done`. The Detective's evidence is stable across machines (ids as aliases, no request log lines), so its
+// recording replays on the real uvicorn subprocess too. Required: run.finished `done`, a reviewed diagnosis,
+// 0 coins, and GET /runs agreeing with run.finished. The fix is reported, not required: on the hosted
+// ProcessSandbox the app runs from the allowlisted app dir, not the patched workspace, so a verified fix is
+// not reachable there yet (docs/04_FRONTEND_SPEC.md §3.8).
 //
 // Env: ROOK_E2E_API_PORT (default 8765), ROOK_E2E_PYTHON (default ../.venv/bin/python, i.e. after `uv sync`),
 // ROOK_E2E_TIMEOUT_S (default 300), ROOK_E2E_SKIP_BUILD=1, ROOK_E2E_KEEP=1 (after the checks, keep both servers
@@ -41,7 +43,6 @@ const RECORDINGS = ["understand", "rules", "design", "diagnose", "surgeon", "ses
 const DEMO_REF = "rook-demo/minishop";
 const DEMO_COMMIT = createHash("sha1").update("rook-e2e-minishop").digest("hex");
 const REQUEST = "find and fix a bug";
-const TERMINAL = new Set(["done", "failed", "cancelled"]);
 
 const API_PORT = Number(process.env.ROOK_E2E_API_PORT ?? 8765);
 const PYTHON = process.env.ROOK_E2E_PYTHON ?? join(ROOT, ".venv", "bin", "python");
@@ -237,6 +238,7 @@ async function streamRun(call, runId) {
     "GET /api/v1/runs/<id>/events streams text/event-stream through the proxy");
   const decoder = new TextDecoder();
   const types = new Map();
+  const seen = { diagnosis: null, verify: null };
   const reader = res.body.getReader();
   let buffer = "";
   for (;;) {
@@ -252,6 +254,8 @@ async function streamRun(call, runId) {
       const event = JSON.parse(data);
       types.set(event.type, (types.get(event.type) ?? 0) + 1);
       if (event.type === "run.phase") log(`phase ${event.data.phase}`);
+      if (event.type === "diagnosis.ready") seen.diagnosis = event.data;
+      if (event.type === "verify.done") seen.verify = event.data;
       if (event.type === "agent.finished" && !event.data.ok) log(`agent ${event.data.agent} failed: ${event.data.summary}`);
       if (event.type === "question.asked") {
         const answer = answerFor(event.data);
@@ -268,7 +272,7 @@ async function streamRun(call, runId) {
       }
       if (event.type === "run.finished") {
         await reader.cancel();
-        return { finished: event.data, types };
+        return { finished: event.data, types, seen };
       }
     }
   }
@@ -322,10 +326,13 @@ async function main() {
   );
   check(typeof created.run_id === "string" && created.run_id !== "", `POST /api/v1/runs -> ${created.run_id}`);
 
-  const { finished, types } = await streamRun(call, created.run_id);
-  check(TERMINAL.has(finished.status), `run.finished with status "${finished.status}": ${finished.summary}`);
+  const { finished, types, seen } = await streamRun(call, created.run_id);
   log(`events: ${[...types].map(([t, n]) => `${t}×${n}`).join(", ")}`);
+  check(finished.status === "done", `run.finished with status "done": ${finished.summary}`);
   check(types.has("counterexample.saved"), "the engine found, shrank and saved a counterexample (streamed)");
+  check(seen.diagnosis !== null && seen.diagnosis.reviewed === true && seen.diagnosis.file !== "",
+    `DIAGNOSE replayed: ${seen.diagnosis?.file}:${seen.diagnosis?.line}, approved by the Diagnosis Reviewer`);
+  log(`fix: ${seen.verify === null ? "not verified (no verify.done)" : `verify.done verified=${seen.verify.verified}`}`);
   const detail = await json(await call(`/api/v1/runs/${created.run_id}`), "GET /api/v1/runs/<id>");
   check(detail.run.coins === 0, "the run spent 0 Bobcoins (replay)");
   check(detail.counterexamples.length > 0, `GET /api/v1/runs/<id> lists ${detail.counterexamples.length} counterexample(s)`);

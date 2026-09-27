@@ -5,7 +5,9 @@
 
 It starts a run on the demo repo, streams its events (SSE), answers each question the way a demo user would
 (approve the refund rule, apply the fix, pick "report" when an agent fails) and waits for `run.finished`.
-Exit code 0 when the run reached a terminal status and, in replay mode, spent 0 Bobcoins.
+Exit code 0 when the run ended `done` with a diagnosis the Diagnosis Reviewer approved and, in replay mode,
+spent 0 Bobcoins. Whether the fix was verified is printed, not required (on the hosted ProcessSandbox the app
+runs from the allowlisted app dir, not the patched workspace, so VERIFY cannot pass there yet).
 The `rook_guest` cookie is kept by hand: it is `Secure`, and a local test runs over plain HTTP.
 """
 
@@ -19,8 +21,6 @@ from collections import Counter
 from typing import Any
 
 import httpx
-
-TERMINAL = {"done", "failed", "cancelled"}
 
 
 class Guest:
@@ -68,8 +68,10 @@ def answer_for(question: dict[str, Any]) -> Any:
     return options[0].get("id") if options else "yes"
 
 
-def stream(guest: Guest, run_id: str, deadline: float) -> tuple[dict[str, Any], Counter[str]]:
+def stream(guest: Guest, run_id: str, deadline: float
+           ) -> tuple[dict[str, Any], Counter[str], dict[str, dict[str, Any]]]:
     types: Counter[str] = Counter()
+    seen: dict[str, dict[str, Any]] = {}  # the last diagnosis.ready and verify.done
     with guest.http.stream("GET", f"{guest.base}/runs/{run_id}/events",
                            headers={"accept": "text/event-stream", "cookie": guest.cookie}) as res:
         if res.status_code != 200 or not res.headers.get("content-type", "").startswith("text/event-stream"):
@@ -87,6 +89,8 @@ def stream(guest: Guest, run_id: str, deadline: float) -> tuple[dict[str, Any], 
             data = []
             types[event["type"]] += 1
             body = event.get("data") or {}
+            if event["type"] in ("diagnosis.ready", "verify.done"):
+                seen[event["type"]] = body
             if event["type"] == "run.phase":
                 print(f"  phase {body.get('phase')}")
             elif event["type"] == "agent.finished" and not body.get("ok"):
@@ -99,7 +103,7 @@ def stream(guest: Guest, run_id: str, deadline: float) -> tuple[dict[str, Any], 
                 if reply.get("ok") is not True:
                     raise SystemExit(f"FAIL the {body.get('kind')} answer was refused")
             elif event["type"] == "run.finished":
-                return body, types
+                return body, types, seen
     raise SystemExit("FAIL the event stream ended without run.finished")
 
 
@@ -123,14 +127,21 @@ def main(argv: list[str] | None = None) -> int:
                                                 "request": args.request, "options": {"auto": False}})
     run_id = created["run_id"]
     print(f"run {run_id} started")
-    finished, types = stream(guest, run_id, deadline)
+    finished, types, seen = stream(guest, run_id, deadline)
     detail = guest.json("GET", f"/runs/{run_id}")
     coins = detail["run"]["coins"]
     print(f"run.finished: status={finished.get('status')} summary={finished.get('summary')!r}")
     print(f"events: {dict(types)}")
     print(f"counterexamples: {len(detail['counterexamples'])}, coins: {coins}")
-    if finished.get("status") not in TERMINAL:
-        print("FAIL not a terminal status")
+    diagnosis = seen.get("diagnosis.ready") or {}
+    verify = seen.get("verify.done")
+    print(f"diagnosis: {diagnosis.get('file')}:{diagnosis.get('line')} reviewed={diagnosis.get('reviewed')}")
+    print(f"fix: {'verified=' + str(verify.get('verified')) if verify else 'not verified (no verify.done)'}")
+    if finished.get("status") != "done":
+        print("FAIL the run did not end `done`")
+        return 1
+    if not (diagnosis.get("reviewed") is True and diagnosis.get("file")):
+        print("FAIL no diagnosis approved by the Diagnosis Reviewer (DIAGNOSE did not replay)")
         return 1
     if health.get("bob_mode") == "replay" and coins != 0:
         print("FAIL a replay run spent Bobcoins")

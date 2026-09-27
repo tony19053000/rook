@@ -1,0 +1,12 @@
+{
+  "cx_id": "cx_001",
+  "file": "app.py",
+  "line": 214,
+  "explanation": "In buggy mode, `already` is set to 0 instead of `order.refunded_total`, so the check `already + body.amount > order.paid` only tests the current refund amount in isolation. Prior refunds are ignored, allowing the running total to exceed the amount paid.",
+  "evidence": [
+    "step 3: refund amount=1 accepted, refunded_total=1, paid=1 — rule holds",
+    "step 4: refund amount=1 accepted again, refunded_total=2, paid=1 — rule broken",
+    "line 214 sets already=0 (not order.refunded_total) when is_fixed=False, so the guard on line 215 checks only the new amount against paid, ignoring prior refunds"
+  ],
+  "reviewed": true
+}

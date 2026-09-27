@@ -3,7 +3,9 @@
 Bob proposes and code decides (CLAUDE.md rule 1):
 - the evidence bundle is built by code, deterministically: the broken rule, the counterexample's
   minimal steps, the responses and entity state after each step (from one exact replay of the
-  counterexample), the sandbox logs and the related source files, all capped in size;
+  counterexample, with the app-assigned ids shown as stable aliases), the sandbox logs (without request
+  lines and volatile bits) and the related source files, all capped in size. The same counterexample on
+  the same code gives the same prompts on any machine, so recorded Bob calls replay (02 section 5.1);
 - the Detective proposes a file and line; the engine checks that the file is a regular file inside the
   workspace (no path or symlink escape) and that the line exists. An invalid diagnosis is a failed round,
   and the reason goes back to the Detective;
@@ -20,7 +22,9 @@ import asyncio
 import json
 import os
 import random
+import re
 import stat
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
@@ -93,31 +97,69 @@ def _clip(value: Any, limit: int = STEP_VALUE_MAX_CHARS) -> Any:
     return capped if len(text) <= limit else {"_rook_truncated": f"{len(text)} chars", "preview": text[:limit]}
 
 
+def _is_id_key(key: str, names: frozenset[str]) -> bool:
+    return key == "id" or key.endswith(("_id", "_ids", "Id", "Ids")) or key in names
+
+
+def id_aliases(pool: Mapping[str, list[Any]]) -> dict[tuple[type, Any], str]:
+    """Each captured value (an app-assigned id) -> `var[n]`, its index in the pool, as the steps' `refs`
+    name it. The ids themselves depend on what the app served before (the search), the aliases do not."""
+    aliases: dict[tuple[type, Any], str] = {}
+    for var, values in pool.items():
+        for index, value in enumerate(values):
+            if isinstance(value, int | str) and not isinstance(value, bool):
+                aliases.setdefault((type(value), value), f"{var}[{index}]")
+    return aliases
+
+
+def alias_ids(value: Any, aliases: Mapping[tuple[type, Any], str], names: frozenset[str] = frozenset(),
+              key: str = "") -> Any:
+    """`value` with every pooled id replaced by its alias: in dict keys (the state is keyed by id) and in
+    the values of id-like fields (`id`, `*_id`, `*Id` or a pool var name). Other values are left alone,
+    so a price that happens to equal an id is never touched."""
+    def swap(v: Any) -> Any:
+        if isinstance(v, int | str) and not isinstance(v, bool):
+            return aliases.get((type(v), v), v)
+        return v
+
+    if isinstance(value, dict):
+        return {swap(k): alias_ids(v, aliases, names, str(k)) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [alias_ids(v, aliases, names, key) for v in value]
+    return swap(value) if _is_id_key(key, names) else value
+
+
 async def collect_step_states(ex: Executor, model: RookModel, cx: Counterexample) -> list[dict[str, Any]]:
     """Replay the counterexample once, exactly, from a fresh context and record, after every step, each
     response (status and body) and the state of every pooled entity. The Judge marks where the rule
-    breaks. Request bodies are left out: they hold fresh random values and the actors' credentials."""
+    breaks. Request bodies are left out: they hold fresh random values and the actors' credentials.
+    App-assigned ids are shown as their aliases (`id_aliases`)."""
     restricted = rule_only_model(model, cx)
     judge = Judge(restricted)
     ctx = ex.new_context()
     rng = random.Random(f"{cx.cx_id}:diagnose")  # unused: every param and ref is pinned
-    records: list[dict[str, Any]] = []
+    raw: list[tuple[list[dict[str, Any]], dict[str, Any], bool]] = []
     for index, (t, step) in enumerate(zip(cx.to_trace(restricted), cx.steps, strict=True)):
         pins = t.pinned_refs
         outcome = await ex.run_step(ctx, t.step, rng, pins if isinstance(step, CxParallel) else pins[0])
         results = outcome if isinstance(outcome, list) else [outcome]
         responses = [
-            {"action": r.action, "actor": r.actor, "status": r.status, "body": _clip(r.response_json),
+            {"action": r.action, "actor": r.actor, "status": r.status, "body": r.response_json,
              **({"error": r.error} if r.error else {})}
             for r in results
         ]
         broken = any(judge.check_response(r, index) is not None for r in results)
         state = await ex.read_state(ctx)
         broken = judge.check_state(state, index) is not None or broken
+        raw.append((responses, state, broken))
+    aliases = id_aliases(ctx.pool)
+    names = frozenset(ctx.pool)
+    records: list[dict[str, Any]] = []
+    for index, (responses, state, broken) in enumerate(raw):
         records.append({
             "step": index + 1,
-            "responses": responses,
-            "state": _clip(state, 4 * STEP_VALUE_MAX_CHARS),
+            "responses": [{**r, "body": _clip(alias_ids(r["body"], aliases, names))} for r in responses],
+            "state": _clip(alias_ids(state, aliases, names), 4 * STEP_VALUE_MAX_CHARS),
             "rule": "broken" if broken else "holds",
         })
     errors = [*ctx.state_errors, *judge.rule_errors.values()]
@@ -229,9 +271,54 @@ def related_files(workspace: Path, model: RookModel, cx: Counterexample,
     return out
 
 
-def tail_logs(text: str, limit: int = LOGS_MAX_CHARS) -> str:
-    text = redact_text(text)
-    return text if len(text) <= limit else "...\n" + text[-limit:]
+# Log lines that say nothing the bundle does not already hold, and differ from run to run: one line per
+# HTTP request (the replay's responses are in the states; the search's are noise), and the server's own
+# start and stop lines (uvicorn, gunicorn, Node/Express dev loggers, ...).
+_REQUEST_LINE = re.compile(
+    r'"(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) \S* HTTP/[\d.]+" \d{3}'  # uvicorn, gunicorn, common log
+    r"|^\s*(?:\S+\s+)?(?:GET|POST|PUT|PATCH|DELETE|HEAD|OPTIONS) /\S* \d{3}\b"  # morgan dev, Go, ...
+)
+_LIFECYCLE_LINE = re.compile(
+    r"(?:Started|Finished) server process|Waiting for application (?:startup|shutdown)"
+    r"|Application (?:startup|shutdown) complete|running on https?://|Shutting down|Listening (?:at|on)"
+    r"|Booting worker|Started reloader process|Will watch for changes",
+    re.IGNORECASE,
+)
+# Volatile bits of the lines that are kept (masked, not dropped: a traceback's text still matters).
+_VOLATILE = (
+    (re.compile(r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:[.,]\d+)?(?:Z|[+-]\d{2}:?\d{2})?"), "<time>"),
+    (re.compile(r"\b\d{2}:\d{2}:\d{2}(?:[.,]\d+)?\b"), "<time>"),
+    (re.compile(r"\b(?:\d{1,3}(?:\.\d{1,3}){3}|localhost|\[[0-9a-fA-F:]*\]):\d{1,5}\b"), "<addr>"),
+    (re.compile(r"(?i)\b(pid[ =:]?|process \[)\d+"), r"\1<pid>"),
+    (re.compile(r"/tmp/[^\s\"':,)]+"), "<tmp>"),
+    (re.compile(r"\b\d+(?:\.\d+)?\s?ms\b"), "<ms>"),
+)
+
+
+def clean_logs(text: str, workspace: Path | None = None) -> str:
+    """The app's log lines without request and start/stop lines, with timestamps, addresses, pids, temp
+    paths and durations masked, and the workspace path shown as `/workspace`."""
+    root = str(workspace.resolve()) if workspace is not None else ""
+    out = []
+    for line in text.splitlines():
+        if not line.strip() or _REQUEST_LINE.search(line) or _LIFECYCLE_LINE.search(line):
+            continue
+        if root:
+            line = line.replace(root, "/workspace")
+        for pattern, mask in _VOLATILE:
+            line = pattern.sub(mask, line)
+        out.append(line.rstrip())
+    return "\n".join(out)
+
+
+def tail_logs(text: str, limit: int = LOGS_MAX_CHARS, workspace: Path | None = None) -> str:
+    """The cleaned, redacted logs, cut to their last `limit` characters at a line start."""
+    text = clean_logs(redact_text(text), workspace)
+    if len(text) <= limit:
+        return text
+    cut = text[-limit:]
+    newline = cut.find("\n")
+    return "...\n" + (cut[newline + 1:] if 0 <= newline < len(cut) - 1 else cut)
 
 
 def build_bundle(workspace: Path, model: RookModel, cx: Counterexample, states: list[dict[str, Any]],
@@ -241,7 +328,7 @@ def build_bundle(workspace: Path, model: RookModel, cx: Counterexample, states: 
         rule=_rule_input(cx),
         steps=_steps_input(cx),
         states=states,
-        logs=tail_logs(logs),
+        logs=tail_logs(logs, workspace=workspace),
         files=related_files(workspace, model, cx, summary),
     )
 
