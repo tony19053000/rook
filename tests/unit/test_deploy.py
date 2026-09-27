@@ -388,6 +388,25 @@ def test_smoke_answers_like_a_demo_user() -> None:
     assert smoke.answer_for({"kind": "approve_rules", "payload": rules}) == ["r1"]
     assert smoke.answer_for({"kind": "fix"}) == "yes"
     assert smoke.answer_for({"kind": "menu", "options": [{"id": "retry"}, {"id": "report"}]}) == "report"
+    verify = {"cx_id": "cx_001", "verified": True, "summary": "4/4 checks passed"}
+    committed = {"cx_id": "cx_001", "branch": "rook/fix-cx-001"}
+    done = {"status": "done", "summary": "Fixed and verified cx_001 (rule r1); committed to local branch"}
+    assert smoke.fix_verified(done, {"verify.done": verify, "fix.committed": committed})
+    assert not smoke.fix_verified(done, {"verify.done": {**verify, "verified": False}, "fix.committed": committed})
+    assert not smoke.fix_verified(done, {"verify.done": verify})  # never committed
+    live = {"status": "done", "summary": "a fix was written to the run's workspace but NOT verified"}
+    assert not smoke.fix_verified(live, {})
+    fresh = {"cx_id": "cx_001", "check": "fresh_search", "status": "failed", "detail": "new violation of rule r2"}
+    unverified = {"verify.done": {**verify, "verified": False}, "fresh_search": fresh}
+    honest = {"status": "done", "summary": "Found and saved cx_001; the fix for rule r1 was written and the exact "
+              "replay now passes, but the fresh search found another approved rule still broken: r2. NOT "
+              "verified: the patch was reverted and not shipped. Run `rook` from the CLI on your own copy to continue."}
+    assert smoke.honestly_unverified(honest, unverified)
+    assert not smoke.honestly_unverified(honest, {**unverified, "fix.committed": committed})
+    assert not smoke.honestly_unverified(honest, {"verify.done": verify, "fresh_search": fresh})
+    assert not smoke.honestly_unverified(honest, {})  # VERIFY never ran
+    leaky = {**honest, "summary": honest["summary"] + " no recording for key " + "a" * 64}
+    assert not smoke.honestly_unverified(leaky, unverified)
 
 
 # --- Docker: the env file reaches the container as the server expects ---

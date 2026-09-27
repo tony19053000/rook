@@ -23,7 +23,8 @@ PREPARE -> SCOUT -> START_APP -> MAP -> RULES -> APPROVE -> DESIGN -> SEARCH -> 
 - Demo repos (ProcessSandbox) run the pristine allowlisted app unless the server grants `run_workspace`
   (replay mode only, 03 section 3): then the app and the entry's allowlisted `test` command run from the
   workspace copy, so VERIFY executes the Surgeon's patch. Without it a fix cannot be verified there, so
-  VERIFY is skipped and the summary says so.
+  VERIFY is skipped and the summary says so. With it a failed VERIFY does not go back to DIAGNOSE (the
+  recordings cover one fix): the patch is reverted, not shipped, and the run ends `done` saying why.
 
 The public API (used by the CLI, ROOK-024/028, and the server, ROOK-029) is `Session.run()`,
 `events(after)`, `answer()`, `chat()`, `cancel()` and `pending_questions()`. `answer`, `chat` and
@@ -33,6 +34,7 @@ The public API (used by the CLI, ROOK-024/028, and the server, ROOK-029) is `Ses
 from __future__ import annotations
 
 import asyncio
+import re
 import secrets
 import threading
 import uuid
@@ -813,6 +815,8 @@ class Session:
                 self._verified = True
                 self._store_cx(cx, "verified")
                 return await self._ship_fix(cx, fixed, regression, verification)
+            if self._hosted_replay():
+                return await self._end_unverified(guard, cx, verification)
             note = f"verification of {cx.cx_id} failed: {verification.summary}"
             step = await self._decide("verify_failed", notes=[note])
             if step != "diagnose":
@@ -843,6 +847,19 @@ class Session:
             if step != "retry":
                 return None
             self.state.record_retry("surgeon")
+
+    def _hosted_replay(self) -> bool:
+        """A hosted demo run replaying from its workspace copy: its recordings cover one fix, so a failed VERIFY
+        ends the run (honestly) instead of diagnosing again."""
+        return (self._launcher_factory is None and self.workspace is not None and self.workspace.demo is not None
+                and self._runs_workspace())
+
+    async def _end_unverified(self, guard: PathGuard, cx: Counterexample, verification: VerifyResult) -> str:
+        """Hosted replay, VERIFY failed: revert the patch, never ship it, and say why (no paths or keys)."""
+        assert self._pre_fix is not None
+        await asyncio.to_thread(guard.restore, self._pre_fix)
+        await self._log("info", f"Reverted the unverified patch for {cx.cx_id}; it is not shipped")
+        return unverified_summary(cx, verification)
 
     async def _revert(self, guard: PathGuard) -> None:
         """Undo the unverified patch and reload the app, so the next diagnosis sees the original code."""
@@ -885,6 +902,26 @@ class Session:
                                                       branch=shipped.branch))
         where = shipped.pr_url or f"local branch {shipped.branch} in the workspace (not pushed)"
         return f"Fixed and verified {cx.cx_id} (rule {cx.rule.id}); committed to {where}."
+
+
+_NEW_VIOLATION = re.compile(r"new violation of rule ([A-Za-z0-9_.\-]+)")
+
+
+def unverified_summary(cx: Counterexample, verification: VerifyResult) -> str:
+    """The run's summary when a hosted replay's fix is not verified: what passed, what still breaks."""
+    checks = {c.check: c for c in verification.checks}
+    replay = checks.get("replay")
+    fresh = checks.get("fresh_search")
+    text = f"Found and saved {cx.cx_id}; the fix for rule {cx.rule.id} was written"
+    if replay is not None and replay.passed:
+        text += " and the exact replay now passes"
+    if fresh is not None and not fresh.passed and (m := _NEW_VIOLATION.search(fresh.detail)):
+        text += f", but the fresh search found another approved rule still broken: {m.group(1)}"
+    else:
+        failed = [c.check for c in verification.checks if not c.passed]
+        text += f", but these checks failed: {', '.join(failed) or 'none'}"
+    return text + (". NOT verified: the patch was reverted and not shipped. Run `rook` from the CLI on your own "
+                   "copy to continue.")
 
 
 def _failed_fix_note(fixed: FixResult, verification: VerifyResult) -> str:

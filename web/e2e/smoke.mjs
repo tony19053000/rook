@@ -16,16 +16,21 @@
 //     then checks the run is listed by GET /runs with the same status.
 // Child processes are killed and the temp dir removed on success, failure or Ctrl-C.
 //
-// Expected outcome: the run goes PREPARE -> ... -> SAVE -> DIAGNOSE on real replayed Bob output and the real
-// engine (it finds, saves and diagnoses the refund counterexample; the Diagnosis Reviewer approves) and ends
-// `done`. The Detective's evidence is stable across machines (ids as aliases, no request log lines), so its
-// recording replays on the real uvicorn subprocess too. Required: run.finished `done`, a reviewed diagnosis,
-// 0 coins, and GET /runs agreeing with run.finished. The fix is reported, not required: the Surgeon's
-// recordings for this route are not made yet (docs/04_FRONTEND_SPEC.md §3.8).
+// Expected outcome: the run goes PREPARE -> ... -> DIAGNOSE -> FIX -> VERIFY on real replayed Bob output and the
+// real engine, for 0 coins. The demo entry mirrors deploy/demos/allowlist.yaml (with its native `test` command),
+// so in replay mode the app and that test run from the run's workspace copy, patched by the replayed edit tapes
+// (tests/fixtures/recordings/*_minishop; hosted_minishop holds the calls only this route makes).
+// - refund (approve the refund rule): must end `done` with the fix verified (verify.done verified=true,
+//   fix.committed, a summary saying "verified").
+// - all (approve every rule): the admin-export bug is found, diagnosed and fixed, but VERIFY's fresh search
+//   breaks another approved rule (minishop has four planted bugs), so verify.done verified=false and nothing is
+//   committed: honest by design (docs/04_FRONTEND_SPEC.md §3.8). The run ends `done`: the patch is reverted and
+//   the summary names the rule still broken (no paths, no recording keys).
+// Both: a reviewed diagnosis, 0 coins, and GET /runs agreeing with run.finished.
 //
 // Env: ROOK_E2E_API_PORT (default 8765), ROOK_E2E_PYTHON (default ../.venv/bin/python, i.e. after `uv sync`),
 // ROOK_E2E_APPROVE (refund | all | both, default both: one run approving the refund rule, one approving every
-// rule like the web UI), ROOK_E2E_TIMEOUT_S (default 300 per run), ROOK_E2E_SKIP_BUILD=1, ROOK_E2E_KEEP=1 (after the checks, keep both servers
+// rule like the web UI), ROOK_E2E_TIMEOUT_S (default 420 per run), ROOK_E2E_SKIP_BUILD=1, ROOK_E2E_KEEP=1 (after the checks, keep both servers
 // up for the manual in-browser check of docs/04_FRONTEND_SPEC.md §3.8; Ctrl-C stops them and cleans up).
 
 import { spawn } from "node:child_process";
@@ -39,7 +44,7 @@ import { fileURLToPath } from "node:url";
 const WEB = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const ROOT = resolve(WEB, "..");
 const FIXTURES = join(ROOT, "tests", "fixtures");
-const RECORDINGS = ["understand", "rules", "design", "diagnose", "surgeon", "session"].map((p) => `${p}_minishop`);
+const RECORDINGS = ["understand", "rules", "design", "diagnose", "surgeon", "session", "hosted"].map((p) => `${p}_minishop`);
 const DEMO_REF = "rook-demo/minishop";
 const DEMO_COMMIT = createHash("sha1").update("rook-e2e-minishop").digest("hex");
 const REQUEST = "find and fix a bug";
@@ -48,7 +53,7 @@ const API_PORT = Number(process.env.ROOK_E2E_API_PORT ?? 8765);
 const PYTHON = process.env.ROOK_E2E_PYTHON ?? join(ROOT, ".venv", "bin", "python");
 const APPROVE = process.env.ROOK_E2E_APPROVE ?? "both";
 const APPROVE_MODES = { refund: ["refund"], all: ["all"], both: ["refund", "all"] }[APPROVE];
-const TIMEOUT_MS = Number(process.env.ROOK_E2E_TIMEOUT_S ?? 300 * (APPROVE_MODES?.length ?? 1)) * 1000;
+const TIMEOUT_MS = Number(process.env.ROOK_E2E_TIMEOUT_S ?? 420 * (APPROVE_MODES?.length ?? 1)) * 1000;
 
 const children = [];
 let scratch = "";
@@ -166,6 +171,10 @@ function demoSetup() {
       `    commit: '${DEMO_COMMIT}'`,
       "    app_dir: demo/minishop",
       "    start: ['{python}', '-m', 'uvicorn', 'app:app', '--host', '127.0.0.1', '--port', '{port}']",
+      // As deploy/demos/allowlist.yaml: the native test command, run from the workspace in replay mode.
+      "    commands:",
+      "      test: ['{python}', '-m', 'pytest', '-q', '-p', 'no:cacheprovider', '-o', 'asyncio_mode=auto']",
+      "    command_timeout: 300",
       "",
     ].join("\n"),
   );
@@ -242,7 +251,7 @@ async function streamRun(call, runId, approve) {
     "GET /api/v1/runs/<id>/events streams text/event-stream through the proxy");
   const decoder = new TextDecoder();
   const types = new Map();
-  const seen = { diagnosis: null, verify: null };
+  const seen = { diagnosis: null, verify: null, committed: null, fresh: null, phases: [] };
   const reader = res.body.getReader();
   let buffer = "";
   for (;;) {
@@ -257,9 +266,17 @@ async function streamRun(call, runId, approve) {
       if (data === "") continue; // a ping comment
       const event = JSON.parse(data);
       types.set(event.type, (types.get(event.type) ?? 0) + 1);
-      if (event.type === "run.phase") log(`phase ${event.data.phase}`);
-      if (event.type === "diagnosis.ready") seen.diagnosis = event.data;
+      if (event.type === "run.phase") {
+        log(`phase ${event.data.phase}`);
+        seen.phases.push(event.data.phase);
+      }
+      if (event.type === "verify.step" && event.data.check === "fresh_search" && event.data.status !== "running") {
+        seen.fresh = event.data;
+      }
+      // Keep a reviewed diagnosis: a later re-DIAGNOSE (after a failed VERIFY) may end without one.
+      if (event.type === "diagnosis.ready" && (seen.diagnosis === null || event.data.reviewed)) seen.diagnosis = event.data;
       if (event.type === "verify.done") seen.verify = event.data;
+      if (event.type === "fix.committed") seen.committed = event.data;
       if (event.type === "agent.finished" && !event.data.ok) log(`agent ${event.data.agent} failed: ${event.data.summary}`);
       if (event.type === "question.asked") {
         const answer = answerFor(event.data, approve);
@@ -285,7 +302,8 @@ async function streamRun(call, runId, approve) {
 
 // --- main ---
 
-/** One guest run on the demo repo, answering approve_rules with `approve`; it must end `done`, diagnosed. */
+/** One guest run on the demo repo, answering approve_rules with `approve`. Refund: it must end `done` with the
+ * fix verified. All: the fix is made but honestly not verified (another approved rule is still broken). */
 async function demoRun(call, approve) {
   log(`--- demo run, approving ${approve === "all" ? "every proposed rule" : "the refund rule"} ---`);
   const created = await json(
@@ -300,11 +318,33 @@ async function demoRun(call, approve) {
 
   const { finished, types, seen } = await streamRun(call, created.run_id, approve);
   log(`events: ${[...types].map(([t, n]) => `${t}×${n}`).join(", ")}`);
-  check(finished.status === "done", `[${approve}] run.finished with status "done": ${finished.summary}`);
+  log(`run.finished: status=${finished.status} summary=${JSON.stringify(finished.summary)}`);
   check(types.has("counterexample.saved"), `[${approve}] the engine found, shrank and saved a counterexample (streamed)`);
   check(seen.diagnosis !== null && seen.diagnosis.reviewed === true && seen.diagnosis.file !== "",
     `[${approve}] DIAGNOSE replayed: ${seen.diagnosis?.file}:${seen.diagnosis?.line}, approved by the Diagnosis Reviewer`);
-  log(`fix: ${seen.verify === null ? "not verified (no verify.done)" : `verify.done verified=${seen.verify.verified}`}`);
+  check(types.has("fix.ready") && seen.phases.includes("VERIFY"), `[${approve}] FIX replayed (fix.ready) and VERIFY ran`);
+  if (approve === "refund") {
+    check(finished.status === "done", `[${approve}] run.finished with status "done": ${finished.summary}`);
+    check(seen.verify !== null && seen.verify.verified === true,
+      `[${approve}] VERIFY: the replayed fix was verified (verify.done verified=true): ${seen.verify?.summary}`);
+    check(seen.committed !== null && seen.committed.cx_id === seen.verify.cx_id,
+      `[${approve}] the verified fix was committed (fix.committed on ${seen.committed?.branch})`);
+    check(/verified/i.test(finished.summary) && !/not verified/i.test(finished.summary),
+      `[${approve}] the run's summary says the fix was verified`);
+  } else {
+    // Honest by design (04 §3.8): minishop has four planted bugs; with every rule approved, VERIFY's fresh
+    // search still breaks another approved rule after the one fix, so the fix is NOT verified.
+    check(seen.verify !== null && seen.verify.verified === false && seen.fresh?.status === "failed",
+      `[${approve}] VERIFY: not verified, the fresh search broke another approved rule: ${seen.fresh?.detail}`);
+    check(seen.committed === null, `[${approve}] an unverified fix is never committed`);
+    const broken = /new violation of rule (\S+)/.exec(seen.fresh.detail)?.[1];
+    check(finished.status === "done", `[${approve}] run.finished with status "done"`);
+    check(broken !== undefined && finished.summary.includes(`another approved rule still broken: ${broken}.`)
+      && finished.summary.includes("NOT verified: the patch was reverted and not shipped"),
+      `[${approve}] the summary says honestly why the fix is not verified: ${finished.summary}`);
+    check(!/\/tmp\/|\/home\/|recording|[0-9a-f]{64}/.test(finished.summary),
+      `[${approve}] the summary holds no paths or recording keys`);
+  }
   const detail = await json(await call(`/api/v1/runs/${created.run_id}`), "GET /api/v1/runs/<id>");
   check(detail.run.coins === 0, `[${approve}] the run spent 0 Bobcoins (replay)`);
   check(detail.counterexamples.length > 0, `GET /api/v1/runs/<id> lists ${detail.counterexamples.length} counterexample(s)`);

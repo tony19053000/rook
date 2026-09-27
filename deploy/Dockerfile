@@ -82,7 +82,7 @@ COPY tests/fixtures/minishop/app.py tests/fixtures/minishop/test_minishop_app.py
 COPY tests/fixtures/recordings/understand_minishop/ tests/fixtures/recordings/rules_minishop/ \
      tests/fixtures/recordings/design_minishop/ tests/fixtures/recordings/diagnose_minishop/ \
      tests/fixtures/recordings/surgeon_minishop/ tests/fixtures/recordings/session_minishop/ \
-     /home/rook/.rook/recordings/
+     tests/fixtures/recordings/hosted_minishop/ /home/rook/.rook/recordings/
 RUN chown rook:rook /home/rook/.rook && chmod -R a+rX /home/rook/.rook/recordings /opt/rook
 
 COPY deploy/start.sh /usr/local/bin/rook-start

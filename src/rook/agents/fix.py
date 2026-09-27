@@ -45,7 +45,7 @@ from rook.agents.recorder import recording_key
 from rook.agents.registry import get
 from rook.agents.schemas import Diagnosis, FixReviewOutput, SurgeonOutput
 from rook.agents.understand import check_not_rook_repo
-from rook.agents.volatile import Masker
+from rook.agents.volatile import Masker, mask_text
 from rook.core import rails
 from rook.core.events import FixReady, Log, RunPhase, redact_text
 from rook.engine.pathguard import GuardReport, PathGuard, Snapshot, check_allowed_paths
@@ -71,6 +71,9 @@ _NATIVE_NAMES = {
 _LANGUAGE_SUFFIX = {"python": ".py", "javascript": ".js", "typescript": ".ts", "go": ".go"}
 Outcome = Literal["approved", "rejected", "guard", "no_change", "failed"]
 _ERRORS = re.compile(r"\b\d+ errors?\b")
+# Run-specific text an earlier round's reason may quote: a missing recording's key and folder, and local paths.
+_MISSING_RECORDING = re.compile(r"no recording for key [0-9a-f]+ in \S+")
+_LOCAL_PATH = re.compile(r"(?:/home|/Users|/root)/[^\s\"':,)]+")
 
 
 class FixNotApproved(PermissionError):
@@ -378,7 +381,7 @@ class FixPipeline:
     async def _fix_round(self, number: int, task: str, allowed: list[str], model: RookModel,
                          cx: Counterexample, diagnosis: DiagnosisResult, files: dict[str, str],
                          history: list[FixRound]) -> tuple[FixRound, str, str]:
-        call = await self._surgeon(task, allowed, model, cx, diagnosis, files, _feedback(history))
+        call = await self._surgeon(task, allowed, model, cx, diagnosis, files, _feedback(history, self.workspace))
         output, error, snap = call.output, call.error, call.snap
         try:
             report = self._enforce(call, allowed)
@@ -515,11 +518,17 @@ def _cx_input(model: RookModel, cx: Counterexample) -> dict[str, Any]:
     return {"cx_id": cx.cx_id, "rule": _rule_input(cx), "steps": _steps_input(cx), "model": restricted}
 
 
-def _feedback(history: list[FixRound]) -> str:
-    """What went wrong in earlier rounds, for the Surgeon's next try ("" in the first round)."""
-    return "\n\n".join(
+def _feedback(history: list[FixRound], workspace: Path) -> str:
+    """What went wrong in earlier rounds, for the Surgeon's next try ("" in the first round).
+
+    It is part of the next prompt, so of its recording key: run-specific text in a reason (the workspace
+    path, a missing recording's key and folder, temp and home paths, times, random words) is masked, so the
+    same rounds give the same prompt on every run and machine."""
+    text = "\n\n".join(
         f"Round {r.number}: {r.outcome}. {r.reason}" + (f"\nFiles you changed: {', '.join(r.files)}"
                                                          if r.files else "")
         for r in history
     )
+    text = _MISSING_RECORDING.sub("no recording for this call", text.replace(str(workspace), "/workspace"))
+    return mask_text(_LOCAL_PATH.sub("<path>", text))
 
