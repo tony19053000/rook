@@ -1,8 +1,15 @@
 # Rook
 
-**Find the smallest sequence that breaks your software, before your users do.**
+**IBM Bob-powered agents that find your app's business rules, break them with a minimal counterexample, fix the bug and prove the fix. Only the deterministic engine decides pass or fail.**
 
-Rook reads your repository, works out the business rules your app must never break, and then **actually tries to break them**. When it succeeds, you don't get a vague warning. You get the **shortest exact sequence of actions** that breaks the rule, replayed on your real app as proof. Then IBM Bob fixes it, and Rook proves the fix.
+| | |
+|---|---|
+| Web app (guest demo, no sign-in) | <https://rook-weld-six.vercel.app> |
+| API | <https://44-239-185-88.sslip.io> |
+| Demo video | `<VIDEO_URL>` |
+| Slide deck | `<DECK_URL>` |
+
+Built for the **IBM Bob 2.0 Hackathon** (lablab.ai, Sep 2026). MIT licensed.
 
 ```
 ✗ RULE BROKEN   Total refunds never exceed the amount paid
@@ -15,113 +22,85 @@ Rook reads your repository, works out the business rules your app must never bre
   Replayed 10 / 10 on the real app ✓ real bug
 ```
 
-> **Bob finds the rules. The engine tries to break them. Proof decides.**
+## The problem
 
-Built for the **IBM Bob 2.0 Hackathon** (lablab.ai, Sep 2026).
+Unit tests cover the scenarios you thought of. Costly bugs like double refunds, negative stock and permission bypasses come from **unexpected sequences of valid actions**. An AI reviewer that says "this might have a bug" is only guessing. Rook runs the failing sequence on your app and shows you the result.
 
-**Try it in the browser: <https://rook-weld-six.vercel.app>** (guest demo, no sign-in needed).
+## Try it in 30 seconds
 
-🚧 **Status: in active development during the hackathon.** See [`STATUS.md`](STATUS.md) for live progress.
-
----
-
-## Why
-
-Developers test the scenarios they think of. Each test passes. Real, expensive bugs (double refunds, negative stock, permission bypasses, subscriptions that keep charging) come from **unexpected sequences of valid actions** that nobody wrote a test for.
-
-AI code review says *"this might have a bug"*. That's a guess. Rook gives you **proof**.
-
-| | Unit tests | Fuzzing | AI code review | **Rook** |
-|---|---|---|---|---|
-| Finds scenarios you didn't think of | ✗ | ✓ | ~ | ✓ |
-| Understands business rules | ✗ | ✗ | ✓ | ✓ |
-| Real, reproducible proof | ✓ | ✓ | ✗ | ✓ |
-| Minimal reproduction | ✗ | ~ | ✗ | ✓ |
-| Fixes and verifies the fix | ✗ | ✗ | ~ | ✓ |
+1. Open <https://rook-weld-six.vercel.app> and click **Try the demo**. No account needed.
+2. Watch the Bob agents map the demo shop's API and propose rules.
+3. Approve the rules, or let the guest countdown approve them for you.
+4. The engine breaks a rule, shrinks the run to the 3 steps that matter, replays it 10/10, and then verifies Bob's fix.
 
 ## How it works
 
 ```mermaid
 flowchart LR
-  A[Your repo] --> B[Bob agents<br/>understand the app<br/>propose rules]
-  B --> C{You approve<br/>the rules}
-  C --> D[Engine runs thousands<br/>of real action sequences]
-  D -->|rule breaks| E[Shrink to the<br/>smallest sequence]
-  E --> F[Replay 10/10<br/>save as a test]
-  F --> G[Bob diagnoses<br/>and writes the fix]
-  G --> H[Engine verifies:<br/>replay + tests + fresh search]
-  H --> I[Pull request<br/>with the evidence]
+  A[Repo] --> B[Bob agents: understand the app, propose rules]
+  B --> C{Human approves rules}
+  C --> D[Engine: thousands of real action sequences]
+  D -->|rule breaks| E[Shrink to minimal sequence]
+  E --> F[Replay 10/10, save as test]
+  F --> G[Bob: diagnose + fix]
+  G --> H[Engine verifies: replay + tests + fresh search]
+  H --> I[PR with evidence]
 ```
 
-1. **Understand.** Bob agents read your code, start your app in a sandbox and map its API into actions.
-2. **Rules.** Bob proposes the rules that must always hold (for example "refunds never exceed payment"), with evidence from your code. A reviewer agent challenges them, and **you approve**.
-3. **Break.** The deterministic engine runs thousands of valid action sequences against your **real running app** and checks every rule after every step.
-4. **Shrink.** A failure 12 steps long becomes the **3 steps that matter**.
-5. **Prove.** It replays the steps on the real app (10/10) and saves them as a permanent regression test.
-6. **Fix.** Bob finds the root cause and writes the fix, and a reviewer agent checks it.
-7. **Verify.** The exact replay, your test suite and a fresh search must all pass. Then a PR opens with the evidence.
+1. **Understand.** Bob reads the code, starts the app in a Docker sandbox and turns its HTTP API into actions.
+2. **Rules.** Bob proposes invariants and backs each one with evidence from the code. A critic agent challenges them, and **you approve** them.
+3. **Break.** The engine runs valid action sequences against the **real running app** and checks every rule after every step, using a safe expression evaluator with no `eval`.
+4. **Shrink and prove.** A 12-step failure becomes the minimal sequence. Rook replays it on the real app and saves it as a regression test.
+5. **Fix and verify.** Bob diagnoses the bug and writes a patch, which a reviewer agent checks. The fix only counts once the exact replay, your test suite and a fresh search all pass.
 
-**Bob thinks, the engine proves.** An LLM never decides whether something passed or failed.
+## How IBM Bob is used
 
-## Meet the team
+- **13 Bob agents, each a Bob Shell custom mode** (`.bob/custom_modes.yaml`, called with `bob run --mode <slug> --format stream-json`). The Coordinator directs 12 specialists: Scout, Mechanic, Mapper, Lawmaker, Rule Critic, Test Designer, Strategist, Detective, Diagnosis Reviewer, Surgeon, Fix Reviewer and Guide. Each agent has its own tool permissions, and only the Surgeon can edit code, and only files that were approved.
+- Bob's output streams live into the CLI and the web UI as animated agent characters.
+- Bob **proposes and explains**, and the engine **decides**. No Bob output is ever executed as code, and Bob is the only AI in the system.
+- **Replay mode.** Recorded Bob sessions let the hosted demo and CI run for 0 Bobcoins.
+- **Bob IDE** was used during development (see the video).
 
-Rook uses **13 IBM Bob agents** (a Coordinator plus 12 specialists) (Bob custom modes), each with one focused job. They appear in your terminal as little characters while they work.
-
-| | Agent | Job |
-|---|---|---|
-| 🟡 | Coordinator | Plans the run and decides the next step (within hard rails) |
-| 🟢 | Scout | Understands the repository |
-| 🟠 | Mechanic | Gets the app running in a sandbox |
-| 🔵 | Mapper | Turns endpoints into actions |
-| 🟣 | Lawmaker | Proposes the business rules |
-| 🔺 | Rule Critic | Challenges the rules |
-| 🟥 | Test Designer | Designs targeted scenarios |
-| 🟤 | Strategist | Points the search at risky areas |
-| 🔷 | Detective | Finds the root cause |
-| 🔺 | Diagnosis Reviewer | Checks the diagnosis against the evidence |
-| 💚 | Surgeon | Writes the fix (the only agent allowed to edit code) |
-| 🔺 | Fix Reviewer | Checks the fix |
-| ⚪ | Guide | Answers your questions while Rook works |
-
-And **6 engine workers**, with no AI, that do the proving: **Runner · Judge · Shrinker · Replayer · Test Runner · Verifier**.
-
-## Quick start
-
-> Available once the first release is published. See [`STATUS.md`](STATUS.md).
-
-```bash
-uv tool install rook-cli      # or: pipx install rook-cli
-rook                          # sign in, connect GitHub, then just say "find bugs in my app"
-```
+## CLI quickstart
 
 Requirements: Python 3.12+, Docker, and [IBM Bob Shell](https://bob.ibm.com/docs/shell) with `BOB_API_KEY` set.
 
-Commands:
-
 ```bash
-rook                      # interactive session (the main experience)
-rook run --ci             # non-interactive; exit code 1 if a rule breaks (for CI)
-rook replay <cx-id>       # replay a counterexample on your app
-rook explain <cx-id>      # ask Bob why it broke
-rook verify <cx-id>       # prove a fix
+uv tool install git+https://github.com/tony19053000/rook   # PyPI release: coming soon
+rook --help
 ```
 
-**Web app:** the same experience in the browser at <https://rook-weld-six.vercel.app>. Try the demo repos without signing in.
+```bash
+rook                       # interactive session
+rook run <repo> --ci       # non-interactive; exit 1 if a rule breaks
+rook replay <cx-id>        # replay a counterexample on your running app
+rook explain <cx-id>       # plain-words explanation
+rook verify <cx-id>        # prove a fix: exact replay + fresh search
+rook init                  # add rook/ and a GitHub workflow to a repo
+rook serve                 # run the API server that backs the web app
+```
+
+Rook adds these files to your repo:
+
+```
+rook/rook.yaml                    # approved actions, state and rules
+rook/counterexamples/cx_001.json  # every counterexample, replayable
+```
+
+It works with any backend that has an **HTTP API**, whatever the language. The demo apps are written in Node.js, Python and Go.
 
 ## GitHub Action
 
-Rook can check every pull request: the action runs `rook run --ci --auto`, posts `rook-report.md` as a
-single PR comment (updated on each push, never duplicated) and fails the job when an approved rule is
-broken (exit 1) or the run does not finish (exit 2). The comment is posted before the job fails.
+[`action.yml`](action.yml) runs `rook run --ci --auto` on each pull request and posts a single `rook-report.md` comment, which it updates on every push. The job fails if an approved rule breaks (exit 1) or the run doesn't finish (exit 2).
 
 ```yaml
 # .github/workflows/rook.yml
 name: rook
 on:
-  pull_request:          # not pull_request_target: see "Forks and secrets" below
+  pull_request:
 permissions:
   contents: read
-  pull-requests: write   # to post the Rook comment
+  pull-requests: write
 jobs:
   rook:
     runs-on: ubuntu-latest
@@ -129,66 +108,77 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - uses: tony19053000/rook@<full-commit-sha>   # pin Rook to a commit SHA too
+      - uses: tony19053000/rook@<full-commit-sha>   # pin to a commit SHA
         with:
-          bob-mode: live                              # falls back to replay when the key is missing
+          bob-mode: live                            # falls back to replay without a key
           bob-api-key: ${{ secrets.BOB_API_KEY }}
-          bob-package: https://example.com/bobshell-2.0.5.tgz   # where you host the Bob Shell package
-          recordings: rook/recordings                 # used in replay mode (0 Bobcoins)
+          recordings: rook/recordings
 ```
 
-Inputs: `repo-path` (default `.`), `request`, `bob-mode` (`replay` | `live`, default `replay`),
-`bob-api-key`, `bob-package`, `recordings`, `auto` (default `true`), `budget`, `seconds`, `setup`
-(space-separated env var names your app needs, set with `env:` on the step), `report-dir`, `comment`
-(default `true`) and `github-token` (default `github.token`). Outputs: `exit-code`, `report`, `bob-mode`.
+Use `pull_request` and **never** `pull_request_target`. With `pull_request_target`, a fork's code would run with your secrets. PRs from forks get no secrets, so the action uses recorded Bob. For all inputs, see [`action.yml`](action.yml).
 
-**Forks and secrets.** Use the `pull_request` trigger. A PR from a fork gets no secrets and a read-only
-token, so the action uses recorded Bob instead of live Bob and cannot comment (it warns; the report is
-still in the job summary). **Never use `pull_request_target` with this action**: it runs with your
-secrets on the base repo while the checked-out code can come from the fork, which would hand your
-`BOB_API_KEY` to anyone who opens a PR. The key is masked in logs and given only to the Rook step.
+**GitHub App "Rook"** lets the web app list your repositories after you connect GitHub. The hosted server never runs your repo's code: it only issues a short-lived installation token scoped to one repo. The CLI (`rook login`, then `rook run owner/name`) clones the repo, finds and verifies the fix locally, then pushes a `rook/fix-*` branch and opens a PR with the evidence attached.
 
-Try the comment step without GitHub (it prints the exact API requests, with the token redacted):
+## Architecture
+
+```
+web (Next.js, Vercel) ──HTTPS/SSE──▶ API (FastAPI, AWS EC2 + Caddy)
+rook CLI (Textual) ─────────────────▶ same Python core
+                                       ├─ agents/  → bob run (13 custom modes)
+                                       ├─ engine/  → runner, judge, shrinker, replayer, verifier
+                                       └─ sandbox/ → target app in Docker, HTTP only to its base URL
+```
+
+The contracts (event schema, `rook.yaml` schema and API routes) are in [`docs/02_ARCHITECTURE.md`](docs/02_ARCHITECTURE.md).
+
+**Stack:** Python 3.12 · pydantic v2 · FastAPI · Textual · Next.js · IBM Bob Shell · SQLite · Docker · Supabase Auth · GitHub App · Vercel · AWS EC2.
+
+## Security
+
+- Secrets such as `BOB_API_KEY` and the GitHub App key are never committed and never logged. They live only in `.env` or on the host.
+- The target app runs in a Docker sandbox, and the engine only makes HTTP calls to that sandbox's base URL.
+- Rules are checked by a safe expression evaluator. Bob output is never passed to `eval` or `exec`.
+- `bob run` always runs with stdin closed and scoped per-agent permissions.
+- Code edits happen only in a workspace copy, only by the Surgeon, and only after the user approves.
+
+Full model: [`docs/03_SECURITY_ACCESS.md`](docs/03_SECURITY_ACCESS.md).
+
+## Repo layout
+
+```
+src/rook/
+  agents/    Bob agents, prompts, custom-mode registry, record/replay
+  engine/    runner, judge, shrinker, replayer, verifier (deterministic)
+  model/     rook.yaml schema + safe expression evaluator
+  sandbox/   Docker sandbox for the target app
+  cli/       `rook` CLI (Typer + Textual)
+  server/    FastAPI API (runs, SSE events, auth, limits)
+  github/    GitHub App, PR comment, fix PRs
+  store/ export/ auth/ core/
+web/         Next.js web app
+tests/       pytest (unit + marked docker/bob integration)
+deploy/      AWS EC2 + Caddy deployment
+docs/        PRD, architecture, security, UI spec, tickets, mockups
+action.yml   GitHub Action
+```
+
+## Development
 
 ```bash
-rook-pr-comment --dry-run --report rook-report.md \
-  --event tests/fixtures/github_action/pull_request.json --event-name pull_request
+uv sync                    # Python deps
+uv run pytest -q           # tests (docker/bob-marked tests are skipped by default)
+uv run rook --help
+cd web && npm install && npm run test && npx tsc --noEmit
 ```
 
-## What gets added to your repo
-
-```
-rook/rook.yaml                    # the actions, state and rules you approved
-rook/counterexamples/cx_001.json  # every counterexample, replayable forever
-tests/rook_cx_001.test.js         # a native regression test (in your language)
-```
-
-## Works with
-
-Any backend with an **HTTP API**, in any language, because Rook talks to your running app over HTTP. The demo apps use Node.js, Python and Go.
-
-## Architecture and docs
-
-| Doc | What's inside |
+| Doc | Contents |
 |---|---|
 | [`docs/01_PRD.md`](docs/01_PRD.md) | Product requirements |
-| [`docs/02_ARCHITECTURE.md`](docs/02_ARCHITECTURE.md) | Architecture, contracts, engine design |
-| [`docs/03_SECURITY_ACCESS.md`](docs/03_SECURITY_ACCESS.md) | Security and access model |
+| [`docs/02_ARCHITECTURE.md`](docs/02_ARCHITECTURE.md) | Architecture and contracts |
+| [`docs/03_SECURITY_ACCESS.md`](docs/03_SECURITY_ACCESS.md) | Security and access |
 | [`docs/04_FRONTEND_SPEC.md`](docs/04_FRONTEND_SPEC.md) | CLI and web UI spec |
-| [`docs/05_FEATURE_TICKETS.md`](docs/05_FEATURE_TICKETS.md) | Tickets and roadmap |
-| [`STATUS.md`](STATUS.md) · [`HANDOFF.md`](HANDOFF.md) | Live progress and session handoff |
-
-**Stack:** Python (engine, agents, API, Textual CLI) · Next.js (web) · IBM Bob Shell · SQLite · Docker · Supabase Auth · GitHub App · Vercel + AWS EC2 (Docker Compose, Caddy).
-
-## How IBM Bob is used
-
-- **In the product:** 13 Bob custom modes, called through `bob run --format stream-json`, with per-agent tool permissions (only the Surgeon can edit, and only the files it was approved to edit). Every step Bob takes streams live into the UI.
-- **In building it:** Bob IDE was used during development (see the demo video).
-
-## Roadmap
-
-A GitHub App that checks every pull request · verifying code written by AI coding agents · enterprise policy rules ("support never reads payroll", "no cross-tenant access") · continuous invariant testing.
+| [`docs/mockups/`](docs/mockups/) | HTML mockups (made under the earlier name "Counterexample") |
 
 ## License
 
-MIT
+MIT, see [`LICENSE`](LICENSE).
