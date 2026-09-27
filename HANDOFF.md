@@ -67,6 +67,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep ~13:30 | 2→(acct switch noticed) | Committed: UI polish 7aaffc1, featured rule b054314. ROOK-039 demo apps (uncommitted): 3 apps pinned/allowlisted/recorded (3.96 coins) but none verified (shop-app: flawed Lawmaker rule; billing/wallet: rules/model miss bugs). User chose: re-record shop-app, retry billing+wallet, hard stop 14:45, hide unverified apps from demos.yaml. Dockerfile patch applied by orchestrator with user approval (node_modules symlink, go cache chown, COPY hosted_* recordings). User must NOT deploy until 039 committed | (docs) |
 | 27 Sep ~12:55 | 2 | ROOK-039d PASS + committed (hosted refund replay → Fixed and verified; approve-all → done, honestly unverified, patch reverted). Submission kit committed b71bdf9. Running: 039 demo apps coder, UI polish coder (+ guest default = one verifying rule) | ROOK-039d |
 | 27 Sep ~12:40 | 2 | User: build freeze in ~3h (rest for deck/video). Running in parallel (all uncommitted): 039d fix path (option C/b: hosted approve-all ends `done` unverified, patch reverted) IN REVIEW; 039 demo apps coder (shop-app e92c866, billing-service 2186039, wallet-api cdfc08c; ≤5 coins); web UI polish coder (web/ only); submission kit writer (docs/submission/SUBMISSION_KIT.md). README committed 9615561. PyPI: rook-cli taken, no user answer yet → default skip | (docs) |
 | 27 Sep 11:31 | 2 | ROOK-031 PASS r1 + committed. 38/40. 039d re-record running; 040 README drafted; rook-cli PyPI name taken | ROOK-031 |
