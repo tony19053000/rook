@@ -6,7 +6,7 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 27 Sep 10:20 IST. **Account 1 stopped** ("update handoff"). Both coders were stopped mid-work (TaskStop); no agents, servers or `bob run` left running. ONLY ONE orchestrator session at a time.
+**Updated:** 27 Sep (account 2 resumed). Suite at start: 1467 passed + web 210. **039c DONE: reviewer PASS r1, committed b7adb5f** (docs/02 §8 + deploy row hunks). 039b coder still running (uncommitted; docs/02 line ~175 hunk is 039b's). Previous note (account 1, 10:20): both coders stopped mid-work; ONLY ONE orchestrator session at a time.
 
 **Committed and DONE (reviewer PASS), pushed:** ROOK-001–030, 032–038 + 039a (37 / 40 tickets). HEAD f7eae54 (+ this docs commit). Bob coins ≈ 2.8 of 40. Full suite at HEAD: 1437 passed.
 
@@ -67,6 +67,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep | 2 | ROOK-039c PASS r1 + committed (no new code needed; reviewer notes: conftest planting bounded by path guard; command_timeout has no ceiling). 039b coding | ROOK-039c |
 | 27 Sep 10:20 | 1 | Update handoff (limit): stopped 039b + 039c coders mid-work (uncommitted, partial). User chose option A. Server + Vercel + Supabase fully live. 37/40 | (docs) |
 | 27 Sep 09:11 | 1 | ROOK-030 PASS r1 + committed. 37/40. Left: 031 (U2), 039 (U5 + A/B/C), 040 | ROOK-030 |
 | 27 Sep 08:08 | 1 | ROOK-039a + ROOK-038 PASS + committed. 36/40. Waiting: user deploy steps, A/B/C decision, demo apps, Supabase, GitHub App | ROOK-038 |

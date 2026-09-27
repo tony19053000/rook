@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-27 10:20 IST · **By:** Account 1 (update handoff: 039b + 039c partial, uncommitted; everything live)
+**Last updated:** 2026-09-27 · **By:** Account 2 (039c PASS + committed b7adb5f; 039b coder running)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
@@ -81,7 +81,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-036 | Web pages, picker, guest | P0 | DONE | reviewer PASS round 2; `npm run test:e2e` (web/e2e/smoke.mjs, replay, 0 coins, 17 checks). Replayed run ends `failed` at DIAGNOSE (Detective recording key includes sandbox logs; recorded in-process vs real uvicorn) → follow-up |
 | ROOK-037 | Server image + AWS EC2 deploy | P0 | DONE | reviewer PASS r1. Re-targeted from HF (Docker Spaces now paid) to AWS EC2 t3.small + Caddy on `<ip-dashes>.sslip.io`, profile `rook`, us-west-2 ($100 credits). Local: image builds, /health via Caddy, guest replay run to SAVE (fails at DIAGNOSE, known). NOT deployed yet: user runs deploy/aws/create.sh + deploy.sh + set-secret.sh BOB_API_KEY |
 | ROOK-038 | Vercel deploy | P0 | DONE | reviewer PASS r1. SSE `: flush` after bursts (Vercel held burst tails ~15 s); ROOK_PROXY_SECRET header via web/middleware.ts → trusted client IP; per-IP guest quota 10/day (cookie 3); nonce CSP; favicon; e2e/console.mjs. User must set ROOK_PROXY_SECRET on Vercel THEN server (deploy.sh + set-secret.sh) and check /health proxied:true |
-| ROOK-039 | Demo apps integration + recordings | P0 | IN PROGRESS | 039a DONE (DIAGNOSE deterministic). 039b (volatile masking, approve-all recordings) + 039c (option A: replay runs the patched workspace on hosted) PARTIAL, uncommitted. Waiting for the 3 demo repos (U5) |
+| ROOK-039 | Demo apps integration + recordings | P0 | IN PROGRESS | 039a DONE (DIAGNOSE deterministic). 039c DONE (reviewer PASS r1, b7adb5f: hosted replay runs the patched workspace; live skips VERIFY honestly). 039b (volatile masking, approve-all recordings) coding. Waiting for the 3 demo repos (U5) |
 | ROOK-040 | Release polish + PyPI | P1 | TODO | |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
