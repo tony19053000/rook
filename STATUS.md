@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-27 · **By:** Account 2 (039c PASS + committed b7adb5f; 039b coder running)
+**Last updated:** 2026-09-27 · **By:** Account 2 (039b + 039c committed; 031 coding; next: re-record fix path)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
@@ -73,7 +73,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-028 | Background run + chat | P0 | DONE | reviewer PASS round 1; teardown LookupError root cause = callbacks ran in run-thread contextvars → app context captured at bind(); regression test 20x green |
 | ROOK-029 | FastAPI server | P0 | DONE | reviewer PASS round 1. Follow-ups: replay → 501 until Session gets a replay-only mode; deploy must set ROOK_TRUSTED_PROXY_HOPS, ROOK_GUEST_SECRET, ROOK_WEB_ORIGINS, ROOK_DEMO_REPOS; verify the Vercel rewrite streams SSE |
 | ROOK-030 | Auth (Supabase + CLI login) | P1 | DONE | reviewer PASS r1. JWT HS256 + JWKS (project is ES256); web Google PKCE via @supabase/auth-js; rook login (localhost + --device), logout. No CLI token refresh (re-login after ~1h) |
-| ROOK-031 | GitHub App integration | P1 | TODO | needs U2 |
+| ROOK-031 | GitHub App integration | P1 | IN PROGRESS | U2 done (App ID 5093123, slug rook-invariants, secrets on AWS); coder running |
 | ROOK-032 | GitHub Action | P1 | DONE | reviewer PASS round 1; action.yml + rook-pr-comment (dry run, marker upsert, SHA pins verified). Open: Bob tgz hosting for live mode; README `@<full-commit-sha>` placeholder; never run on a real runner |
 | ROOK-033 | Web scaffold + event client | P0 | DONE | reviewer PASS round 1 (59 vitest, tsc, build, audit 0). Notes: /dev/stream chunk ships in prod (clean fixture); cap SSE line length; open contract gaps for 029 (Bearer+CORS on SSE, guest cookie SameSite cross-site, §11 response shapes, pct 0–100) |
 | ROOK-034 | Web sprite + rows | P0 | DONE | reviewer PASS round 1 (91 vitest; /dev/* 404 in prod verified). Follow-ups: 035 must clean() DevStream card text; bidi/zero-width pass through; one shared ticker for many rows |
@@ -81,7 +81,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-036 | Web pages, picker, guest | P0 | DONE | reviewer PASS round 2; `npm run test:e2e` (web/e2e/smoke.mjs, replay, 0 coins, 17 checks). Replayed run ends `failed` at DIAGNOSE (Detective recording key includes sandbox logs; recorded in-process vs real uvicorn) → follow-up |
 | ROOK-037 | Server image + AWS EC2 deploy | P0 | DONE | reviewer PASS r1. Re-targeted from HF (Docker Spaces now paid) to AWS EC2 t3.small + Caddy on `<ip-dashes>.sslip.io`, profile `rook`, us-west-2 ($100 credits). Local: image builds, /health via Caddy, guest replay run to SAVE (fails at DIAGNOSE, known). NOT deployed yet: user runs deploy/aws/create.sh + deploy.sh + set-secret.sh BOB_API_KEY |
 | ROOK-038 | Vercel deploy | P0 | DONE | reviewer PASS r1. SSE `: flush` after bursts (Vercel held burst tails ~15 s); ROOK_PROXY_SECRET header via web/middleware.ts → trusted client IP; per-IP guest quota 10/day (cookie 3); nonce CSP; favicon; e2e/console.mjs. User must set ROOK_PROXY_SECRET on Vercel THEN server (deploy.sh + set-secret.sh) and check /health proxied:true |
-| ROOK-039 | Demo apps integration + recordings | P0 | IN PROGRESS | 039a DONE (DIAGNOSE deterministic). 039c DONE (reviewer PASS r1, b7adb5f: hosted replay runs the patched workspace; live skips VERIFY honestly). 039b (volatile masking, approve-all recordings) coding. Waiting for the 3 demo repos (U5) |
+| ROOK-039 | Demo apps integration + recordings | P0 | IN PROGRESS | 039a DONE (DIAGNOSE deterministic). 039c DONE (reviewer PASS r1, b7adb5f: hosted replay runs the patched workspace; live skips VERIFY honestly). 039b DONE (reviewer PASS r1, 9c92834: volatile masking, id collisions, approve-all recordings 0.14 coins). Next: re-record Surgeon/fix path for hosted replay; then the 3 demo repos (U5). Waiting for the 3 demo repos (U5) |
 | ROOK-040 | Release polish + PyPI | P1 | TODO | |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
@@ -91,7 +91,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 | ID | Task | Status |
 |---|---|---|
 | U1 | Supabase + Google OAuth | DONE (Supabase nfegrmjlbwfgvcyhwddh; Google app in Testing mode → owner as test user; judges use guest) |
-| U2 | GitHub App "Rook" | TODO (step list given 27 Sep 10:15) |
+| U2 | GitHub App "Rook" | DONE (App ID 5093123, slug rook-invariants; 3 secrets on AWS) |
 | U3 | AWS account + IAM user rook-deploy (profile `rook`) | DONE (was HF Space; $100 credits) |
 | U4 | Vercel project | DONE (rook-weld-six.vercel.app) |
 | U5 | 3 demo apps via Antigravity | IN PROGRESS (user building; prompts in docs/demo-apps/) |
