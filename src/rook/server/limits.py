@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 import math
 import time
@@ -13,9 +14,25 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 _BODY_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 
 
-def client_ip(headers: Mapping[str, str], peer: str | None, trusted_hops: int) -> str:
+PROXY_SECRET_HEADER = "x-rook-proxy-secret"
+
+
+def proxy_verified(headers: Mapping[str, str], proxy_secret: str | None) -> bool:
+    """True when the request carries the shared secret the web proxy (Vercel middleware) adds (03 §8)."""
+    if not proxy_secret:
+        return False
+    given = headers.get(PROXY_SECRET_HEADER, "")
+    return hmac.compare_digest(given.encode("utf-8", "replace"), proxy_secret.encode())
+
+
+def client_ip(headers: Mapping[str, str], peer: str | None, trusted_hops: int,
+              proxy_secret: str | None = None) -> str:
     """The caller's IP. Behind `trusted_hops` proxies, the entry that many places from the right of
-    X-Forwarded-For (each proxy appends the address it saw); the left-most entries are client-controlled."""
+    X-Forwarded-For (each proxy appends the address it saw); the left-most entries are client-controlled.
+    With a `proxy_secret`, the outermost proxy (Vercel) is trusted only when the request proves it came through
+    it; otherwise that hop is dropped, so a caller that skips it is counted by the address our own proxy saw."""
+    if proxy_secret and trusted_hops > 0 and not proxy_verified(headers, proxy_secret):
+        trusted_hops -= 1
     if trusted_hops > 0:
         forwarded = [p.strip() for p in headers.get("x-forwarded-for", "").split(",") if p.strip()]
         if forwarded:
@@ -109,10 +126,12 @@ class RateLimit:
     """60 requests/min per IP on the API and 10/min on `POST /runs` (03 §8); `exempt` paths skip it."""
 
     def __init__(self, app: ASGIApp, *, prefix: str, per_minute: int, runs_per_minute: int, trusted_hops: int,
-                 exempt: frozenset[str] = frozenset(), clock: Callable[[], float] = time.monotonic) -> None:
+                 proxy_secret: str | None = None, exempt: frozenset[str] = frozenset(),
+                 clock: Callable[[], float] = time.monotonic) -> None:
         self.app = app
         self.prefix = prefix
         self.trusted_hops = trusted_hops
+        self.proxy_secret = proxy_secret
         self.exempt = exempt
         self.api = RateLimiter(per_minute, clock=clock)
         self.runs = RateLimiter(runs_per_minute, clock=clock)
@@ -125,7 +144,7 @@ class RateLimit:
             return
         headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope["headers"]}
         peer = scope["client"][0] if scope.get("client") else None
-        ip = client_ip(headers, peer, self.trusted_hops)
+        ip = client_ip(headers, peer, self.trusted_hops, self.proxy_secret)
         wait = self.api.hit(ip)
         if not wait and scope["method"] == "POST" and path.rstrip("/") == f"{self.prefix}/runs":
             wait = self.runs.hit(ip)

@@ -73,8 +73,9 @@ def _admit(state: ServerState, caller: Caller, request: Request, auto: bool) -> 
         raise HTTPException(429, "The server is busy; try again in a few minutes", headers={"Retry-After": "60"})
     if caller.is_guest:
         peer = request.client.host if request.client else None
-        ip = client_ip(request.headers, peer, settings.trusted_proxy_hops)
-        if not state.db.consume_run([f"guest:{caller.id}", f"ip:{ip}"], day, settings.guest_runs_per_day):
+        ip = client_ip(request.headers, peer, settings.trusted_proxy_hops, settings.proxy_secret_value())
+        limits = {f"guest:{caller.id}": settings.guest_runs_per_day, f"ip:{ip}": settings.guest_runs_per_ip_per_day}
+        if not state.db.consume_run(limits, day):
             raise HTTPException(429, GUEST_LIMIT_MESSAGE, headers=retry)
     return SessionOptions(auto=auto, hosted=True, daily_cap=cap, daily_spent=spent)
 
@@ -173,8 +174,8 @@ async def run_events(run_id: OwnedRun, state: State,
         source = state.bus.subscribe(run_id, after)
     else:
         source = stored_events(state.store.events_after(run_id, after))
-    return StreamingResponse(sse_stream(source, state.settings.ping_seconds), media_type="text/event-stream",
-                             headers=SSE_HEADERS)
+    stream = sse_stream(source, state.settings.ping_seconds, state.settings.flush_seconds)
+    return StreamingResponse(stream, media_type="text/event-stream", headers=SSE_HEADERS)
 
 
 @router.post("/runs/{run_id}/answers", response_model=Ok)

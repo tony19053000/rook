@@ -19,6 +19,8 @@ Rook reads your repository, works out the business rules your app must never bre
 
 Built for the **IBM Bob 2.0 Hackathon** (lablab.ai, Sep 2026).
 
+**Try it in the browser: <https://rook-weld-six.vercel.app>** (guest demo, no sign-in needed).
+
 🚧 **Status: in active development during the hackathon.** See [`STATUS.md`](STATUS.md) for live progress.
 
 ---
@@ -104,7 +106,7 @@ rook explain <cx-id>      # ask Bob why it broke
 rook verify <cx-id>       # prove a fix
 ```
 
-**Web app:** the same experience in the browser, at the hosted URL (coming soon). Try the demo repos without signing in.
+**Web app:** the same experience in the browser at <https://rook-weld-six.vercel.app>. Try the demo repos without signing in.
 
 ## GitHub Action
 

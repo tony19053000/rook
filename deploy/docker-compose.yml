@@ -19,7 +19,9 @@ services:
       # Only for CORS (local dev, direct calls); the web itself calls same-origin through the Vercel rewrite.
       ROOK_WEB_ORIGINS: ${ROOK_WEB_ORIGINS:-http://localhost:3000}
       # browser -> Vercel -> Caddy -> rook: Vercel sets X-Forwarded-For to the client IP (it overwrites any
-      # client-sent value) and Caddy appends Vercel's IP, so the client is 2 entries from the right.
+      # client-sent value) and Caddy appends Vercel's IP, so the client is 2 entries from the right. With
+      # ROOK_PROXY_SECRET in the env file, the Vercel entry is trusted only on requests that carry the secret header
+      # (03 §8); the rest are counted by the address Caddy saw.
       ROOK_TRUSTED_PROXY_HOPS: "2"
       ROOK_DAILY_COIN_CAP: ${ROOK_DAILY_COIN_CAP:-2}
       ROOK_DB_PATH: /data/rook.db

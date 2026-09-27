@@ -29,7 +29,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEPLOY = ROOT / "deploy"
 AWS = DEPLOY / "aws"
 SCRIPTS = sorted([*AWS.glob("*.sh"), *AWS.glob("scripts/*.sh"), *DEPLOY.glob("*.sh"), DEPLOY / "demos/build-demos.sh"])
-SECRET_NAMES = ("BOB_API_KEY", "ROOK_GUEST_SECRET", "SUPABASE_JWT_SECRET", "SUPABASE_URL", "GITHUB_APP_ID",
+SECRET_NAMES = ("BOB_API_KEY", "ROOK_GUEST_SECRET", "ROOK_PROXY_SECRET", "SUPABASE_JWT_SECRET", "SUPABASE_URL", "GITHUB_APP_ID",
                 "GITHUB_APP_PRIVATE_KEY", "GITHUB_WEBHOOK_SECRET")
 # Built at runtime so no PEM marker sits in the repo.
 DASH = "-" * 5

@@ -8,6 +8,10 @@ const plexSans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600
 const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
 const newsreader = Newsreader({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-newsreader" });
 
+// Every page renders per request so it can carry that request's CSP nonce (middleware.ts, 03 §8): a page
+// prerendered at build time would have scripts without a nonce, and the browser would block them.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Rook",
   description: "Finds the smallest sequence of actions that breaks a business rule, proves it, and verifies the fix.",

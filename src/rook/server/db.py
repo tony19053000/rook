@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import threading
-from collections.abc import Sequence
+from collections.abc import Mapping
 from pathlib import Path
 
 from rook.store.db import connect
@@ -23,16 +23,16 @@ class ServerDb:
         with self._lock:
             self._conn.close()
 
-    def consume_run(self, keys: Sequence[str], day: str, limit: int) -> bool:
-        """Count one run against every key for `day`, only if none of them is at `limit` yet (atomic)."""
+    def consume_run(self, limits: Mapping[str, int], day: str) -> bool:
+        """Count one run against every key for `day`, only if none of them is at its limit yet (atomic)."""
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             try:
                 used: dict[str, int] = {}
-                for key in keys:
+                for key in limits:
                     row = self._conn.execute("SELECT day, runs FROM guest_quota WHERE key = ?", (key,)).fetchone()
                     used[key] = row["runs"] if row is not None and row["day"] == day else 0
-                if any(n >= limit for n in used.values()):
+                if any(n >= limits[key] for key, n in used.items()):
                     self._conn.execute("ROLLBACK")
                     return False
                 for key, n in used.items():

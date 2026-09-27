@@ -91,6 +91,7 @@ def create_app(
     app.add_middleware(BodySizeLimit, max_bytes=settings.max_body_bytes)
     app.add_middleware(RateLimit, prefix=API_PREFIX, per_minute=settings.rate_per_minute,
                        runs_per_minute=settings.runs_per_minute, trusted_hops=settings.trusted_proxy_hops,
+                       proxy_secret=settings.proxy_secret_value(),
                        exempt=frozenset({f"{API_PREFIX}/health"}))
     app.add_middleware(CORSMiddleware, allow_origins=settings.web_origins, allow_credentials=True,
                        allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type", "Accept"],

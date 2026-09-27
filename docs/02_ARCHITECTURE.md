@@ -380,7 +380,7 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 
 | Method | Path | Auth | Body → Response |
 |---|---|---|---|
-| GET | `/health` | none | → `{ok, version, bob_mode}` |
+| GET | `/health` | none | → `{ok, version, bob_mode, proxied}` (`proxied`: the request carried the web proxy's `ROOK_PROXY_SECRET` header, 03 §8) |
 | GET | `/me` | user | → `{id, email, github_connected}` |
 | GET | `/repos` | user or guest | → `[{kind: github\|demo, ref, name, private, language}]` (guests only see demo repos) |
 | POST | `/runs` | user or guest | `{repo:{kind,ref}, request, options:{auto?:bool}}` → `{run_id}` (guest: demo repos only, quota) |
@@ -425,13 +425,17 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
   answer: any}`; `chat` body: `{text: str (1-2000)}`.
 - **`POST /counterexamples/{id}/replay`** answers 501 until the Session supports a replay-only run.
 - **SSE** (`/runs/{id}/events?after=N`, `N` an integer ≥ 0, default 0): each message is `id: <seq>` plus one
-  `data: <envelope JSON>` line (§9); a `: ping` comment every 15 s; the stream ends after `run.finished`. For a
+  `data: <envelope JSON>` line (§9); a `: ping` comment every 15 s; the stream ends after `run.finished`. A
+  `: flush` comment follows each burst of events once the stream has been quiet for 0.25 s: the Vercel rewrite
+  proxy holds back the tail of a burst until the next bytes arrive (measured: a 3 KB `question.asked` waited for the
+  next ping, 15 s), and this small separate write pushes it through. Clients ignore comments. For a
   finished run it sends the stored events after `N` and ends. The owner is re-checked on every connect.
 - **Errors** are `{detail: str}` and never echo the request: 400 invalid input, 401 bad or missing auth, 403 not
   allowed (guest or non-demo repo), 404 missing run **or not the owner**, 413 body over 64 KB, 429 rate limit /
   guest quota / queue full / daily coin cap (with `Retry-After`), 501 not available yet.
 - **Web access** goes through a same-origin Vercel rewrite (`/api/v1/*` → the EC2 server), so the guest cookie is
-  first-party. CORS still allows only the configured web origins (never `*`), with credentials and the
+  first-party. The web middleware adds the `X-Rook-Proxy-Secret` header (`ROOK_PROXY_SECRET`) to these requests, so
+  the server can trust the client IP Vercel forwards (03 §8). CORS still allows only the configured web origins (never `*`), with credentials and the
   `Authorization` and `Content-Type` headers.
 
 ## 12. CLI architecture
@@ -454,16 +458,17 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 - `lib/events.ts` holds TS types that mirror section 9, and `lib/sse.ts` handles reconnecting to the SSE stream with `after`.
 - `lib/runStore.ts` is a reducer from events to UI state, the **same logic** as the TUI.
 - Components: `AgentSprite` (a canvas that ports the sprite shapes), `AgentRow`, `EngineRow`, `QuestionCard`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, `Sidebar`, `Composer`, `RepoPicker`.
+- **`middleware.ts`** (03 §8): on `/api/*` it replaces any client-sent `X-Rook-Proxy-Secret` with `ROOK_PROXY_SECRET` (a server-only env var; unset = no header) before the rewrite; on pages it sets a per-request nonce Content-Security-Policy (`lib/security.ts`), which Next.js puts on its scripts. So every page renders per request (`dynamic = "force-dynamic"` in the root layout). Static security headers come from `next.config.ts` `headers()`. `e2e/console.mjs <origin> [--run]` loads the pages in headless Chrome and fails on any console error, CSP violation or failed request.
 - The browser calls the API **same-origin** through a Vercel rewrite (`/api/v1/*` → the EC2 server behind Caddy, a proxy, not a function), so the `rook_guest` cookie stays first-party (SameSite=Lax). The rewrite target is `ROOK_API_PROXY_TARGET` (the server origin, read at build time; no rewrite when unset). `NEXT_PUBLIC_API_URL` is the base the client uses: unset in production (the browser then calls same-origin `/api/v1`), the server URL in local dev without the proxy.
 
 ## 14. Deployment
 
 | Piece | Where | Notes |
 |---|---|---|
-| Web | Vercel project `rook` | env (all public, none is a secret): `ROOK_API_PROXY_TARGET` = the server origin, e.g. `https://203-0-113-7.sslip.io` (build-time: it sets the `/api/v1/*` rewrite, so set it before the build and redeploy after changing it; origin only, no path), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`. `NEXT_PUBLIC_API_URL` stays **unset** on Vercel so the browser uses same-origin `/api/v1` through the rewrite. The server's `ROOK_WEB_ORIGINS` should list the Vercel origin (CORS for direct calls) |
+| Web | Vercel project `rook`, <https://rook-weld-six.vercel.app> (Git-connected: every push to `main` redeploys) | env: `ROOK_API_PROXY_TARGET` = the server origin, e.g. `https://203-0-113-7.sslip.io` (public; build-time: it sets the `/api/v1/*` rewrite, so set it before the build and redeploy after changing it; origin only, no path), `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (public), and **`ROOK_PROXY_SECRET`** (a secret: mark it Sensitive, never `NEXT_PUBLIC_`; read at runtime by the middleware only; the same value as on the server, at least 32 chars, e.g. `openssl rand -hex 32`). `NEXT_PUBLIC_API_URL` stays **unset** on Vercel so the browser uses same-origin `/api/v1` through the rewrite. The server's `ROOK_WEB_ORIGINS` should list the Vercel origin (CORS for direct calls). Check the secret end to end with `curl https://<web>/api/v1/health` → `"proxied": true` |
 | Server | AWS EC2 (`us-west-2`, one `t3.small`, Ubuntu 24.04, 30 GB gp3, IMDSv2, Elastic IP), `deploy/docker-compose.yml` | Two containers. **caddy** (`caddy:2.11.4-alpine`, ports 80/443) gets a Let's Encrypt certificate for `ROOK_HOST` = `<ip-dashes>.sslip.io` and proxies only `/api/v1/*` (SSE unbuffered, `flush_interval -1`). **rook** (`deploy/Dockerfile`: Python 3.12 + uv, Node 22, Go, optional Bob Shell 2.0.5 on Node 24, non-root user `rook`, tini, `uvicorn rook.server.app:app --port 8000`) is not published: only Caddy reaches it. The database and workspaces live on the `rook-data` volume (`ROOK_DB_PATH=/data/rook.db`, `ROOK_WORKSPACES=/data/workspaces`). `ROOK_BOB_MODE` defaults to `replay` |
 | Server config | `deploy/.env` on the host (non-secret, written by `deploy/aws/deploy.sh`) | `ROOK_HOST`, `ROOK_WEB_ORIGINS`, `ROOK_BOB_MODE`, `ROOK_DAILY_COIN_CAP` (default 2). Fixed in the compose file: `ROOK_TRUSTED_PROXY_HOPS=2` (browser → Vercel → Caddy → rook: Vercel overwrites `X-Forwarded-For` with the client IP and Caddy, which trusts every peer because Vercel has no fixed egress IPs, appends Vercel's IP, so the client is the 2nd entry from the right). In the image: `ROOK_ALLOWLIST=/opt/rook/config/allowlist.yaml`, `ROOK_DEMO_REPOS=/opt/rook/config/demos.yaml` (from `deploy/demos/`) |
-| Server secrets | `/etc/rook/rook.env` on the host only (root, `600`), compose `env_file` | Set one at a time with `deploy/aws/scripts/set-secret.sh NAME` (value over ssh stdin; allowlist: `BOB_API_KEY`, `ROOK_GUEST_SECRET`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`). Never in the image, the repo, user-data or argv. `deploy.sh` generates `ROOK_GUEST_SECRET` on the host when it is missing. The server process sees `GITHUB_APP_PRIVATE_KEY` as the PEM with **real newlines** (it is stored `\n`-escaped in double quotes, which compose expands) |
+| Server secrets | `/etc/rook/rook.env` on the host only (root, `600`), compose `env_file` | Set one at a time with `deploy/aws/scripts/set-secret.sh NAME` (value over ssh stdin; allowlist: `BOB_API_KEY`, `ROOK_GUEST_SECRET`, `ROOK_PROXY_SECRET`, `SUPABASE_JWT_SECRET`, `SUPABASE_URL`, `GITHUB_APP_ID`, `GITHUB_APP_PRIVATE_KEY`, `GITHUB_WEBHOOK_SECRET`). Never in the image, the repo, user-data or argv. `deploy.sh` generates `ROOK_GUEST_SECRET` on the host when it is missing. The server process sees `GITHUB_APP_PRIVATE_KEY` as the PEM with **real newlines** (it is stored `\n`-escaped in double quotes, which compose expands) |
 | Demo apps | `deploy/demos/` baked into the image | `repos.txt` lists the demo repos (`owner/name`, pinned 40-char SHA, https URL, build recipe `none/npm/go/uv`), cloned and pre-built by `build-demos.sh` into `/opt/rook/demos/<name>`; each needs matching entries in `allowlist.yaml` and `demos.yaml`. Interim demo until ROOK-039: `rook-demo/minishop` (the `tests/fixtures/minishop` app, pseudo-SHA `sha1("rook-demo-minishop")`) with its Bob recordings in `/home/rook/.rook/recordings` for replay |
 | Bob Shell | `deploy/vendor/bobshell-2.0.5.tgz` (gitignored, packed by `deploy/pack-bob.sh`) | Never committed (licence unknown). Without it the image builds replay-only and `start.sh` refuses `live`/`record` mode; `live` also needs `BOB_API_KEY` |
 | Uptime | none needed | EC2 does not sleep, so there is no keep-alive job. Optional: any external uptime monitor on `https://<host>/api/v1/health` (rate-limit exempt) |

@@ -8,6 +8,8 @@ export interface Health {
   ok: boolean;
   version: string;
   bob_mode: string;
+  /** The request came through the web proxy with its ROOK_PROXY_SECRET header (02 §11). */
+  proxied: boolean;
 }
 
 export interface Me {

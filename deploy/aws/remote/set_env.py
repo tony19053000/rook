@@ -22,6 +22,7 @@ from pathlib import Path
 ALLOWED = (
     "BOB_API_KEY",
     "ROOK_GUEST_SECRET",
+    "ROOK_PROXY_SECRET",
     "SUPABASE_JWT_SECRET",
     "SUPABASE_URL",
     "GITHUB_APP_ID",
@@ -31,7 +32,7 @@ ALLOWED = (
 PEM_NAME = "GITHUB_APP_PRIVATE_KEY"
 DEFAULT_FILE = Path("/etc/rook/rook.env")
 _PEM = re.compile(r"-----BEGIN [A-Z ]+-----\n[A-Za-z0-9+/=\n]+\n-----END [A-Z ]+-----")
-_MIN_LENGTH = {"ROOK_GUEST_SECRET": 32}
+_MIN_LENGTH = {"ROOK_GUEST_SECRET": 32, "ROOK_PROXY_SECRET": 32}
 
 
 class SecretError(ValueError):

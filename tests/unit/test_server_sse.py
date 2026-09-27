@@ -1,7 +1,9 @@
 """ROOK-029: `GET /runs/{id}/events?after=N`: the SSE format the web client (web/lib/sse.ts) reads, resume
 after a seq, the live tail, pings, and the fatal 400 for a bad `after`."""
 
+import asyncio
 import json
+from collections.abc import AsyncIterator
 from pathlib import Path
 
 import pytest
@@ -18,6 +20,9 @@ from server_helpers import (
     state_of,
     wait_for,
 )
+
+from rook.core.events import Event, now_ts
+from rook.server.sse import sse_stream
 
 API = "/api/v1"
 BOB_PREFIX = "bob" + "_prod_"
@@ -140,3 +145,44 @@ async def test_secrets_in_events_are_redacted_on_the_wire(tmp_path: Path) -> Non
         response = await client.get(f"{API}/runs/{run_id}/events", headers=ALICE)
     assert BOB_PREFIX not in response.text and GH_PREFIX not in response.text
     assert "[REDACTED]" in response.text
+
+
+# --- ROOK-038: a `: flush` comment after each burst, so the Vercel rewrite proxy passes the burst on at once ---
+
+
+def _event(seq: int, event_type: str = "log") -> Event:
+    return Event(seq=seq, ts=now_ts(), run_id="r_aaaaaaaaaaaa", type=event_type,
+                 data={"level": "info", "text": str(seq)} if event_type == "log" else {"status": "done", "summary": ""})
+
+
+async def test_a_burst_is_followed_by_one_flush_then_pings() -> None:
+    resume = asyncio.Event()
+
+    async def events() -> AsyncIterator[Event]:
+        yield _event(1)
+        yield _event(2)
+        await resume.wait()
+        yield _event(3, "run.finished")
+
+    stream = sse_stream(events(), ping_seconds=0.2, flush_seconds=0.01)
+    parts = [await anext(stream) for _ in range(6)]
+    resume.set()
+    parts += [part async for part in stream]
+    assert parts[0] == ": connected\n\n"
+    assert [p.split("\n")[0] for p in parts[1:3]] == ["id: 1", "id: 2"]
+    assert parts[3:6] == [": flush\n\n", ": ping\n\n", ": ping\n\n"]  # one flush per burst, then pings
+    assert parts[6].startswith("id: 3") and len(parts) == 7  # nothing after run.finished
+
+
+async def test_the_live_stream_flushes_after_events(tmp_path: Path) -> None:
+    factory = Factory()
+    app = make_app(tmp_path, factory, ping_seconds=60, flush_seconds=0.01)
+    async with client_for(app) as client:
+        run_id = await create_run(client, ALICE)
+        await wait_for(factory.sessions[run_id].asked.is_set)
+        stream = RawStream(app, f"{API}/runs/{run_id}/events", "after=0", ALICE)
+        text = await stream.read_until(": flush")
+        await stream.close()
+        await client.post(f"{API}/runs/{run_id}/cancel", headers=ALICE)
+    assert text.index('"type":"question.asked"') < text.index(": flush") and ": ping" not in text
+    assert stream.headers["x-accel-buffering"] == "no" and "no-cache" in stream.headers["cache-control"]

@@ -23,7 +23,7 @@ from server_helpers import (
 from rook.core.events import clear_secrets, now_ts, register_secret
 from rook.server.auth import GUEST_COOKIE, GuestCookies
 from rook.server.config import ServerSettings
-from rook.server.limits import RateLimiter, client_ip
+from rook.server.limits import PROXY_SECRET_HEADER, RateLimiter, client_ip
 from rook.store.repo import RunRecord, Store
 
 API = "/api/v1"
@@ -153,6 +153,65 @@ def test_client_ip_counts_trusted_proxies_from_the_right() -> None:
     assert client_ip({}, "10.9.9.9", 2) == "10.9.9.9"
 
 
+PROXY_SECRET = "p" * 40  # a fake value for the tests
+
+
+def test_with_a_proxy_secret_the_vercel_hop_is_trusted_only_when_proven() -> None:
+    chain = "6.6.6.6, 1.2.3.4, 10.0.0.1"  # spoofed, client, the Vercel hop
+    proven = {"x-forwarded-for": chain, PROXY_SECRET_HEADER: PROXY_SECRET}
+    assert client_ip(proven, "10.9.9.9", 2, PROXY_SECRET) == "1.2.3.4"
+    # A caller that skips Vercel sends its own X-Forwarded-For; Caddy appends the address it really saw.
+    direct = {"x-forwarded-for": "1.2.3.4, 203.0.113.9"}
+    assert client_ip(direct, "10.9.9.9", 2, PROXY_SECRET) == "203.0.113.9"
+    wrong = {**direct, PROXY_SECRET_HEADER: "p" * 39 + "q"}
+    assert client_ip(wrong, "10.9.9.9", 2, PROXY_SECRET) == "203.0.113.9"
+    assert client_ip({**direct, PROXY_SECRET_HEADER: "\u00e9" * 3}, "10.9.9.9", 2, PROXY_SECRET) == "203.0.113.9"
+    assert client_ip(direct, "10.9.9.9", 2, None) == "1.2.3.4"  # no secret configured: the ROOK-037 behaviour
+
+
+def test_the_proxy_secret_setting() -> None:
+    settings = ServerSettings.from_env({"ROOK_PROXY_SECRET": PROXY_SECRET, "ROOK_GUEST_SECRET": "k" * 40})
+    assert settings.proxy_secret_value() == PROXY_SECRET
+    assert PROXY_SECRET not in repr(settings) and PROXY_SECRET not in settings.model_dump_json()
+    assert ServerSettings().proxy_secret_value() is None
+    with pytest.raises(ValidationError):
+        ServerSettings.from_env({"ROOK_PROXY_SECRET": "short"})
+
+
+async def test_health_says_whether_the_request_came_through_the_proxy(tmp_path: Path) -> None:
+    app = make_app(tmp_path, trusted_proxy_hops=2, proxy_secret=PROXY_SECRET)
+    async with client_for(app) as client:
+        proxied = await client.get(f"{API}/health", headers={PROXY_SECRET_HEADER: PROXY_SECRET})
+        direct = await client.get(f"{API}/health", headers={PROXY_SECRET_HEADER: "nope"})
+    assert proxied.json()["proxied"] is True and direct.json()["proxied"] is False
+    assert PROXY_SECRET not in proxied.text
+
+
+async def test_the_guest_quota_uses_the_proven_client_ip(tmp_path: Path) -> None:
+    """Through Vercel two guests on different IPs don't share a quota; a direct caller can't pick its IP."""
+    factory = Factory()
+    app = make_app(tmp_path, factory, max_concurrent_runs=20, trusted_proxy_hops=2, proxy_secret=PROXY_SECRET,
+                   guest_runs_per_ip_per_day=2, rate_per_minute=1000, runs_per_minute=1000)
+
+    def via_vercel(client_ip: str) -> dict[str, str]:
+        return {"X-Forwarded-For": f"{client_ip}, 10.0.0.1", PROXY_SECRET_HEADER: PROXY_SECRET,
+                **guest_headers(app)[1]}
+
+    def spoofed(fake_ip: str) -> dict[str, str]:  # direct to Caddy, which appends the real peer 203.0.113.9
+        return {"X-Forwarded-For": f"{fake_ip}, 203.0.113.9", **guest_headers(app)[1]}
+
+    async with client_for(app) as client:
+        a = [(await client.post(f"{API}/runs", json=NEW_RUN, headers=via_vercel("1.1.1.1"))).status_code
+             for _ in range(3)]
+        b = (await client.post(f"{API}/runs", json=NEW_RUN, headers=via_vercel("2.2.2.2"))).status_code
+        fake = [(await client.post(f"{API}/runs", json=NEW_RUN, headers=spoofed(f"9.9.9.{i}"))).status_code
+                for i in range(3)]
+        for session in factory.sessions.values():
+            session.cancel()
+    assert a == [200, 200, 429] and b == 200
+    assert fake == [200, 200, 429]
+
+
 # --- guest cookie and guest limits ---
 
 
@@ -206,18 +265,21 @@ async def test_guest_quota_is_3_runs_per_day(tmp_path: Path) -> None:
 
 
 async def test_guest_quota_also_counts_per_ip(tmp_path: Path) -> None:
-    """Dropping the cookie (a new guest) doesn't reset the quota from the same address."""
+    """Dropping the cookie (a new guest) doesn't reset the quota from the same address: 10 runs per IP."""
     factory = Factory()
-    app = make_app(tmp_path, factory, max_concurrent_runs=10)
+    app = make_app(tmp_path, factory, max_concurrent_runs=20, max_queued_runs=20, runs_per_minute=100)
+    assert state_of(app).settings.guest_runs_per_ip_per_day == 10
     async with client_for(app, ip="10.2.2.2") as client:
         codes = []
-        for _ in range(4):
-            codes.append((await client.post(f"{API}/runs", json=NEW_RUN, headers=guest_headers(app)[1])).status_code)
+        for _ in range(11):
+            response = await client.post(f"{API}/runs", json=NEW_RUN, headers=guest_headers(app)[1])
+            codes.append(response.status_code)
+        assert response.json()["detail"].startswith("Demo limit reached")
         async with second_client(app, ip="10.3.3.3") as other:
             other_ip = await other.post(f"{API}/runs", json=NEW_RUN, headers=guest_headers(app)[1])
         for session in factory.sessions.values():
             session.cancel()
-    assert codes == [200, 200, 200, 429]
+    assert codes == [200] * 10 + [429]
     assert other_ip.status_code == 200
 
 

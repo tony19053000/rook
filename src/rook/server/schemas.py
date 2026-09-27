@@ -17,6 +17,7 @@ class Health(BaseModel):
     ok: bool
     version: str
     bob_mode: str
+    proxied: bool  # the request came through the web proxy (its ROOK_PROXY_SECRET header matched)
 
 
 class Me(BaseModel):

@@ -50,7 +50,7 @@ async def test_health(tmp_path: Path) -> None:
     async with client_for(make_app(tmp_path)) as client:
         response = await client.get(f"{API}/health")
     assert response.status_code == 200
-    assert response.json() == {"ok": True, "version": "0.1.0", "bob_mode": "replay"}
+    assert response.json() == {"ok": True, "version": "0.1.0", "bob_mode": "replay", "proxied": False}
 
 
 async def test_me_for_a_user_and_not_for_a_guest(tmp_path: Path) -> None:
