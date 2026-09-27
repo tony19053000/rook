@@ -146,7 +146,7 @@ describe("runs list (04 §3.2 /runs)", () => {
 
 describe("errors and limits (04 §3.6)", () => {
   it("the guest limit card shows the install command", () => {
-    const view = errorView(new ApiError(429, "Demo limit reached for today. Install the CLI to run on your own repos: uv tool install rook-cli"), "create");
+    const view = errorView(new ApiError(429, "Demo limit reached for today. Install the CLI to run on your own repos: uv tool install git+https://github.com/tony19053000/rook"), "create");
     const out = html(<ErrorCard view={view} onRetry={() => {}} />);
     expect(out).toContain("Demo limit reached for today");
     expect(out).toContain(`<code class="rounded bg-sunk px-1.5 py-0.5 font-mono text-[13px]">${CLI_INSTALL}</code>`);

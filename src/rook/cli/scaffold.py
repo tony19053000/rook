@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv tool install rook-cli
+      - run: uv tool install git+https://github.com/tony19053000/rook
       - run: rook run . --ci --auto
         env:
           BOB_API_KEY: ${{ secrets.BOB_API_KEY }}

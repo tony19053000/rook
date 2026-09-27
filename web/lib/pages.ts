@@ -11,7 +11,7 @@ import { displayName, type Session } from "./session";
 export const REQUEST_MAX = 2000;
 export const DEFAULT_REQUEST = "Find bugs";
 /** 04 §3.6, the guest limit copy; the command is shown as code. */
-export const CLI_INSTALL = "uv tool install rook-cli";
+export const CLI_INSTALL = "uv tool install git+https://github.com/tony19053000/rook";
 /** 04 §3.3: the composer note under a picked GitHub repo when the server runs it (ROOK-041). */
 export const HOSTED_GITHUB_NOTE = "Runs live on Rook's server with IBM Bob · costs coins";
 /** How often the recents refresh while a run is queued or running. */

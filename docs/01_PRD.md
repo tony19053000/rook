@@ -58,7 +58,7 @@ Rook reads a repository and uses **IBM Bob agents** to work out the business rul
 
 ## 5. The core flow (user journey)
 
-1. **Install:** `pipx install rook-cli` or `uv tool install rook-cli`, then type `rook`.
+1. **Install:** `uv tool install git+https://github.com/tony19053000/rook`, then type `rook`.
 2. **First run:** animated logo → **sign in with Google** in the browser → **connect GitHub** (a GitHub App; pick the repos, private repos work). The login is saved, so after that `rook` opens straight into the chat.
 3. **Ask:** type "find bugs in my app", or use `/run`. Rook asks **which repo**: a local folder, a connected GitHub repo, or a pasted URL.
 4. **Understand:** the **Scout** reads the repo, the **Mechanic** starts the app in a Docker sandbox, and the **Mapper** turns endpoints into actions and state readers.

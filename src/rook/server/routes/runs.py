@@ -47,7 +47,7 @@ _CX_ID = re.compile(r"[A-Za-z0-9_]{1,80}")
 _STATUSES: frozenset[str] = frozenset({"queued", "running", "done", "failed", "cancelled"})
 _HEADLINE_MAX = 120
 GUEST_LIMIT_MESSAGE = ("Demo limit reached for today. Install the CLI to run on your own repos: "
-                       "uv tool install rook-cli")
+                       "uv tool install git+https://github.com/tony19053000/rook")
 LIST_LIMIT = 50
 
 

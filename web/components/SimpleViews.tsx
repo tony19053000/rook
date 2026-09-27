@@ -85,7 +85,7 @@ export function LoginView({ session, runs, signIn = { available: SIGN_IN_AVAILAB
         )}
         <p className="text-[12.5px] text-muted">
           Guests can run the demo repositories a few times a day. To run on your own repos, install the CLI:{" "}
-          <code className="font-mono">uv tool install rook-cli</code>
+          <code className="font-mono">uv tool install git+https://github.com/tony19053000/rook</code>
         </p>
       </div>
     </AppShell>

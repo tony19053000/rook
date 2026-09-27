@@ -195,7 +195,7 @@ Fonts: **Newsreader** (the greeting and wordmark only), **IBM Plex Sans** (UI) a
 - **Loading** a run: skeleton rows. **Reconnecting** the SSE: a thin banner "Reconnecting…" with a retry that resumes with `after`.
 - **Errors:** an inline card with a clear cause and next step (for example: "The app didn't start: port 3000 never answered. Check the logs or edit the start command.").
 - **Empty recents:** "No runs yet. Pick a repository to start."
-- **Guest limits reached:** "Demo limit reached for today. Install the CLI to run on your own repos: `uv tool install rook-cli`."
+- **Guest limits reached:** "Demo limit reached for today. Install the CLI to run on your own repos: `uv tool install git+https://github.com/tony19053000/rook`."
 
 ### 3.7 Accessibility
 Keyboard navigation for the composer, picker and buttons, with a visible focus ring. `aria-live="polite"` on the chat column. Color is never the only signal (there's always a ✓/✗/? plus text). Contrast is at least 4.5:1 for text.
