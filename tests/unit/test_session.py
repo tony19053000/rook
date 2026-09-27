@@ -248,7 +248,7 @@ async def test_auto_mode_never_approves_a_rule_flagged_already_broken(tmp_path: 
                for log in h.events("log"))
 
 
-async def test_the_featured_rule_is_marked_in_the_payload_and_auto_mode_ignores_it(tmp_path: Path) -> None:
+async def test_the_featured_rule_is_marked_in_the_payload_and_auto_mode_approves_only_it(tmp_path: Path) -> None:
     h = Harness(tmp_path, replies(lawmaker=[{"rules": list(RULES.values())}],
                                   rule_critic=[approve_all(*RULES)]), auto=True,
                 search_sequences=1, verify_sequences=1, featured_rule="refund_le_paid")
@@ -257,7 +257,18 @@ async def test_the_featured_rule_is_marked_in_the_payload_and_auto_mode_ignores_
     assert {r["id"]: r["featured"] for r in asked["payload"]["rules"]} == {
         i: i == "refund_le_paid" for i in RULES}
     (answered, *_) = h.events("question.answered")
-    assert set(answered["answer"]) == set(RULES) - {"admin_export_forbidden"}  # unchanged auto answer
+    assert answered["by"] == "auto" and answered["answer"] == ["refund_le_paid"]
+    assert h.events("rules.approved")[0]["rule_ids"] == ["refund_le_paid"]
+
+
+async def test_auto_mode_falls_back_when_the_featured_rule_is_not_auto_approvable(tmp_path: Path) -> None:
+    # A flagged featured rule is never auto-approved: the usual auto answer applies.
+    h = Harness(tmp_path, replies(lawmaker=[{"rules": list(RULES.values())}],
+                                  rule_critic=[approve_all(*RULES)]), auto=True,
+                search_sequences=1, verify_sequences=1, featured_rule="admin_export_forbidden")
+    await h.session.run()
+    (answered, *_) = h.events("question.answered")
+    assert set(answered["answer"]) == set(RULES) - {"admin_export_forbidden"}
 
 
 async def test_a_human_may_approve_a_flagged_rule(tmp_path: Path) -> None:

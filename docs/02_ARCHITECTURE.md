@@ -137,7 +137,8 @@ DONE
   already_broken: bool, featured?: bool}]}` (every proposed rule, with its outcome; only `accepted` ones can be
   approved; a flagged rule's `reason` ends with the engine's reason). `featured` is present on every rule only when
   the run's demo catalog entry names a `featured_rule` (trusted server config, never a request): true for that rule
-  only. The web's guest default selects only the featured rule; auto answers and the CLI ignore it.
+  only. The web's guest default selects only the featured rule, and an auto answer approves only the featured rule
+  when it is auto-approvable (critic-approved, not flagged; otherwise the usual auto answer). The CLI never sets it.
 - Auto answers: approve_rules = critic-approved rules, never one flagged `already_broken` (only a human may
   approve it); fix = yes only for a reviewed diagnosis; pr = yes (a branch,
   never the default branch); menu = the first allowed of retry/skip/extend/diagnose/report/stop. Setup values come

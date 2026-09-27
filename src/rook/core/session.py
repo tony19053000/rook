@@ -689,13 +689,17 @@ class Session:
     async def _approve(self, rules: RulesPipeline, result: RulesResult) -> RookModel | None:
         """APPROVE: the human (or auto mode) picks rules. Whatever the RULES phase put in the model can
         be approved; the pipeline refuses anything else. Auto mode takes only critic-approved rules, and
-        never a rule flagged `already_broken` (it may be wrong: only a human may approve it)."""
+        never a rule flagged `already_broken` (it may be wrong: only a human may approve it). On a demo
+        whose catalog names a featured rule, auto mode approves only that rule (if it is auto-approvable):
+        the demo's recorded path verifies it, while other planted bugs would fail VERIFY's fresh search."""
         await self._phase("APPROVE")
         approvable = [r.id for r in result.model.rules]
         critic_ok = [o.rule.id for o in result.outcomes
                      if o.accepted and o.critic is not None and o.critic.verdict in ("approve", "revise")]
         flagged = [o.rule.id for o in result.outcomes if o.accepted and o.already_broken]
         auto_ids = [i for i in critic_ok if i not in flagged]
+        if self._featured_rule in auto_ids:
+            auto_ids = [self._featured_rule]
         payload = {"rules": [redact({
             "id": o.rule.id, "text": o.rule.text, "kind": o.rule.kind, "check": o.rule.check,
             "accepted": o.accepted,
