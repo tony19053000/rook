@@ -94,7 +94,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 | U2 | GitHub App "Rook" | DONE (App ID 5093123, slug rook-invariants; 3 secrets on AWS) |
 | U3 | AWS account + IAM user rook-deploy (profile `rook`) | DONE (was HF Space; $100 credits) |
 | U4 | Vercel project | DONE (rook-weld-six.vercel.app) |
-| U5 | 3 demo apps via Antigravity | IN PROGRESS (user building; prompts in docs/demo-apps/) |
+| U5 | 3 demo apps via Antigravity | DONE (shop-app e92c866, billing-service 2186039, wallet-api cdfc08c; public) |
 | U6 | Bob IDE clips | TODO |
 | U7 | Video | TODO |
 | U8 | Deck | TODO |
