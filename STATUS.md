@@ -9,7 +9,7 @@
 ## Progress
 
 ```
-OVERALL   [█████████████████████████████░]  97%  39 / 40 tickets
+OVERALL   [█████████████████████████████░]  95%  39 / 41 tickets
 TIME      [████████████████████████░░░░░░]  80%   ~6.3h left (to 27 Sep 20:30 IST)
 
 M0  Docs & setup      [██████████]  100%   done
@@ -82,6 +82,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-037 | Server image + AWS EC2 deploy | P0 | DONE | reviewer PASS r1. Re-targeted from HF (Docker Spaces now paid) to AWS EC2 t3.small + Caddy on `<ip-dashes>.sslip.io`, profile `rook`, us-west-2 ($100 credits). Local: image builds, /health via Caddy, guest replay run to SAVE (fails at DIAGNOSE, known). NOT deployed yet: user runs deploy/aws/create.sh + deploy.sh + set-secret.sh BOB_API_KEY |
 | ROOK-038 | Vercel deploy | P0 | DONE | reviewer PASS r1. SSE `: flush` after bursts (Vercel held burst tails ~15 s); ROOK_PROXY_SECRET header via web/middleware.ts → trusted client IP; per-IP guest quota 10/day (cookie 3); nonce CSP; favicon; e2e/console.mjs. User must set ROOK_PROXY_SECRET on Vercel THEN server (deploy.sh + set-secret.sh) and check /health proxied:true |
 | ROOK-039 | Demo apps integration + recordings | P0 | DONE | reviewer PASS (48b3a11). shop-app hosted replay: Fixed and verified in ~40 s, 0 coins (rule refunded_total_le_order_total, orders.js:264). billing-service + wallet-api pinned/allowlisted but NOT offered (user-approved scope cut: Mapper cannot set up dependent actions: bank account / second wallet; billing dry-runs fail). Replay server uses seed 7, concurrency 1, 30 s fresh search. ~9.1 coins |
+| ROOK-041 | Hosted runs of a signed-in user's GitHub repos | P0 | IN PROGRESS | user decision 27 Sep ~14:50 (overrides 'hosted never runs user repos'; docs/03 updated in the ticket). Server coder + web coder in parallel; Docker sandbox on host via socket, live Bob per run, 1 concurrent user run, coin caps. Freeze moved to ~17:30 |
 | ROOK-040 | Release polish + PyPI | P1 | IN PROGRESS | README rewritten (uncommitted, not reviewed). PyPI name rook-cli TAKEN (free: rook-invariants, rook-bob): waiting user decision/token |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
