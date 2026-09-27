@@ -278,7 +278,8 @@ def test_me_verifies_the_supabase_token(tmp_path: Path) -> None:
     with client:
         good = client.get(f"{API}/me", headers=bearer(jwt.encode(claims(), SECRET, algorithm="HS256")))
         assert good.status_code == 200
-        assert good.json() == {"id": "u-123", "email": "owner@example.com", "github_connected": False}
+        assert good.json() == {"id": "u-123", "email": "owner@example.com", "github_connected": False,
+                               "can_run_github": False}
         expired = jwt.encode(claims(exp=int(time.time()) - 120), SECRET, algorithm="HS256")
         assert client.get(f"{API}/me", headers=bearer(expired)).status_code == 401
         assert client.get(f"{API}/me").status_code == 401  # a guest

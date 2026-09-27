@@ -268,11 +268,15 @@ def render(
     host_port: int | None,
     env: Mapping[str, str],
     hardening: Hardening,
+    access_network: str | None = None,
+    access_alias: str | None = None,
 ) -> tuple[dict[str, Any], str]:
     """Check the compose file and return `(hardened compose document, app service name)`.
 
-    `env` (the plan's values) is added to the app service's environment. Only the app service publishes
-    `port`, on 127.0.0.1 (`host_port` or a Docker-picked one).
+    `env` (the plan's values) is added to the app service's environment. Only Rook's proxy service is
+    reachable: published on 127.0.0.1 (`host_port` or a Docker-picked one), or, with `access_network`
+    (Rook itself runs in a container on that existing network), not published at all but joined to that
+    network as `access_alias`.
     """
     root = workspace.resolve()
     compose_path = inside(root, compose_path, "compose file")
@@ -321,7 +325,13 @@ def render(
     # it (their hostname, domainname, container_name, networks and aliases are dropped; links refused).
     app_alias = f"rook-app-{secrets.token_hex(4)}"
     app_spec["networks"] = {"default": {"aliases": [app_alias]}}
-    rendered[PROXY_SERVICE] = _proxy_service(app_alias, port, host_port, hardening)
+    proxy = _proxy_service(app_alias, port, host_port, hardening)
+    publish_network: dict[str, Any] = {"labels": dict(hardening.labels)}
+    if access_network is not None:
+        del proxy["ports"]
+        proxy["networks"] = {"default": {}, _PUBLISH_NETWORK: {"aliases": [access_alias or PROXY_SERVICE]}}
+        publish_network = {"external": True, "name": access_network}
+    rendered[PROXY_SERVICE] = proxy
     out: dict[str, Any] = {
         "services": rendered,
         "networks": {
@@ -330,7 +340,7 @@ def render(
                 "driver_opts": dict(INTERNAL_NETWORK_OPTS),
                 "labels": dict(hardening.labels),
             },
-            _PUBLISH_NETWORK: {"labels": dict(hardening.labels)},
+            _PUBLISH_NETWORK: publish_network,
         },
     }
     if volumes_out:

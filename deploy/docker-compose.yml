@@ -27,9 +27,22 @@ services:
       # The OAuth callback of `rook login` (03 §6): https://<ROOK_HOST>/api/v1/auth/cli/callback
       ROOK_PUBLIC_URL: https://${ROOK_HOST:?set ROOK_HOST, e.g. 203-0-113-7.sslip.io}
       ROOK_DB_PATH: /data/rook.db
-      ROOK_WORKSPACES: /data/workspaces
+      # User GitHub runs (ROOK-041, 03 §3) start DockerSandbox containers through the host's Docker socket. The
+      # daemon resolves bind paths ON THE HOST, so the workspaces live on a host folder mounted at the SAME path
+      # here, and the sandbox's port proxy joins the `rook-sandbox` network (not a host port) to be reachable.
+      ROOK_WORKSPACES: /var/lib/rook/workspaces
+      ROOK_SANDBOX_NETWORK: rook-sandbox
+      ROOK_GITHUB_RUNS_MAX: ${ROOK_GITHUB_RUNS_MAX:-1}
+      ROOK_USER_RUNS_PER_DAY: ${ROOK_USER_RUNS_PER_DAY:-5}
+      ROOK_USER_RUN_BUDGET: ${ROOK_USER_RUN_BUDGET:-1.5}
     volumes:
       - rook-data:/data
+      - /var/lib/rook/workspaces:/var/lib/rook/workspaces
+      # Docker socket access is root-equivalent on the host (03 §3): only the server process gets it.
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_GID:?set DOCKER_GID to the group id of /var/run/docker.sock (deploy/aws/deploy.sh writes it)}"
+    networks: [default, sandbox]
     expose:
       - "8000" # no `ports:`: reachable only from Caddy on the compose network
     cap_drop: [ALL]
@@ -50,6 +63,13 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy-data:/data
       - caddy-config:/config
+
+networks:
+  default: {}
+  # The server and the sandboxes' port proxies only; the apps themselves stay on their own internal networks.
+  sandbox:
+    name: rook-sandbox
+    driver: bridge
 
 volumes:
   rook-data:

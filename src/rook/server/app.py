@@ -7,7 +7,7 @@ so importing this module never opens a database.
 from __future__ import annotations
 
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -26,6 +26,7 @@ from rook.server.config import ServerSettings
 from rook.server.db import ServerDb
 from rook.server.deps import ServerState
 from rook.server.github_link import AppGitHub, GitHubLink, NoGitHub
+from rook.server.github_runs import DockerProbe
 from rook.server.limits import BodySizeLimit, RateLimit
 from rook.server.logins import LoginFlows
 from rook.server.routes import auth, meta, runs
@@ -74,6 +75,7 @@ def create_app(
     allowlist: Allowlist | None = None,
     oauth: SupabaseOAuth | None = None,
     github_transport: httpx.AsyncBaseTransport | None = None,
+    docker_ready: Callable[[], bool] | None = None,
 ) -> FastAPI:
     settings = settings or ServerSettings.from_env()
     if allowlist is None:
@@ -94,7 +96,8 @@ def create_app(
     state = ServerState(
         settings=settings, store=store, db=db, bus=bus, runs=manager,
         verifier=verifier or RejectAllTokens(), cookies=GuestCookies(guest_secret, secure=settings.cookie_secure),
-        github=github, replay_factory=replay_factory, logins=LoginFlows(guest_secret), oauth=oauth)
+        github=github, replay_factory=replay_factory, logins=LoginFlows(guest_secret), oauth=oauth,
+        docker_ready=docker_ready or DockerProbe(settings.workspaces_root, settings.sandbox_network))
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

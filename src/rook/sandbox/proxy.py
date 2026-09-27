@@ -72,14 +72,17 @@ def proxy_command(target_host: str, target_port: int) -> list[str]:
 
 
 def proxy_run_argv(
-    *, name: str, network: str, host_port: int | None, target_port: int, labels: Mapping[str, str]
+    *, name: str, network: str, host_port: int | None, target_port: int, labels: Mapping[str, str],
+    publish: bool = True,
 ) -> list[str]:
-    """`docker run` argv for the proxy (attached to the publish network; the internal one is added after)."""
+    """`docker run` argv for the proxy (attached to the publish network; the internal one is added after).
+    With `publish=False` (Rook itself runs in a container on `network`) no host port is published: Rook
+    reaches the proxy by its container name on that network."""
     argv = [
         "run", "-d",
         "--name", name,
         "--network", network,
-        "--publish", f"127.0.0.1:{host_port or ''}:{PROXY_PORT}",
+        *(["--publish", f"127.0.0.1:{host_port or ''}:{PROXY_PORT}"] if publish else []),
         "--user", PROXY_USER,
         "--cap-drop", "ALL",
         "--security-opt", "no-new-privileges:true",

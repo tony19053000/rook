@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Annotated
 
@@ -35,6 +36,7 @@ class ServerState:
     replay_factory: ReplayFactory | None
     logins: LoginFlows
     oauth: SupabaseOAuth | None  # None: the CLI sign-in routes answer 501
+    docker_ready: Callable[[], bool] = lambda: False  # user GitHub runs need Docker (server/github_runs.py)
 
 
 def get_state(request: Request) -> ServerState:

@@ -21,6 +21,11 @@ if [[ "$mode" != "replay" ]]; then
         exit 1
     fi
 fi
+if docker version --format '{{.Server.Version}}' >/dev/null 2>&1; then
+    echo "rook: Docker reachable: user GitHub runs possible (with the GitHub App and BOB_API_KEY)"
+else
+    echo "rook: Docker NOT reachable: user GitHub runs are off (demos are unaffected)"
+fi
 [[ -n "${ROOK_GUEST_SECRET:-}" ]] || echo "rook: WARNING ROOK_GUEST_SECRET is unset: guest cookies reset on restart"
 echo "rook: bob_mode=$mode, trusted proxy hops=${ROOK_TRUSTED_PROXY_HOPS:-0}, web origins=${ROOK_WEB_ORIGINS:-<default>}"
 

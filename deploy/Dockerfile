@@ -34,6 +34,14 @@ RUN fetch() { curl -fsSL --proto '=https' --tlsv1.2 -o "$1" "$2" && echo "$3  $1
 
 COPY --from=ghcr.io/astral-sh/uv:0.10.12 /uv /usr/local/bin/uv
 
+# The docker CLI with the compose and buildx plugins (static binaries), for DockerSandbox: user GitHub runs
+# (ROOK-041) build and run the user's app as SIBLING containers through the host's Docker socket, which
+# docker-compose.yml mounts. User code never runs in this container (03 §3).
+COPY --from=docker:29.8.1-cli@sha256:018edbc908e08fcc9dbf029c812c34251e9b4719e6f71ca0e5eae2a987d014ca \
+     /usr/local/bin/docker /usr/local/bin/docker
+COPY --from=docker:29.8.1-cli@sha256:018edbc908e08fcc9dbf029c812c34251e9b4719e6f71ca0e5eae2a987d014ca \
+     /usr/local/libexec/docker/cli-plugins/ /usr/local/libexec/docker/cli-plugins/
+
 # The server runs as `rook`; everything it does not need to write stays root-owned.
 RUN useradd --create-home --home-dir /home/rook --uid 10001 --user-group --shell /usr/sbin/nologin rook \
     && mkdir -p /data /opt/rook/config /opt/rook/demos \

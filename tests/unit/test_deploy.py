@@ -195,6 +195,28 @@ def test_rook_settings_and_secret_source() -> None:
     assert rook["cap_drop"] == ["ALL"]
 
 
+def test_user_github_runs_get_docker_the_same_path_workspaces_and_the_sandbox_network() -> None:
+    """ROOK-041: sibling sandbox containers through the host socket. The daemon resolves bind paths on the
+    host, so the workspaces folder is mounted at the same path; the proxy joins `rook-sandbox`."""
+    doc = compose()
+    rook, caddy = doc["services"]["rook"], doc["services"]["caddy"]
+    workspaces = rook["environment"]["ROOK_WORKSPACES"]
+    assert f"{workspaces}:{workspaces}" in rook["volumes"]
+    assert "/var/run/docker.sock:/var/run/docker.sock" in rook["volumes"]
+    assert len(rook["group_add"]) == 1 and rook["group_add"][0].startswith("${DOCKER_GID:?")
+    assert rook["environment"]["ROOK_SANDBOX_NETWORK"] == doc["networks"]["sandbox"]["name"] == "rook-sandbox"
+    assert rook["networks"] == ["default", "sandbox"] and "networks" not in caddy  # Caddy never sees sandboxes
+    assert not any("docker.sock" in v for v in caddy["volumes"])
+    assert rook["cap_drop"] == ["ALL"] and "privileged" not in rook
+    dockerfile = (DEPLOY / "Dockerfile").read_text()
+    assert re.search(r"COPY --from=docker:[0-9.]+-cli@sha256:[0-9a-f]{64} \\\n\s+/usr/local/bin/docker ", dockerfile)
+    assert "/usr/local/libexec/docker/cli-plugins/" in dockerfile
+    deploy = (AWS / "deploy.sh").read_text()
+    assert "stat -c %g /var/run/docker.sock" in deploy and "DOCKER_GID=%s" in deploy
+    assert "install -d -o 10001 -g 10001 -m 750 /var/lib/rook/workspaces" in deploy
+    assert workspaces == "/var/lib/rook/workspaces"
+
+
 def test_caddy_appends_forwarded_for_and_streams() -> None:
     text = (DEPLOY / "Caddyfile").read_text()
     assert "trusted_proxies static 0.0.0.0/0 ::/0" in text

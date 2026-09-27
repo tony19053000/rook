@@ -5,6 +5,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Request
 
 from rook.server.deps import AnyCaller, State, UserCaller
+from rook.server.github_link import AppGitHub
+from rook.server.github_runs import not_configured
 from rook.server.limits import proxy_verified
 from rook.server.schemas import Health, Me, RepoOption
 
@@ -20,7 +22,12 @@ def health(request: Request, state: State) -> Health:
 
 @router.get("/me", response_model=Me)
 def me(caller: UserCaller, state: State) -> Me:
-    return Me(id=caller.id, email=caller.email, github_connected=state.github.connected(caller))
+    """`can_run_github`: linked to the GitHub App, and this server can run GitHub repos (App, BOB_API_KEY,
+    Docker). A sync route: the (cached) Docker probe runs in the thread pool."""
+    connected = state.github.connected(caller)
+    can_run = connected and not not_configured(state.settings, isinstance(state.github, AppGitHub),
+                                               state.docker_ready)
+    return Me(id=caller.id, email=caller.email, github_connected=connected, can_run_github=can_run)
 
 
 @router.get("/repos", response_model=list[RepoOption])

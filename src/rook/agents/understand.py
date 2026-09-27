@@ -53,7 +53,7 @@ from rook.model.loader import ModelError, load_model_str
 from rook.model.schema import RookModel
 from rook.sandbox.allowlist import check_env_name
 from rook.sandbox.base import Sandbox, SandboxError
-from rook.sandbox.docker import DockerSandbox, base_image_for
+from rook.sandbox.docker import DEFAULT_LIMITS, DockerSandbox, Limits, base_image_for
 
 MAX_ATTEMPTS = rails.MAX_RETRIES
 MODEL_PATH = Path("rook") / "rook.yaml"
@@ -100,12 +100,15 @@ Launcher = Callable[[SandboxPlan, Mapping[str, str], RepoSummary], StartedApp]
 SetupAnswerer = Callable[[QuestionAsked], Awaitable[str | None]]
 
 
-def docker_launcher(workspace: str | os.PathLike[str], run_id: str) -> Launcher:
-    """The local-CLI launcher: a DockerSandbox built from the Mechanic's plan (02 section 8)."""
+def docker_launcher(workspace: str | os.PathLike[str], run_id: str, *, access_network: str | None = None,
+                    limits: Limits = DEFAULT_LIMITS) -> Launcher:
+    """A DockerSandbox built from the Mechanic's plan (02 section 8): the local CLI's launcher, and the hosted
+    server's for a signed-in user's GitHub repo (`access_network` and `limits` from trusted server config)."""
 
     def launch(plan: SandboxPlan, values: Mapping[str, str], summary: RepoSummary) -> StartedApp:
         sandbox = DockerSandbox(Path(workspace), run_id=run_id, env=values,
-                                base_image=base_image_for(summary.language))
+                                base_image=base_image_for(summary.language), access_network=access_network,
+                                limits=limits)
         return StartedApp(sandbox=sandbox, base_url=sandbox.start(plan))  # start() cleans up on failure
 
     return launch

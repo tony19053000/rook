@@ -62,7 +62,8 @@ async def test_me_for_a_user_and_not_for_a_guest(tmp_path: Path) -> None:
         anonymous = await client.get(f"{API}/me")
         bad = await client.get(f"{API}/me", headers={"Authorization": "Bearer nope"})
         not_bearer = await client.get(f"{API}/me", headers={"Authorization": "Basic abc"})
-    assert me.json() == {"id": "u_alice", "email": "alice@example.com", "github_connected": True}
+    assert me.json() == {"id": "u_alice", "email": "alice@example.com", "github_connected": True,
+                         "can_run_github": False}  # no GitHub App on this server
     assert bob.json()["github_connected"] is False
     assert (guest.status_code, anonymous.status_code, bad.status_code, not_bearer.status_code) == (401,) * 4
 
@@ -108,19 +109,21 @@ async def test_create_run_for_a_user_and_a_guest(tmp_path: Path) -> None:
     assert "rook_guest=" in guest_response.headers["set-cookie"]
 
 
-@pytest.mark.parametrize("repo, who, detail", [
-    ({"kind": "github", "ref": "alice/private-app"}, "guest", "Guests can only run the demo repos"),
-    ({"kind": "demo", "ref": "evil/unknown"}, "guest", "run arbitrary repos with the CLI"),
-    ({"kind": "github", "ref": "alice/private-app"}, "user", "run arbitrary repos with the CLI"),
-    ({"kind": "demo", "ref": "evil/unknown"}, "user", "run arbitrary repos with the CLI"),
+@pytest.mark.parametrize("repo, who, status, detail", [
+    ({"kind": "github", "ref": "alice/private-app"}, "guest", 401, "Sign in to run your own GitHub repos"),
+    ({"kind": "demo", "ref": "evil/unknown"}, "guest", 403, "run arbitrary repos with the CLI"),
+    # ROOK-041: a user's GitHub repo needs the GitHub App, BOB_API_KEY and Docker on the server
+    ({"kind": "github", "ref": "alice/private-app"}, "user", 503, "not available on this server"),
+    ({"kind": "demo", "ref": "evil/unknown"}, "user", 403, "run arbitrary repos with the CLI"),
 ])
-async def test_only_allowlisted_demo_repos_run(tmp_path: Path, repo: dict[str, str], who: str, detail: str) -> None:
+async def test_only_allowlisted_demo_repos_run(tmp_path: Path, repo: dict[str, str], who: str, status: int,
+                                               detail: str) -> None:
     factory = Factory()
     app = make_app(tmp_path, factory)
     headers = ALICE if who == "user" else guest_headers(app)[1]
     async with client_for(app) as client:
         response = await client.post(f"{API}/runs", json={**NEW_RUN, "repo": repo}, headers=headers)
-    assert response.status_code == 403
+    assert response.status_code == status
     assert detail in response.json()["detail"]
     assert factory.sessions == {}
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import re
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any, Literal
@@ -11,11 +12,21 @@ from fastapi.responses import StreamingResponse
 
 from rook.core.session import SessionOptions
 from rook.core.workspace import RepoSpec
+from rook.github.app import GitHubError
 from rook.sandbox.allowlist import REFUSED_MESSAGE
 from rook.server.auth import Caller
 from rook.server.deps import NOT_FOUND, AnyCaller, OwnedRun, ServerState, State, existing_caller
+from rook.server.github_link import AppGitHub, SetupError
+from rook.server.github_runs import (
+    BUSY,
+    NOT_CONFIGURED,
+    NOT_LINKED,
+    NOT_YOURS,
+    settings_allow,
+    user_limit_message,
+)
 from rook.server.limits import client_ip
-from rook.server.runs import LiveRun, QueueFull, RunSession, RunSpec, SessionFactory
+from rook.server.runs import GitHubAccess, LiveRun, QueueFull, RunSession, RunSpec, SessionFactory
 from rook.server.schemas import (
     AnswerBody,
     ChatBody,
@@ -88,11 +99,70 @@ def _admit(state: ServerState, caller: Caller, request: Request, auto: bool) -> 
 
 
 def _start(state: ServerState, repo: RepoSpec, request_text: str, options: SessionOptions, owner: str,
-           factory: SessionFactory | None = None) -> str:
+           factory: SessionFactory | None = None, github: GitHubAccess | None = None) -> str:
     try:
-        return state.runs.start(repo, request_text, options, owner, factory=factory)
+        return state.runs.start(repo, request_text, options, owner, factory=factory, github=github)
     except QueueFull as exc:
         raise HTTPException(429, str(exc), headers={"Retry-After": "60"}) from exc
+
+
+# --- a signed-in user's own GitHub repo (ROOK-041, 03 §3) ---
+
+
+async def _github_repo(state: ServerState, caller: Caller, ref: str) -> tuple[AppGitHub, RepoSpec]:
+    """401 guest, 503 not available here, 403 not linked or not a repo of the caller's own installation. The
+    repo must be in the installation's repo list as GitHub reports it (never trusted from the request)."""
+    if caller.is_guest:
+        raise HTTPException(401, "Sign in to run your own GitHub repos")
+    github = state.github
+    if not isinstance(github, AppGitHub) or not settings_allow(state.settings):
+        raise HTTPException(503, NOT_CONFIGURED)
+    if not await asyncio.to_thread(state.docker_ready):
+        raise HTTPException(503, NOT_CONFIGURED)
+    if not github.connected(caller):
+        raise HTTPException(403, NOT_LINKED)
+    wanted = ref.lower()
+    match = next((r.ref for r in await github.list_repos(caller) if r.kind == "github" and r.ref.lower() == wanted),
+                 None)
+    if match is None:
+        raise HTTPException(403, NOT_YOURS)
+    return github, RepoSpec(kind="github", ref=match)
+
+
+def _admit_github(state: ServerState, caller: Caller, auto: bool) -> SessionOptions:
+    """The daily coin cap (always: these runs use live Bob), one user GitHub run at a time server-wide, the
+    queue, then the caller's daily runs (counted last, so a refused request never uses one up). No await
+    between these checks and the start, so two requests can't both take the last slot."""
+    settings = state.settings
+    now = datetime.now(UTC)
+    day = now.strftime("%Y-%m-%d")
+    retry = {"Retry-After": str(_seconds_to_midnight(now))}
+    spent = state.db.coins_since(day)
+    cap = settings.daily_coin_cap
+    if cap is not None and spent >= cap:
+        raise HTTPException(429, "Today's AI budget is spent; try again tomorrow", headers=retry)
+    if state.runs.live_github() >= settings.github_runs_max or state.runs.is_full():
+        raise HTTPException(429, BUSY, headers={"Retry-After": "60"})
+    if not state.db.consume_run({f"user_github:{caller.id}": settings.user_runs_per_day}, day):
+        raise HTTPException(429, user_limit_message(settings.user_runs_per_day), headers=retry)
+    return SessionOptions(auto=auto, budget=settings.user_run_budget, daily_cap=cap, daily_spent=spent)
+
+
+async def _create_github_run(state: ServerState, caller: Caller, body: CreateRun) -> str:
+    github, repo = await _github_repo(state, caller, body.repo.ref)
+    try:
+        clone = await github.token_for(caller, repo.ref)
+    except SetupError as exc:
+        raise HTTPException(exc.status, str(exc)) from None
+    except GitHubError:
+        raise HTTPException(502, "GitHub could not be reached, try again") from None
+
+    async def fresh_token() -> str:  # SHIP asks again: a run can outlive a token
+        return (await github.token_for(caller, repo.ref)).token
+
+    options = _admit_github(state, caller, body.options.auto)
+    return _start(state, repo, body.request, options, caller.id,
+                  github=GitHubAccess(clone_token=clone.token, token_source=fresh_token))
 
 
 # --- reading runs ---
@@ -152,6 +222,8 @@ def _cx_item(data: dict[str, Any], cx_id: str, status: str, rule_id: str) -> dic
 
 @router.post("/runs", response_model=RunCreatedResponse)
 async def create_run(body: CreateRun, request: Request, caller: AnyCaller, state: State) -> RunCreatedResponse:
+    if body.repo.kind == "github":
+        return RunCreatedResponse(run_id=await _create_github_run(state, caller, body))
     repo = _demo_repo(state, caller, body.repo.kind, body.repo.ref)
     options = _admit(state, caller, request, body.options.auto)
     return RunCreatedResponse(run_id=_start(state, repo, body.request, options, caller.id))

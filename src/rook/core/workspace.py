@@ -259,6 +259,19 @@ def git_auth_env(token: str, base: str) -> dict[str, str]:
             "GIT_CONFIG_KEY_1": "http.sslVerify", "GIT_CONFIG_VALUE_1": "true"}
 
 
+def _remove_bob_config(ws: Path) -> list[str]:
+    """Drop a cloned repo's own `.bob/` (Bob settings or modes it ships): Bob runs with cwd = the workspace,
+    and only Rook writes `.bob/` there (a local copy leaves it out the same way, COPY_IGNORE)."""
+    target = ws / ".bob"
+    if not os.path.lexists(target):
+        return []
+    if target.is_dir() and not target.is_symlink():
+        shutil.rmtree(target)
+    else:
+        target.unlink()
+    return [".bob"]
+
+
 def _clone(repo: RepoSpec, ws: Path, token: str | None, github_url: str,
            cancel: threading.Event | None = None) -> str:
     if not _REPO_RE.fullmatch(repo.ref) or repo.ref.startswith(("-", ".")):
@@ -308,6 +321,7 @@ def prepare_workspace(
         elif repo.kind == "github":
             base = _clone(repo, ws, token, github_url, cancel)
             skipped = _remove_escaping_links(ws)
+            skipped += _remove_bob_config(ws)
         else:
             assert entry is not None
             skipped = _copy(entry.app_dir, ws, cancel)

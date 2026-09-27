@@ -290,7 +290,7 @@ async def test_refused_runs_do_not_use_up_the_guest_quota(tmp_path: Path) -> Non
     bad_repo = {**NEW_RUN, "repo": {"kind": "github", "ref": "a/b"}}
     async with client_for(app) as client:
         for _ in range(3):
-            assert (await client.post(f"{API}/runs", json=bad_repo, headers=guest)).status_code == 403
+            assert (await client.post(f"{API}/runs", json=bad_repo, headers=guest)).status_code == 401
         codes = [(await client.post(f"{API}/runs", json=NEW_RUN, headers=guest)).status_code for _ in range(3)]
         for session in factory.sessions.values():
             session.cancel()

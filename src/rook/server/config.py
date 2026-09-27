@@ -99,6 +99,15 @@ class ServerSettings(BaseModel):
     github_client_secret: SecretStr | None = None
     github_api_url: str = "https://api.github.com"
     github_web_url: str = "https://github.com"
+    # Hosted runs of a signed-in user's own GitHub repos (ROOK-041, 03 §3). They need the App, BOB_API_KEY (only
+    # whether it is set is kept here, never the value) and Docker; they always use live Bob.
+    bob_key_set: bool = False
+    github_runs_max: int = Field(default=1, ge=0)  # at once, server-wide (queued ones count); 0 turns them off
+    user_runs_per_day: int = Field(default=5, ge=0)  # GitHub runs per signed-in user per UTC day
+    user_run_budget: float = Field(default=1.5, ge=0)  # Bobcoins per GitHub run
+    sandbox_network: str | None = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
+    sandbox_memory: str = Field(default="1g", pattern=r"^[1-9][0-9]{0,5}[kmg]$")
+    sandbox_cpus: float = Field(default=1.0, gt=0, le=16)
     ping_seconds: float = Field(default=15.0, gt=0)
     flush_seconds: float = Field(default=0.25, gt=0)
 
@@ -159,7 +168,9 @@ class ServerSettings(BaseModel):
         """ROOK_WEB_ORIGINS (comma list), ROOK_DB_PATH, ROOK_WORKSPACES, ROOK_BOB_MODE, ROOK_DEMO_REPOS (a YAML
         file), ROOK_ALLOWLIST, ROOK_GUEST_SECRET (else a random key per process), ROOK_PROXY_SECRET, ROOK_TRUSTED_PROXY_HOPS,
         ROOK_DAILY_COIN_CAP, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY, ROOK_PUBLIC_URL, GITHUB_APP_ID,
-        GITHUB_APP_SLUG, GITHUB_APP_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET."""
+        GITHUB_APP_SLUG, GITHUB_APP_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET,
+        ROOK_GITHUB_RUNS_MAX, ROOK_USER_RUNS_PER_DAY, ROOK_USER_RUN_BUDGET, ROOK_SANDBOX_NETWORK, ROOK_SANDBOX_MEMORY,
+        ROOK_SANDBOX_CPUS, and whether BOB_API_KEY is set (never its value)."""
         env = dict(os.environ) if env is None else env
         values: dict[str, object] = {}
         if origins := env.get("ROOK_WEB_ORIGINS"):
@@ -202,6 +213,17 @@ class ServerSettings(BaseModel):
             values["github_client_id"] = client_id
         if client_secret := env.get("GITHUB_CLIENT_SECRET", "").strip():
             values["github_client_secret"] = SecretStr(client_secret)
+        values["bob_key_set"] = bool(env.get("BOB_API_KEY", "").strip())
+        numbers: dict[str, tuple[str, type[int | float]]] = {
+            "ROOK_GITHUB_RUNS_MAX": ("github_runs_max", int), "ROOK_USER_RUNS_PER_DAY": ("user_runs_per_day", int),
+            "ROOK_USER_RUN_BUDGET": ("user_run_budget", float), "ROOK_SANDBOX_CPUS": ("sandbox_cpus", float)}
+        for name, (field, kind) in numbers.items():
+            if raw := env.get(name, "").strip():
+                values[field] = kind(raw)
+        if network := env.get("ROOK_SANDBOX_NETWORK", "").strip():
+            values["sandbox_network"] = network
+        if memory := env.get("ROOK_SANDBOX_MEMORY", "").strip():
+            values["sandbox_memory"] = memory
         return cls.model_validate(values)
 
     @property

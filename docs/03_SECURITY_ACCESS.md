@@ -14,6 +14,7 @@ Rook runs **other people's code**, holds **API keys**, can **edit code** and can
 | T4 | Bob-generated rules or actions get executed as code | Remote code execution |
 | T5 | SSRF: generated actions call hosts other than the sandboxed app | Attacks internal services, leaks data |
 | T6 | Public web users abuse the hosted server (burn coins, run arbitrary repos, DoS) | Cost, downtime |
+| T10 | A signed-in user's own GitHub repo, run on the hosted server (ROOK-041), attacks the host or other users through its build, its app or its text (prompt injection) | Host compromise (the server holds the Docker socket), stolen server secrets, other users' data |
 | T7 | A user reads or changes another user's runs or repos | Data leak |
 | T8 | An unreviewed or unverified change is pushed to the user's repo | Broken code in production |
 | T9 | A stolen CLI credential file | Account misuse |
@@ -45,9 +46,17 @@ Rules:
 - Build steps (`npm install` and so on) need network access during build. The run phase gets a network limited to the sandbox (compose-internal) wherever the app allows it.
 - Everything is cleaned up (containers, networks, volumes) when the run ends, including on crash (`atexit` + signal handlers).
 
-**Hosted server → ProcessSandbox**
-- The server container runs as the non-root user `rook` with `cap_drop: ALL`, `no-new-privileges`, a pids and memory limit, and no Docker socket. It is not published: only Caddy (80/443) is reachable, and SSH (22) is open only to the admin's IP /32. IMDSv2 is required with a hop limit of 1, so containers cannot reach the instance metadata.
-- **Only allowlisted demo repos** (`sandbox/allowlist.py`, pinned by commit SHA) can run. User-supplied repos are **never** executed on the hosted server. The API rejects them with a clear message: "run arbitrary repos with the CLI".
+**Hosted server → ProcessSandbox (demos) and DockerSandbox (a signed-in user's own GitHub repos)**
+- The server container runs as the non-root user `rook` with `cap_drop: ALL`, `no-new-privileges`, and a pids and memory limit. It is not published: only Caddy (80/443) is reachable, and SSH (22) is open only to the admin's IP /32. IMDSv2 is required with a hop limit of 1, so containers cannot reach the instance metadata (and the instance has no IAM role).
+- **Guests run only allowlisted demo repos** (`sandbox/allowlist.py`, pinned by commit SHA) in the ProcessSandbox below. An unknown demo ref is rejected with "run arbitrary repos with the CLI".
+- **Signed-in users may run their own GitHub repos (ROOK-041, the user's decision on 27 Sep; this replaces the old "user repos are never executed on the hosted server" rule).** Conditions and limits, all from trusted server config, never from a request:
+  - signed in (a guest gets 401), GitHub App linked, and the repo must be in that user's installation repo list **as GitHub reports it** (`GET /installation/repositories` with an installation token; the request's `ref` is only a lookup key). Tokens are minted per repo (contents + pull requests), live in memory, go to git only through the child env and to GitHub only as a header, are registered with the redaction filter, and are never in argv, events, logs, the workspace's `.git/config` or the sandbox;
+  - at most `ROOK_GITHUB_RUNS_MAX` (default 1) such runs at once server-wide (queued included), `ROOK_USER_RUNS_PER_DAY` (default 5) per user, `ROOK_USER_RUN_BUDGET` (default 1.5) Bobcoins per run and the server's `ROOK_DAILY_COIN_CAP`; the Bob mode is `live` for these runs only (demos keep `ROOK_BOB_MODE`), so they need `BOB_API_KEY`, else 503;
+  - **the user's code never runs in the server container.** It is built and run only in a DockerSandbox (the same hardening as the local CLI above: non-root, `--cap-drop ALL`, `no-new-privileges`, pids limit, memory `ROOK_SANDBOX_MEMORY` (1g) and `ROOK_SANDBOX_CPUS` (1), an `--internal` network with no route out and no host address at run time, only the workspace copy mounted, none of the server's env: the app env comes only from the SandboxPlan and is checked against the denylist, which refuses `BOB_`, `ROOK_`, `SUPABASE_`, `DOCKER_`, `GITHUB_APP_` names). Build steps (e.g. `npm install`) have network access, as on the CLI; build containers are on Docker's default bridge, where IMDS is blocked by the hop limit and the server's port (bound inside its own container) is not reachable;
+  - Bob runs in the server container with cwd = the workspace (as on the CLI): read-only tool groups except the Mechanic (`.rook-sandbox/`) and the Surgeon (the reviewed paths), never `command`/`browser`/`mcp` (`--disable-mcp`), and the Bob child env holds only `BOB_API_KEY` plus basics (never the GitHub App key, Supabase or guest secrets). The cloned repo's own `.bob/` folder is deleted before Bob runs, so a repo cannot ship Bob settings, modes or MCP config. Prompt injection from repo text stays the T3 risk of §4, bounded by those tool groups and the engine's checks;
+  - questions (rules, fix, PR) are answered by the user in the browser; `auto` only when the user asks. SHIP opens a PR from `rook/fix-<cx>` with a fresh token; never a push to the default branch.
+- **The Docker socket (honest risk).** To start sibling sandbox containers, the rook container mounts the host's `/var/run/docker.sock` (group `DOCKER_GID`). Access to the socket is **equivalent to root on the host** for the server process: a remote-code-execution bug in the server itself (not in the user's app) would own the EC2 host. Mitigations: user code never executes in the server container (only in sandboxes, as above); Bob has no command tool; the server's own inputs are validated (pydantic, no `eval`, safe YAML); the server has no published port (Caddy only); Caddy has no socket; the host holds nothing but this deployment (no IAM role, SSH limited to the admin IP). A sandbox escape through a Docker/kernel bug would also reach the host, as with any Docker host. Accepted for the hackathon; the long-term fix is a separate runner host or a rootless/sysbox daemon.
+- **Why the workspace path matters.** The daemon resolves bind paths on the host. The workspaces live on the host folder `/var/lib/rook/workspaces`, mounted at the same path in the server container, so a compose bind of a workspace file mounts that file and nothing else. The server checks this at run time (`docker inspect` of its own container) and turns GitHub runs off (503) if it does not hold.
 - The demo apps run as a separate unprivileged user, each with a temp database directory, and are killed when the run ends.
 - **What ProcessSandbox executes, and from where.** Only the allowlist entry's `start` command and its named `commands` (argv lists, never a shell), with an env built from scratch (the entry's fixed values, the allowlisted `settable_env` answers, and PATH/HOME/TMPDIR; **none** of the server's env, so `BOB_API_KEY`, GitHub and Supabase keys never reach it). By default they run from the pristine, pre-installed `app_dir`.
 - **Replay mode only: run from the workspace copy (ROOK-039c).** When the server's own config says `ROOK_BOB_MODE=replay`, the server (never a request: no API field can set it, unknown fields are refused) grants the Session `run_workspace`, which passes `workspace=<run workspace>` to ProcessSandbox. The Session also requires its Bob client to be replaying, else it logs a warning and keeps the pristine app dir. Then the app and the entry's `test` command run with cwd = the run's workspace copy, so VERIFY executes the Surgeon's patch. Why this is safe:
@@ -86,7 +95,7 @@ Rules:
 - Supabase Google OAuth. The web holds only the anon key.
 - The web uses the PKCE flow; its session lives in `localStorage` (key `rook-auth`), and sign-out is local to the browser.
 - The server verifies the Supabase JWT (HS256 with `SUPABASE_JWT_SECRET`, or ES256/RS256 with the project's JWKS fetched only from `SUPABASE_URL`, never from a URL in the token), checking `exp`, `aud`, `iss` and that the key type matches the `alg` (no `none`, no alg confusion). Details in 02 §11.
-- **Guest mode** ("Try the demo") uses a signed, httpOnly, SameSite=Lax cookie `rook_guest`. It's limited to demo repos only, 3 runs per day per guest, a global concurrency of 3, and the daily coin cap.
+- **Guest mode** ("Try the demo") uses a signed, httpOnly, SameSite=Lax cookie `rook_guest`. It's limited to demo repos only, 3 runs per day per guest, a global concurrency of 3, and the daily coin cap. Only signed-in users with the GitHub App linked can run their own repos on the server (§3).
 
 **CLI**
 - **Localhost callback flow:** the CLI opens a one-shot listener on `127.0.0.1:<random>` and opens the browser at `/auth/cli/start?port&state`. A random `state` guards against CSRF. It accepts exactly one callback and then closes (a wrong `state` fails the login). The server keeps the PKCE verifier; the browser only carries a signed 10-minute `rook_login` cookie, and tokens are only ever redirected to `127.0.0.1`. The listener never logs request lines (they hold the token).
@@ -95,7 +104,7 @@ Rules:
 
 **GitHub App**
 - Minimum permissions: **Contents: read & write**, **Pull requests: read & write**, **Metadata: read**. For CI comments: **Issues: write** (only if needed).
-- The private key lives only on the server. The server mints **installation tokens** (1 hour) and gives them to the CLI via `POST /github/token`, only for the user's own installation.
+- The private key lives only on the server. The server mints **installation tokens** (1 hour) and gives them to the CLI via `POST /github/token`, only for the user's own installation; for a hosted GitHub run (§3) it mints them for itself (clone, then again at SHIP) and never returns them.
 - Webhooks are verified with HMAC `X-Hub-Signature-256` (constant-time, over the raw body, before parsing).
 - **Linking an installation to a user** can't be forged or hijacked (installation ids are guessable): a one-time `state` bound to the signed-in user (CSRF), the installation must belong to this App and be unlinked, and either the OAuth `code` proves the GitHub user can access it (with `GITHUB_CLIENT_ID`/`GITHUB_CLIENT_SECRET`) or it must be a fresh install made after that `state` was issued; 5 failures per user per hour lock the callback. Details in 02 §11.
 - CLI tokens from `POST /github/token` are scoped to **one repo** (contents + pull requests), live in memory only, and are fetched again at SHIP.
@@ -121,7 +130,7 @@ Rules:
 
 - Python dependencies are pinned in `uv.lock`, and web dependencies in `package-lock.json`.
 - Minimal dependencies. New dependencies must be justified in the CODER report.
-- The Bob Shell version is pinned in the server image (2.0.5, checked at build). It is vendored from the local install into the gitignored `deploy/vendor/`, never committed. Node, Go and the uv image are pinned by version, and the Node and Go tarballs by SHA-256; demo apps by full commit SHA (`deploy/demos/repos.txt`).
+- The Bob Shell version is pinned in the server image (2.0.5, checked at build). It is vendored from the local install into the gitignored `deploy/vendor/`, never committed. Node, Go and the uv image are pinned by version, and the Node and Go tarballs by SHA-256; the docker CLI and its compose/buildx plugins come from `docker:<version>-cli` pinned by digest; demo apps by full commit SHA (`deploy/demos/repos.txt`).
 
 ## 10. Logging and privacy
 
@@ -135,6 +144,6 @@ Rules:
 - [ ] `bob run` uses `stdin=DEVNULL`, workspace-scoped, `--disable-mcp`, and correct mode groups
 - [ ] HTTP calls restricted to the sandbox base_url
 - [ ] New API routes have an auth check and an owner check
-- [ ] Untrusted code only runs in the sandbox, and the hosted server only runs the allowlist
+- [ ] Untrusted code only runs in the sandbox; on the hosted server guests run only the allowlist, and a signed-in user's own repo runs only in a DockerSandbox, never in the server container (§3)
 - [ ] Surgeon edits limited to allowed paths, with the diff path check in place
 - [ ] User-visible strings are escaped in the web app

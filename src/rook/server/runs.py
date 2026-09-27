@@ -9,17 +9,20 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol
 
 from rook.agents.bob import BobClient
 from rook.agents.caller import AgentCaller
+from rook.agents.understand import Launcher, docker_launcher
 from rook.core.events import EventBus, RunFinished, now_ts
 from rook.core.session import Session, SessionOptions
-from rook.core.workspace import RepoSpec, new_run_id
+from rook.core.workspace import RepoSpec, Workspace, new_run_id
+from rook.github.pr import GitHubShipper
 from rook.sandbox.allowlist import Allowlist
+from rook.sandbox.docker import Limits
 from rook.server.config import ServerSettings
 from rook.store.repo import CounterexampleRecord, RunRecord, Store
 
@@ -41,6 +44,15 @@ class RunSession(Protocol):
 
 
 @dataclass(frozen=True)
+class GitHubAccess:
+    """A user GitHub run's credentials: the clone token (checked out by the route) and a source of fresh
+    tokens for SHIP. Both come from the user's own installation; neither is ever published or logged."""
+
+    clone_token: str = field(repr=False)
+    token_source: Callable[[], Awaitable[str]] = field(repr=False)
+
+
+@dataclass(frozen=True)
 class RunSpec:
     run_id: str
     repo: RepoSpec
@@ -49,6 +61,7 @@ class RunSpec:
     user_id: str
     bus: EventBus
     store: Store
+    github: GitHubAccess | None = None
 
 
 SessionFactory = Callable[[RunSpec], RunSession]
@@ -57,13 +70,32 @@ ReplayFactory = Callable[[RunSpec, CounterexampleRecord], RunSession]
 
 def default_session_factory(settings: ServerSettings, allowlist: Allowlist) -> SessionFactory:
     """Sessions for the server. Only in replay mode (server config, never a request) do demo apps run from
-    the run's workspace copy, where every edit comes from a committed, reviewed edit tape (03 §3)."""
+    the run's workspace copy, where every edit comes from a committed, reviewed edit tape (03 §3).
+
+    A signed-in user's GitHub repo (ROOK-041) always uses live Bob, runs in a DockerSandbox and ships with a
+    push + PR (`GitHubShipper`, never the default branch), like `rook run owner/name` on the CLI."""
     run_workspace = settings.bob_mode == "replay"
+    limits = Limits(memory=settings.sandbox_memory, cpus=settings.sandbox_cpus)
 
     def client(bus: EventBus, run_id: str, workspace: Path) -> AgentCaller:
         return BobClient(bus, run_id, mode=settings.bob_mode)
 
+    def live_client(bus: EventBus, run_id: str, workspace: Path) -> AgentCaller:
+        return BobClient(bus, run_id, mode="live")
+
+    def launcher(workspace: Workspace, run_id: str) -> Launcher:
+        return docker_launcher(workspace.path, run_id, access_network=settings.sandbox_network, limits=limits)
+
     def make(spec: RunSpec) -> RunSession:
+        if spec.repo.kind == "github":
+            if spec.github is None:
+                raise ValueError("a GitHub run needs its installation token")
+            shipper = GitHubShipper(spec.repo.ref, spec.github.token_source, api_url=settings.github_api_url,
+                                    github_url=settings.github_web_url)
+            return Session(spec.repo, spec.request, spec.options, bus=spec.bus, store=spec.store,
+                           run_id=spec.run_id, user_id=spec.user_id, workspaces_root=settings.workspaces_root,
+                           client_factory=live_client, launcher_factory=launcher, shipper=shipper,
+                           token=spec.github.clone_token, github_url=settings.github_web_url)
         demo = settings.demo(spec.repo.ref) if spec.repo.kind == "demo" else None
         return Session(spec.repo, spec.request, spec.options, bus=spec.bus, store=spec.store, run_id=spec.run_id,
                        user_id=spec.user_id, workspaces_root=settings.workspaces_root, client_factory=client,
@@ -122,13 +154,19 @@ class RunManager:
         """No free slot and the waiting queue is at its limit."""
         return self._slots.locked() and self.queued() >= self.max_queued
 
+    def live_github(self) -> int:
+        """User GitHub runs that are running or queued."""
+        return sum(1 for r in self._live.values() if r.repo.kind == "github")
+
     def start(self, repo: RepoSpec, request: str, options: SessionOptions, owner: str,
-              factory: SessionFactory | None = None, run_id: str | None = None) -> str:
+              factory: SessionFactory | None = None, run_id: str | None = None,
+              github: GitHubAccess | None = None) -> str:
         """Create the run's Session and schedule it. QueueFull when too many runs are already waiting."""
         if self.is_full():
             raise QueueFull("The server is busy; try again in a few minutes")
         run_id = run_id or new_run_id()
-        session = (factory or self.factory)(RunSpec(run_id, repo, request, options, owner, self.bus, self.store))
+        spec = RunSpec(run_id, repo, request, options, owner, self.bus, self.store, github)
+        session = (factory or self.factory)(spec)
         live = LiveRun(session, owner, repo, request, now_ts())
         self._live[run_id] = live
         live.task = asyncio.get_running_loop().create_task(self._drive(run_id, live), name=f"run {run_id}")

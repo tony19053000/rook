@@ -26,6 +26,7 @@ class Me(BaseModel):
     id: str
     email: str
     github_connected: bool
+    can_run_github: bool  # this user may start a hosted run on one of their GitHub repos (ROOK-041)
 
 
 class RepoOption(BaseModel):

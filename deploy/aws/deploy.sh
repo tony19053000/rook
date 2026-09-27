@@ -49,9 +49,15 @@ rsync -az --delete \
     --exclude '.pytest_cache/' --exclude '.ruff_cache/' --exclude '.next/' \
     -e "ssh ${SSH_OPTS[*]}" "$REPO_ROOT/" "$target:$REMOTE_DIR/"
 
+# User GitHub runs (ROOK-041): the rook container reaches Docker through the host socket (as that socket's group)
+# and keeps workspaces on a host folder mounted at the same path (owned by the image's `rook` user, uid 10001).
+docker_gid=$(remote 'stat -c %g /var/run/docker.sock') || die "cannot read the Docker socket's group on the host"
+[[ "$docker_gid" =~ ^[0-9]+$ ]] || die "unexpected Docker socket group id: '$docker_gid'"
+remote 'sudo install -d -o 10001 -g 10001 -m 750 /var/lib/rook/workspaces'
+
 echo "Writing the non-secret settings (deploy/.env on the host)..."
-printf 'ROOK_HOST=%s\nROOK_WEB_ORIGINS=%s\nROOK_BOB_MODE=%s\nROOK_DAILY_COIN_CAP=%s\n' \
-    "$host" "$web_origins" "$bob_mode" "$coin_cap" | remote "cat > $REMOTE_DIR/deploy/.env"
+printf 'ROOK_HOST=%s\nROOK_WEB_ORIGINS=%s\nROOK_BOB_MODE=%s\nROOK_DAILY_COIN_CAP=%s\nDOCKER_GID=%s\n' \
+    "$host" "$web_origins" "$bob_mode" "$coin_cap" "$docker_gid" | remote "cat > $REMOTE_DIR/deploy/.env"
 
 # A guest-cookie key made ON the host (it never leaves it), unless one was set with set-secret.sh.
 remote "sudo install -d -m 700 /etc/rook && sudo touch /etc/rook/rook.env && sudo chmod 600 /etc/rook/rook.env \

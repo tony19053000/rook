@@ -8,7 +8,10 @@ Used by the local CLI. The plan is written by the Mechanic (Bob) and the repo is
 - every container runs with `--cap-drop ALL`, `no-new-privileges`, pid/memory/CPU limits, `--init`, a
   non-root user and (optionally) a read-only root filesystem with a tmpfs `/tmp`;
 - nothing from the host is mounted (compose may bind only paths inside the workspace copy), and the only
-  published port is the app's, on 127.0.0.1;
+  published port is the app's, on 127.0.0.1. When Rook itself runs in a container (the hosted server,
+  `access_network`), nothing is published: Rook's port proxy joins that existing Docker network and Rook
+  reaches it by container name. The workspace must then sit on a bind mount with the same path on the
+  host and in Rook's container, because the Docker daemon resolves compose bind paths on the host;
 - all resources carry the label `rook.run=<name>` and are removed on stop, at exit, on SIGTERM/SIGHUP,
   and by a watchdog process (`reaper.py`) if Rook itself is killed.
 
@@ -70,6 +73,7 @@ _BASE_IMAGES = {
     "typescript": "node:22-slim",
     "node": "node:22-slim",
 }
+_NETWORK_NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,63}")
 _DOCKERIGNORE = ".git\n**/__pycache__\n**/*.pyc\n.venv\nnode_modules\n.rook\n"
 
 Mode = Literal["compose", "dockerfile", "command"]
@@ -275,9 +279,12 @@ class DockerSandbox(Sandbox):
         limits: Limits = DEFAULT_LIMITS,
         health_timeout: float = HEALTH_TIMEOUT,
         build_timeout: float = BUILD_TIMEOUT,
+        access_network: str | None = None,
     ) -> None:
         """`workspace` is the run's workspace copy (never the user's own folder); it is the build
-        context. `env` holds values for the plan's `env_required` names (e.g. setup answers)."""
+        context. `env` holds values for the plan's `env_required` names (e.g. setup answers).
+        `access_network` (trusted server config only): an existing Docker network Rook's own container is
+        on; the proxy joins it instead of publishing a port (see the module docstring)."""
         self.workspace = Path(workspace).resolve()
         if not self.workspace.is_dir():
             raise SandboxError(f"workspace is not a folder: {workspace}")
@@ -288,6 +295,9 @@ class DockerSandbox(Sandbox):
         self.limits = limits
         self.health_timeout = health_timeout
         self.build_timeout = build_timeout
+        if access_network is not None and not _NETWORK_NAME.fullmatch(access_network):
+            raise SandboxError(f"invalid access network name {access_network!r}")
+        self.access_network = access_network
         self.name: str | None = None
         self._plan: SandboxPlan | None = None
         self._mode: Mode | None = None
@@ -316,7 +326,14 @@ class DockerSandbox(Sandbox):
     def base_url(self) -> str:
         if self._container is None or self._host_port is None:
             raise SandboxError("sandbox is not started")
+        if self.access_network is not None:
+            return f"http://{self._proxy_name()}:{PROXY_PORT}"
         return f"http://{HOST}:{self._host_port}"
+
+    def _proxy_name(self) -> str:
+        """The proxy's name on the access network (its container name; in compose mode, its alias)."""
+        assert self.name is not None
+        return f"{self.name}-proxy"
 
     @property
     def labels(self) -> dict[str, str]:
@@ -357,7 +374,9 @@ class DockerSandbox(Sandbox):
         return self.base_url
 
     def restart(self) -> str:
-        """Remove the app's containers (fresh state) and run them again on the same port and image."""
+        """Remove the app's containers (fresh state), rebuild the image from the workspace (so the app
+        serves the patched code; Docker's layer cache keeps an unchanged build fast) and run it again on
+        the same port."""
         if self._plan is None or self.name is None:
             raise SandboxError("sandbox is not started")
         plan = self._plan
@@ -365,8 +384,9 @@ class DockerSandbox(Sandbox):
         self._remove_containers()
         try:
             if plan.mode == "compose":
-                self._up_compose(plan, container_env(plan, self._values), build=False)
+                self._up_compose(plan, container_env(plan, self._values), build=True)
             else:
+                self._build_image(plan)
                 self._run_container(plan)
             self._wait_healthy(plan)
         except BaseException:
@@ -484,23 +504,28 @@ class DockerSandbox(Sandbox):
         self._docker(
             ["network", "create", "--driver", "bridge", *internal, *labels, self.name], "network create"
         )
-        self._docker(
-            ["network", "create", "--driver", "bridge", *labels, f"{self.name}-pub"], "network create"
-        )
+        if self.access_network is None:
+            self._docker(
+                ["network", "create", "--driver", "bridge", *labels, f"{self.name}-pub"], "network create"
+            )
         self._network = True
 
     def _start_proxy(self, plan: SandboxPlan) -> None:
         assert self.name is not None
-        proxy = f"{self.name}-proxy"
+        proxy = self._proxy_name()
         argv = proxy_run_argv(
             name=proxy,
-            network=f"{self.name}-pub",
+            network=self.access_network or f"{self.name}-pub",
             host_port=self._host_port,
             target_port=plan.port,
             labels=self.labels,
+            publish=self.access_network is None,
         )
         self._docker(argv, "docker run (proxy)")
         self._docker(["network", "connect", self.name, proxy], "docker network connect")
+        if self.access_network is not None:
+            self._host_port = PROXY_PORT  # not published: base_url is the proxy's name on the network
+            return
         self._host_port = self._published_port(["port", proxy, f"{PROXY_PORT}/tcp"])
 
     def _run_container(self, plan: SandboxPlan) -> None:
@@ -564,6 +589,8 @@ class DockerSandbox(Sandbox):
             host_port=self._host_port,
             env=env,
             hardening=hardening,
+            access_network=self.access_network,
+            access_alias=self._proxy_name(),
         )
         self._compose_file = self._tmp / "compose.rook.yaml"
         self._compose_file.write_text(yaml.safe_dump(doc, sort_keys=False), encoding="utf-8")
@@ -585,6 +612,9 @@ class DockerSandbox(Sandbox):
         self._container = container.strip().splitlines()[0] if container.strip() else None
         if self._container is None:
             raise SandboxError(f"compose service {service!r} did not start\n{self.logs(50)}")
+        if self.access_network is not None:
+            self._host_port = PROXY_PORT
+            return
         self._host_port = self._published_port(
             [*self._compose_args(), "port", PROXY_SERVICE, str(PROXY_PORT)]
         )
