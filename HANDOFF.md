@@ -67,6 +67,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 27 Sep 15:16 | 2 | ROOK-041 web + server PASS + committed. 40/41. User next: resize EC2 to t3.medium, `ROOK_DAILY_COIN_CAP=10 ROOK_WEB_ORIGINS=https://rook-weld-six.vercel.app deploy/aws/deploy.sh`, smoke, sign in → connect GitHub → run shop-app live. Then ROOK-040 (skip PyPI, tag v0.1.0) + video | ROOK-041 |
 | 27 Sep ~14:50 | 2 | Auto-on-featured-demo fix committed 3746bbc (needs redeploy). USER DECISION: build ROOK-041 hosted runs of signed-in users' own GitHub repos (like Claude Code web); freeze moved to ~17:30. Two coders: server (routes/runs, session factory live Bob per run, DockerSandbox via docker.sock, host-path workspace volume, limits, docs/02+03) and web (picker starts GitHub runs when /me.can_run_github). Contract: /me.can_run_github; POST /runs repo.kind=github | (docs) |
 | 27 Sep 14:27 | 2 | User redeployed (after .dockerignore fix 520d8fa). LIVE smoke via Vercel: minishop + shop-app both 'Fixed and verified', 0 coins. Left: ROOK-040 (PyPI rook-cli taken → skip unless user decides; v0.1.0 tag), 031 live PR test, vitest-not-found in local Docker sandbox (Node), video build after freeze | (docs) |
 | 27 Sep 14:10 | 2 | ROOK-039 PASS + committed (shop-app verified on replay; billing/wallet not offered, user-approved). 39/40. Next: user runs deploy.sh + smoke; live PR test (031); vitest-not-found bug in local Docker sandbox for Node (CLI shop-app run) awaits user yes; ROOK-040 left: PyPI (rook-cli taken) + v0.1.0 tag; video build after freeze | ROOK-039 |
