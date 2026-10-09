@@ -206,6 +206,25 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 - README with GIFs/screens, PyPI publish of `rook-cli`, a `v0.1.0` tag, links (video, URL, deck).
 - **AC:** `uv tool install rook-cli` works from PyPI in a clean environment.
 
+## M11 · Public website (spec: `docs/06_PUBLIC_SITE.md`)
+
+**ROOK-043 · Site foundation, route move, design system, simple pages** · P1 · deps: 042
+- Move the app home from `/` to `/app` and update every in-app link and redirect (06 §1); the GitHub setup return on `/` redirects in `middleware.ts`; e2e smoke and doc 04 §3.2 updated.
+- Site design system (06 §3): tokens, type scale, `Section`, `Card`, `Badge`, `Button`, `CodeBlock`; SVG logo mark + wordmark + favicon; sticky translucent header with a `<details>` mobile menu and a skip link; full footer (Product, Docs, Company, Legal); the reduced-motion CSS rule.
+- `web/content/*.ts` structure (one source per repeated fact); metadata (title template, OG/Twitter with an OG image, theme colour).
+- Pages: `/pricing` (launch notice from `content/pricing.ts`), `/privacy` and `/terms` (draft banner + placeholders), branded 404. `/` gets a minimal home (hero text + CTAs) that ROOK-044 completes.
+- Tooling: `motion`, React Testing Library + jsdom, ESLint flat config with `npm run lint`.
+- **AC:** 06 §9 tests for these pages (landmarks, heading order, banned patterns, pricing notice, legal banners, skip link, 404, the reduced-motion rule); `/app` and all old app routes still work; typecheck, lint, test and build pass.
+
+**ROOK-044 · Home page: parallax hero, walkthrough, sections** · P1 · deps: 043
+- 06 §5.1 and §6: the layered parallax hero (text never moves), the walkthrough built from the app's real components with sample data, Features, "What Rook refuses to do", "Where Rook is today", FAQ, closing CTA. `motion` only in these client islands.
+- **AC:** 06 §9 home tests (landmarks, heading order, walkthrough: one visible frame, no network, autoplay, step click, pause/play, reduced motion = still with no autoplay or parallax, complete with JS off); typecheck, lint, test and build pass.
+
+**ROOK-045 · Docs, Security, Sign-in, final audit** · P1 · deps: 044
+- `/docs` (flow + getting started), `/security` (data handling + "What is not yet true"), `/login` restyled with the four sign-in states (06 §7), "Open workspace" for signed-in visitors, the app's account menu with sign-out checked.
+- Final audit across the site: every 06 §9 test, each rule broken once and restored, a 360 px layout check, no secrets in the client bundle.
+- **AC:** all of 06 §9 passes; sign-in is never called without a click; typecheck, lint, test and build pass, with results reported.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)

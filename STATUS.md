@@ -2,15 +2,15 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-09-27 16:43 IST · **By:** Account 2 (ROOK-042 web redesign committed 527c050)
+**Last updated:** 2026-10-09 IST · **By:** ROOK-043 started (public website, docs/06)
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████████████████░]  97%  41 / 42 tickets
-TIME      [████████████████████████░░░░░░]  83%   ~5.2h left (to 27 Sep 20:30 IST)
+OVERALL   [███████████████████████████░░░]  91%  41 / 45 tickets
+TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
 M1  Foundation        [██████████] 100%   4 / 4    ROOK-001…004
@@ -23,6 +23,7 @@ M7  Server            [██████████] 100%   1 / 1    ROOK-029
 M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030…032
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
+M11 Public website    [░░░░░░░░░░]   0%   0 / 3    ROOK-043…045
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -85,6 +86,9 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-041 | Hosted runs of a signed-in user's GitHub repos | P0 | DONE | reviewer PASS web (f3ead25) + server (9139e30, security review clean). Docker sandbox via host socket (root-equivalent, documented docs/03), live Bob per run, 1 concurrent, 5/user/day, 1.5 coins/run, daily cap. Live end-to-end test pending user deploy |
 | ROOK-042 | Web redesign modelled on Claude Code web | P0 | DONE | user request 16:20; reviewer PASS (271 web tests, visual check 1280/375). Sidebar + recents + account menu; home greeting + bottom composer + repo selector; signed-out Sign in + 'Try an example'. 527c050 |
 | ROOK-040 | Release polish + PyPI | P1 | IN PROGRESS | README rewritten (uncommitted, not reviewed). PyPI name rook-cli TAKEN (free: rook-invariants, rook-bob): waiting user decision/token |
+| ROOK-043 | Site foundation, route move, design system, simple pages | P1 | IN PROGRESS | spec docs/06_PUBLIC_SITE.md (user request 9 Oct) |
+| ROOK-044 | Home page: parallax hero, walkthrough, sections | P1 | TODO | deps 043 |
+| ROOK-045 | Docs, Security, Sign-in, final audit | P1 | TODO | deps 044 |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 

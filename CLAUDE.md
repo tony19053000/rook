@@ -12,6 +12,7 @@ These rules are **compulsory** for every Claude Code session on this repo, on ei
    - `docs/03_SECURITY_ACCESS.md`: security rules (never skip)
    - `docs/04_FRONTEND_SPEC.md`: CLI and web UI spec
    - `docs/05_FEATURE_TICKETS.md`: the ticket list, acceptance criteria and roadmap
+   - `docs/06_PUBLIC_SITE.md`: the public marketing site (routes, design, product facts for copy)
 4. Continue from **"Next session starts here"** in `HANDOFF.md`.
 
 ## 1. Context
