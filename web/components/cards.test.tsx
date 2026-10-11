@@ -254,7 +254,7 @@ describe("untrusted text (XSS and control characters)", () => {
     // The only links are the sidebar's own app paths; no payload ever becomes a link.
     const anchors = out.match(/<a [^>]*>/g) ?? [];
     expect(anchors.length).toBeGreaterThan(0);
-    for (const a of anchors) expect(a).toMatch(/href="\/(runs|counterexamples|rules|repositories|login)?"/);
+    for (const a of anchors) expect(a).toMatch(/href="\/(app|runs|counterexamples|rules|repositories|login)"/);
   });
 
   it("drops every control character", () => {

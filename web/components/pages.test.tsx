@@ -255,7 +255,7 @@ describe("login and repositories", () => {
     const out = html(<LoginView session={GUEST} runs={noRuns} />);
     expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Continue with Google<\/button>/);
     expect(out).toContain("not set up on this site");
-    expect(out).toMatch(/<a (?=[^>]*href="\/")(?=[^>]*data-try-demo)[^>]*>/);
+    expect(out).toMatch(/<a (?=[^>]*href="\/app")(?=[^>]*data-try-demo)[^>]*>/);
     expect(out).toContain("Try the demo without signing in");
   });
 

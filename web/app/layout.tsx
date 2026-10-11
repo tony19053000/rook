@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
+import { metadataCopy, site } from "@/content/site";
 import { siteUrl } from "@/lib/config";
 import "./globals.css";
 
@@ -13,23 +14,22 @@ const newsreader = Newsreader({ subsets: ["latin"], weight: ["400", "500"], vari
 // prerendered at build time would have scripts without a nonce, and the browser would block them.
 export const dynamic = "force-dynamic";
 
-const DESCRIPTION =
-  "Rook finds the smallest sequence of actions that breaks a business rule, proves it on the real app, and verifies the fix. Built on IBM Bob.";
-
 export const metadata: Metadata = {
   metadataBase: siteUrl(process.env.NEXT_PUBLIC_SITE_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL),
-  title: "Rook · prove the bug, verify the fix",
-  description: DESCRIPTION,
-  applicationName: "Rook",
+  title: { default: metadataCopy.defaultTitle, template: metadataCopy.titleTemplate },
+  description: metadataCopy.description,
+  applicationName: site.name,
+  // The image comes from app/opengraph-image.tsx and app/twitter-image.tsx.
   openGraph: {
     type: "website",
-    siteName: "Rook",
-    title: "Rook · prove the bug, verify the fix",
-    description: DESCRIPTION,
+    siteName: site.name,
+    title: metadataCopy.defaultTitle,
+    description: metadataCopy.description,
   },
-  twitter: { card: "summary", title: "Rook · prove the bug, verify the fix", description: DESCRIPTION },
+  twitter: { card: "summary_large_image", title: metadataCopy.defaultTitle, description: metadataCopy.description },
 };
 
+// The app's warm theme colours; the site's pages override this with their dark colour (app/(site)/layout.tsx).
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

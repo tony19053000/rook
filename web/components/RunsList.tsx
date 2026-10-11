@@ -39,7 +39,7 @@ export function RunsList({ runs, loading, error, onRetry, now, empty = "No runs 
     return (
       <p className="text-muted" data-empty>
         {empty}{" "}
-        <Link href="/" className="text-link underline-offset-2 hover:underline">
+        <Link href="/app" className="text-link underline-offset-2 hover:underline">
           New run
         </Link>
       </p>

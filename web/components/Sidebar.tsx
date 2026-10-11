@@ -95,7 +95,7 @@ function SidebarRail({ active, signedIn = false, userName, onToggle }: SidebarPr
       <button type="button" onClick={onToggle} aria-label="Open sidebar" title="Open sidebar" className={ICON_BUTTON}>
         <Icon name="panel" />
       </button>
-      <Link href="/" aria-label="New run" title="New run" className="mt-2 grid size-8 place-items-center rounded-lg hover:bg-hover">
+      <Link href="/app" aria-label="New run" title="New run" className="mt-2 grid size-8 place-items-center rounded-lg hover:bg-hover">
         <NewRunIcon />
       </Link>
       <nav className="flex flex-col items-center gap-1" aria-label="Lists">
@@ -145,7 +145,7 @@ function SidebarPanel({
   return (
     <aside className="flex min-h-0 w-full flex-col border-r border-line bg-side" aria-label="Sidebar">
       <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-3">
-        <Link href="/" className="flex items-center gap-2 rounded-lg px-1.5 py-1" aria-label="Rook home">
+        <Link href="/app" className="flex items-center gap-2 rounded-lg px-1.5 py-1" aria-label="Rook home">
           <RookMark />
           <span className="font-serif text-[22px] leading-none tracking-tight">Rook</span>
         </Link>
@@ -158,7 +158,7 @@ function SidebarPanel({
 
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-2 pb-2">
         <nav className="flex flex-col gap-0.5" aria-label="Lists">
-          <Link href="/" aria-current={active === "home" ? "page" : undefined} className={`${ITEM} font-medium`}>
+          <Link href="/app" aria-current={active === "home" ? "page" : undefined} className={`${ITEM} font-medium`}>
             <NewRunIcon />
             New run
           </Link>

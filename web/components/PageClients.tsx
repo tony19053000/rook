@@ -10,7 +10,7 @@ import { RunPage } from "./RunPage";
 import { CounterexamplesView, LoginView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
 import { completeSignIn, oauthReturn, SIGN_IN_AVAILABLE, signInWithGoogle, signOutAndReload } from "@/lib/session";
 import { useApi, useRepos, useRuns, useSession } from "@/lib/useShell";
-import { finishGithubConnect, isSetupReturn, SETUP_PATH, setupParams, startGithubConnect } from "@/lib/github";
+import { finishGithubConnect, SETUP_PATH, setupParams, startGithubConnect } from "@/lib/github";
 
 export function HomeClient() {
   const api = useApi();
@@ -18,11 +18,6 @@ export function HomeClient() {
   const runs = useRuns(api);
   const repos = useRepos(api);
   const router = useRouter();
-
-  // GitHub's Setup URL may point at the site root: hand the setup return to /github/setup.
-  useEffect(() => {
-    if (isSetupReturn(window.location.search)) router.replace(`${SETUP_PATH}${window.location.search}`);
-  }, [router]);
 
   const connectGithub = useCallback(() => startGithubConnect(api, (url) => window.location.assign(url)), [api]);
   const signIn = useCallback(() => signInWithGoogle(window.location.origin), []);
@@ -108,7 +103,7 @@ export function LoginClient() {
     }
     setBusy(true);
     void completeSignIn(back.code).then((message) => {
-      if (message === null) router.replace("/");
+      if (message === null) router.replace("/app");
       else {
         setError(message);
         setBusy(false);

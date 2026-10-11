@@ -383,10 +383,15 @@ async function main() {
   await waitFor(`${web}/login`, next);
 
   const call = client(web);
-  for (const page of ["/", "/runs", "/login", "/repositories"]) {
+  for (const page of ["/", "/app", "/pricing", "/privacy", "/terms", "/runs", "/login", "/repositories"]) {
     const res = await call(page);
     check(res.status === 200, `GET ${page} -> 200`);
   }
+  check((await call("/no-such-page")).status === 404, "GET /no-such-page -> the branded 404");
+  const setupQuery = `?installation_id=1&setup_action=install&state=${"s".repeat(24)}`;
+  const setup = await call(`/${setupQuery}`);
+  check(setup.status === 307 && setup.headers.get("location")?.endsWith(`/github/setup${setupQuery}`),
+    "a GitHub setup return on / redirects to /github/setup");
 
   const health = await json(await call("/api/v1/health"), "GET /api/v1/health");
   check(typeof health === "object" && health !== null, "GET /api/v1/health through the Next proxy");

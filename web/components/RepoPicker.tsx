@@ -99,6 +99,8 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
     const i = index;
     const isSelected = repoKey(repo) === selectedKey;
     return (
+      // Listbox with aria-activedescendant: focus stays in the search box, which handles the keys (onKeyDown above).
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/interactive-supports-focus
       <div
         key={repoKey(repo)}
         id={optionId(i)}

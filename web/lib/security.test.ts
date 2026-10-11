@@ -73,6 +73,21 @@ describe("middleware", () => {
     }
   });
 
+  it("redirects a GitHub setup return on / to /github/setup with the same query (06 §1)", () => {
+    const query = "?installation_id=42&setup_action=install&state=" + "s".repeat(24);
+    const res = middleware(new NextRequest(`https://rook.example.app/${query}`));
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe(`https://rook.example.app/github/setup${query}`);
+  });
+
+  it("leaves / and other pages alone otherwise", () => {
+    for (const url of ["https://rook.example.app/", "https://rook.example.app/?ref=x", "https://rook.example.app/app?installation_id=42"]) {
+      const res = middleware(new NextRequest(url));
+      expect(res.headers.get("location"), url).toBeNull();
+      expect(res.headers.get("content-security-policy"), url).toMatch(/'nonce-/);
+    }
+  });
+
   it("runs on the API and the pages, not on static files", () => {
     expect(config.matcher).toEqual(["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|icon.svg).*)"]);
   });

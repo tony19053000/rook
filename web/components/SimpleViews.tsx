@@ -47,7 +47,7 @@ export function LoginView({ session, runs, signIn = { available: SIGN_IN_AVAILAB
               {clean(displayName(session))}
               {session.email && session.email !== session.name ? ` · ${clean(session.email)}` : ""}
             </p>
-            <Link href="/" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">
+            <Link href="/app" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">
               Go to Rook
             </Link>
             <button type="button" onClick={onSignOut} className="w-full rounded-lg border border-line bg-surface px-3.5 py-2 font-medium hover:bg-hover">
@@ -78,7 +78,7 @@ export function LoginView({ session, runs, signIn = { available: SIGN_IN_AVAILAB
                 Google sign-in is not set up on this site. You can use everything below as a guest.
               </p>
             )}
-            <Link href="/" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink" data-try-demo>
+            <Link href="/app" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink" data-try-demo>
               Try the demo without signing in
             </Link>
           </>

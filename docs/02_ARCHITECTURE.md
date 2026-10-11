@@ -533,12 +533,14 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
 
 ## 13. Web architecture
 
-- Next.js App Router with these pages: `/` (home and composer), `/runs/[id]` (the chat column with cards), `/login`,
+- Next.js App Router with these pages: `/app` (home and composer), `/runs/[id]` (the chat column with cards), `/login`,
   `/github/setup` (the GitHub App's Setup URL: forwards GitHub's query to `GET /github/callback` once, then shows
-  "GitHub connected" or the error; a setup return that lands on `/` is sent there). "Connect GitHub" gets the install
+  "GitHub connected" or the error; a setup return that lands on `/` is redirected there by `middleware.ts`). The public
+  website (`/`, `/pricing`, `/privacy`, `/terms`, and later `/docs`, `/security`) lives in the route group
+  `app/(site)/` with its components in `components/site/` and all copy in `content/*.ts` (doc 06). "Connect GitHub" gets the install
   URL from `GET /github/install-url` and navigates only to `https://github.com/apps/<slug>/installations/new?state=…`.
 - `lib/events.ts` holds TS types that mirror section 9, and `lib/sse.ts` handles reconnecting to the SSE stream with `after`.
-- `lib/session.ts`: Google sign-in with `@supabase/auth-js` (PKCE, `detectSessionInUrl: false`, storage key `rook-auth`, only the `apikey` header: the `sb_publishable_…` key is never a bearer). `/login` starts `signInWithOAuth` with `redirectTo = <origin>/login` and, back from Google, exchanges `?code=` once and goes to `/`. `getToken()` returns the (auto-refreshed) access token for `Authorization: Bearer`, or null for a guest. `useSession` is the guest until Supabase reports a user, then checks `GET /me` (a 401 signs the browser out). Sign-out is local to the browser (`scope: local`). Without `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` at build time the site is guest-only.
+- `lib/session.ts`: Google sign-in with `@supabase/auth-js` (PKCE, `detectSessionInUrl: false`, storage key `rook-auth`, only the `apikey` header: the `sb_publishable_…` key is never a bearer). `/login` starts `signInWithOAuth` with `redirectTo = <origin>/login` and, back from Google, exchanges `?code=` once and goes to `/app`. `getToken()` returns the (auto-refreshed) access token for `Authorization: Bearer`, or null for a guest. `useSession` is the guest until Supabase reports a user, then checks `GET /me` (a 401 signs the browser out). Sign-out is local to the browser (`scope: local`). Without `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` at build time the site is guest-only.
 - `lib/runStore.ts` is a reducer from events to UI state, the **same logic** as the TUI.
 - Components: `AgentSprite` (a canvas that ports the sprite shapes), `AgentRow`, `EngineRow`, `QuestionCard`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, `Sidebar`, `Composer`, `RepoPicker`.
 - **`middleware.ts`** (03 §8): on `/api/*` it replaces any client-sent `X-Rook-Proxy-Secret` with `ROOK_PROXY_SECRET` (a server-only env var; unset = no header) before the rewrite; on pages it sets a per-request nonce Content-Security-Policy (`lib/security.ts`), which Next.js puts on its scripts. So every page renders per request (`dynamic = "force-dynamic"` in the root layout). Static security headers come from `next.config.ts` `headers()`. `e2e/console.mjs <origin> [--run]` loads the pages in headless Chrome and fails on any console error, CSP violation or failed request.

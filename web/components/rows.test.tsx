@@ -138,6 +138,7 @@ describe("AgentRow lifecycle", () => {
     for (const out of [working, done]) {
       expect(out).not.toContain("<img");
       expect(out).toContain("&lt;img src=x onerror=alert(1)&gt;[31mred next");
+      // eslint-disable-next-line no-control-regex -- matching control characters is the point here
       expect(out).not.toMatch(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/);
     }
     expect(working).not.toContain("<b>x</b>");

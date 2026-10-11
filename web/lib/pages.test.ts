@@ -237,6 +237,7 @@ describe("errors (04 §3.6)", () => {
 
   it("strips control characters from the server's detail and caps its length", () => {
     const view = errorView(new ApiError(403, `bad\x1b]8;;evil\x07${"y".repeat(500)}`), "create");
+    // eslint-disable-next-line no-control-regex -- matching control characters is the point here
     expect(view.message).not.toMatch(/[\x00-\x1f]/);
     expect(view.message.length).toBeLessThanOrEqual(300);
   });

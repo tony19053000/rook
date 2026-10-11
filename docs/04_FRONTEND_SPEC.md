@@ -157,11 +157,15 @@ Exit codes: `0` every approved rule held, `1` an approved rule is broken, `2` th
 - Recents dots: pulsing accent = running, green = fixed/holding, red = broken.
 
 ### 3.2 Pages
+The public website (`/`, `/docs`, `/security`, `/pricing`, `/privacy`, `/terms`, the branded 404) is specified in `docs/06_PUBLIC_SITE.md`; the app home moved from `/` to `/app` (ROOK-043). A GitHub setup return that lands on `/` is redirected to `/github/setup` by `middleware.ts`.
+
 | Route | Content |
 |---|---|
-| `/` | Home, laid out like Claude Code on the web. **Signed in:** a small Rook mark and the serif greeting "What should Rook check next, <first name>?" near the top; the rest of the main column stays empty; the composer sits at the bottom centre (max 760px; 16px gutters on mobile). **Signed out:** "Find the bug. Prove it. Verify the fix.", the one-line tagline, a primary **Sign in with Google** (the `/login` OAuth flow) and a small text link **Try an example without signing in** that starts the first example repo (for judges without an account). No demo hero, step strip or demo chips. Choosing a repo and sending creates a run → `/runs/[id]`. A signed-in user's own GitHub repo starts the same kind of run when `GET /me` says `can_run_github` (ROOK-041) |
+| `/` | The public site's home (06 §5.1) |
+| `/pricing`, `/privacy`, `/terms` | Site pages (06 §5): pricing from `content/pricing.ts`, legal drafts with the draft banner |
+| `/app` | Home, laid out like Claude Code on the web. **Signed in:** a small Rook mark and the serif greeting "What should Rook check next, <first name>?" near the top; the rest of the main column stays empty; the composer sits at the bottom centre (max 760px; 16px gutters on mobile). **Signed out:** "Find the bug. Prove it. Verify the fix.", the one-line tagline, a primary **Sign in with Google** (the `/login` OAuth flow) and a small text link **Try an example without signing in** that starts the first example repo (for judges without an account). No demo hero, step strip or demo chips. Choosing a repo and sending creates a run → `/runs/[id]`. A signed-in user's own GitHub repo starts the same kind of run when `GET /me` says `can_run_github` (ROOK-041) |
 | `/runs/[id]` | The live run: chat column rendered from the SSE events, with the composer active for chat |
-| `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook", "Sign out". The sidebar account row shows the user's name with a menu holding "Sign out" (a guest: the "Sign in" button, §3.1) |
+| `/login` | "Continue with Google", "Try the demo without signing in"; when signed in: the name and email, "Go to Rook" (→ `/app`), "Sign out". Back from Google it goes to `/app`; sign-out goes to `/` (the site). The sidebar account row shows the user's name with a menu holding "Sign out" (a guest: the "Sign in" button, §3.1) |
 | `/runs` | Every run of the viewer, newest first (reached from **All runs** next to the recents) |
 | `/counterexamples`, `/rules`, `/repositories` | Simple lists (lower priority); `/repositories` offers "Connect GitHub" to a signed-in user without GitHub, and ends with the small "Add to CI" note (`rook run --ci`) |
 | `/github/setup` | Where GitHub returns after the App install: "Connecting GitHub…", then "GitHub connected" (+ "Go to Rook") or the error with "Connect GitHub again" |

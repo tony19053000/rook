@@ -41,7 +41,7 @@ export function GithubSetupView({ session, runs, status, connectGithub }: Github
               Your shared repositories are in the repo picker. The hosted server runs the demo repositories; run your own with the CLI:{" "}
               <code className="font-mono">rook run owner/name</code>
             </p>
-            <Link href="/" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">
+            <Link href="/app" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">
               Go to Rook
             </Link>
           </>
@@ -65,7 +65,7 @@ export function GithubSetupView({ session, runs, status, connectGithub }: Github
               </button>
             )}
             {retryError !== null && <p className="text-[12.5px] text-bad">{clean(retryError)}</p>}
-            <Link href="/" className="text-link underline-offset-2 hover:underline">
+            <Link href="/app" className="text-link underline-offset-2 hover:underline">
               Back to Rook
             </Link>
           </>

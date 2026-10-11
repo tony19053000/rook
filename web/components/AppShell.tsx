@@ -74,10 +74,10 @@ export function AppShell({ children, composer, banner, recents = [], coins = 0, 
           >
             <Icon name="menu" size={18} />
           </button>
-          <Link href="/" className="font-serif text-[20px] leading-none tracking-tight">
+          <Link href="/app" className="font-serif text-[20px] leading-none tracking-tight">
             Rook
           </Link>
-          <Link href="/" aria-label="New run" className="ml-auto grid size-9 place-items-center rounded-lg text-muted hover:bg-hover hover:text-ink">
+          <Link href="/app" aria-label="New run" className="ml-auto grid size-9 place-items-center rounded-lg text-muted hover:bg-hover hover:text-ink">
             <Icon name="plus" size={18} />
           </Link>
         </div>

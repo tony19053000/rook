@@ -91,10 +91,69 @@
   --color-bad-soft: var(--bad-soft);
   --color-warn: var(--warn);
   --color-warn-soft: var(--warn-soft);
+  --color-site-bg: var(--site-bg);
+  --color-site-raised: var(--site-raised);
+  --color-site-card: var(--site-card);
+  --color-site-line: var(--site-line);
+  --color-site-control: var(--site-control);
+  --color-site-ink: var(--site-ink);
+  --color-site-muted: var(--site-muted);
+  --color-site-faint: var(--site-faint);
+  --color-site-accent: var(--site-accent);
+  --color-site-accent-ink: var(--site-accent-ink);
+  --color-site-link: var(--site-link);
+  --color-site-good: var(--site-good);
+  --color-site-warn: var(--site-warn);
+  --color-site-warn-soft: var(--site-warn-soft);
   --font-sans: var(--font-plex-sans), system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: var(--font-newsreader), Georgia, "Times New Roman", serif;
   --font-mono: var(--font-plex-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --animate-pulse-dot: pulse-dot 1s infinite;
+}
+
+/* Public site tokens (06 §3): dark only, and defined only inside `.site` (components/site/SiteFrame.tsx), so the
+   app's tokens above and its light theme are untouched. Text pairs are at least 4.5:1 on --site-bg and
+   --site-card; --site-control (button and input borders) is at least 3:1. */
+.site {
+  color-scheme: dark;
+  --site-bg: #09090b;
+  --site-raised: #0f0f12;
+  --site-card: #131316;
+  --site-line: #26262c;
+  --site-control: #71717a;
+  --site-ink: #f4f4f5;
+  --site-muted: #a1a1aa;
+  --site-faint: #8a8a93;
+  --site-accent: #ff6a4d;
+  --site-accent-ink: #0b0b0d;
+  --site-link: #8fb0ff;
+  --site-good: #6bd9a0;
+  --site-warn: #f2d27f;
+  --site-warn-soft: #2a2310;
+  background: var(--site-bg);
+  color: var(--site-ink);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The page behind the site (overscroll, short pages) is the site's dark, not the app's background. */
+body:has(> .site) {
+  background: #09090b;
+}
+
+.site :focus-visible {
+  outline: 2px solid var(--site-link);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* The native <details> mobile menu: no default marker. */
+.site summary {
+  list-style: none;
+}
+.site summary::-webkit-details-marker {
+  display: none;
 }
 
 @keyframes pulse-dot {
@@ -128,11 +187,13 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* 06 §3: under reduced motion everything is still, even before any JS loads. */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
     transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -18,7 +18,7 @@ describe("sidebar: signed in", () => {
   it("has the wordmark, the collapse button and the nav with New run", () => {
     expect(out).toContain(">Rook<");
     expect(out).toContain('aria-label="Close sidebar"');
-    for (const href of ["/", "/counterexamples", "/rules", "/repositories"]) expect(out).toContain(`href="${href}"`);
+    for (const href of ["/app", "/counterexamples", "/rules", "/repositories"]) expect(out).toContain(`href="${href}"`);
     expect(out).toContain("New run");
   });
 
@@ -77,7 +77,7 @@ describe("sidebar: signed out", () => {
   });
 
   it("still has the nav", () => {
-    for (const href of ["/", "/counterexamples", "/rules", "/repositories"]) expect(out).toContain(`href="${href}"`);
+    for (const href of ["/app", "/counterexamples", "/rules", "/repositories"]) expect(out).toContain(`href="${href}"`);
   });
 });
 

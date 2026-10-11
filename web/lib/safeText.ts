@@ -3,6 +3,7 @@
 // the web twin of src/rook/cli/tui/safe_text.py.
 
 const WHITESPACE = /[\t\n\r\v\f]/g;
+// eslint-disable-next-line no-control-regex -- matching control characters is the point here
 const CONTROLS = /[\x00-\x1f\x7f-\x9f]/g;
 
 /** One display line: line breaks and tabs become spaces; other C0, DEL and C1 controls are dropped. */
@@ -12,6 +13,7 @@ export function clean(text: string): string {
 
 const NEWLINES = /\r\n?/g;
 const INLINE_WHITESPACE = /[\t\v\f]/g;
+// eslint-disable-next-line no-control-regex -- matching control characters is the point here
 const CONTROLS_BUT_NEWLINE = /[\x00-\x09\x0b-\x1f\x7f-\x9f]/g;
 
 /** Like `clean`, but keeps line breaks: \r\n and lone \r become \n; tabs, \v and \f become spaces. */
