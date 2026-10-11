@@ -15,7 +15,7 @@
 - **ROOK-046 DONE** (reviewer PASS, committed 45af3ae): no dead sign-in button with JS off; copy-rule negation fix. **M11 complete.** Final check 11 Oct: typecheck, lint, 419 vitest, build all pass.
 - **ROOK-047 DONE** (user feedback: looked like a tablet layout at 1920 px; reviewer PASS, committed a3a89fb): full-width header, 1440 px content container, wider hero/walkthrough/grids, capped text measure. Local preview: `node node_modules/next/dist/bin/next start -p 3000` in web/ after `npm run build`.
 - **ROOK-048 DONE** (user request: no visible "demo"; reviewer PASS r2, committed 4530044): CTA "Try Rook", "example apps/repos", reworded app + server messages; guards `NO_DEMO_WORD`, `noDemo.test.tsx`, `tests/unit/test_no_demo_copy.py`. API values stay `kind: "demo"`. Server wording reaches production only after the user runs `deploy/aws/deploy.sh`; the web handles both old and new guest-limit text. Known data leftovers (not Rook copy): `admin@demo.local` in the minishop fixture app; Bob text in unused wallet-api recordings.
-- **NOT PUSHED.** Waiting for the user: push to main redeploys Vercel and makes `/` the marketing site (app at `/app`). Before pushing, nothing else is needed on Vercel/Supabase (`/login` unchanged).
+- **PUSHED 12 Oct** (user approved): origin/main = 59fd8e1; Vercel redeployed in ~1 min; live https://rook-weld-six.vercel.app shows the marketing site, app at `/app`, all pages 200, `/api/v1/health` proxied:true. Server (EC2) still runs the old message wording until the user runs `deploy/aws/deploy.sh`.
 - Follow-up for the user to decide (changes the app's look): the app pages' own contrast (--faint 3.7:1, white on accent 3.77:1, 5 agent name colours).
 - Known, unrelated: `tests/unit/test_demo_apps.py` has 3 failures locally (missing Mechanic/Coordinator recording keys); they depend on the local demo builds in `~/.cache/rook/demos`, not on M11 code. Follow-up, not blocking.
 - **Don't push without asking the user**: Vercel redeploys on push to main, and this changes what `/` shows on the live URL (judging may still be open).
@@ -49,6 +49,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct | – | Pushed to main (user approved); Vercel live with the new site | (docs) |
 | 12 Oct | – | ROOK-048 no visible "demo" PASS r2 + committed; localhost:3000 rebuilt | ROOK-048 |
 | 11 Oct | – | ROOK-047 full-width layout PASS + committed (user feedback); localhost:3000 rebuilt | ROOK-047 |
 | 11 Oct | – | ROOK-046 PASS + committed; M11 done (419 vitest, lint, typecheck, build green); not pushed | ROOK-046 |

@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** ROOK-048 (no "demo" in visible text) committed 4530044; not pushed
+**Last updated:** 2026-10-12 IST · **By:** ROOK-048 (no "demo" in visible text) committed 4530044; pushed, Vercel live
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
