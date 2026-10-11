@@ -6,11 +6,13 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 9 Oct 2026 (post-hackathon). **Current goal: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
+**Updated:** 11 Oct 2026 (post-hackathon). **Current goal: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
 
-**State:** HEAD 358e2de. ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
-- **ROOK-043 IN PROGRESS** (coder running, uncommitted): app home `/` → `/app`, site design system in `web/components/site/`, copy in `web/content/*.ts`, header/footer/logo/favicon, `/pricing`, `/privacy`, `/terms`, 404, minimal `/`, ESLint + RTL + jsdom + `motion` deps. Next: reviewer → commit `ROOK-043: …` with explicit paths only.
-- Then ROOK-044 (home: parallax hero, walkthrough from real app components, sections), then ROOK-045 (/docs, /security, /login states, "Open workspace", final audit + break-each-rule + build).
+**State:** HEAD 8976686 (+ docs). ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
+- **ROOK-043 DONE** (reviewer PASS, committed 8976686): app home `/` → `/app`, site design system `web/components/site/`, copy `web/content/*.ts`, `/pricing` `/privacy` `/terms` 404, minimal `/`, ESLint (`npm run lint`), RTL + jsdom, `motion` dep (unused until 044). Web suite: 314 passed.
+- **ROOK-044 IN PROGRESS** (coder): the full home page. Then ROOK-045.
+- Known, unrelated: `tests/unit/test_demo_apps.py` has 3 failures locally (missing Mechanic/Coordinator recording keys); they depend on the local demo builds in `~/.cache/rook/demos`, not on M11 code. Follow-up, not blocking.
+- ROOK-045 (/docs, /security, /login states, "Open workspace", final audit + break-each-rule + build).
 - **Don't push without asking the user**: Vercel redeploys on push to main, and this changes what `/` shows on the live URL (judging may still be open).
 - Untracked/modified user files (`docs/submission/**`, `docs/demo-apps/**`) are the user's video/deck work: never commit or edit them.
 
@@ -42,6 +44,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 11 Oct | – | ROOK-043 reviewer PASS (2nd attempt; 1st cut off by usage limit) + committed; 044 coder started | ROOK-043 |
 | 9 Oct | – | Public website started: docs/06_PUBLIC_SITE.md, tickets ROOK-043–045 added; 043 coder running | (docs) |
 | 27 Sep 16:43 | 2 | Server live with ROOK-041 (Docker reachable; t3.small, free plan can't resize; swap 4G; coin cap 10). ROOK-042 web redesign (Claude-Code-style) PASS + committed 527c050, Vercel auto-deploys. Left: user live GitHub run test, Google OAuth publish (judges sign-in), ROOK-040 tag v0.1.0, video | ROOK-042 |
 | 27 Sep 15:16 | 2 | ROOK-041 web + server PASS + committed. 40/41. User next: resize EC2 to t3.medium, `ROOK_DAILY_COIN_CAP=10 ROOK_WEB_ORIGINS=https://rook-weld-six.vercel.app deploy/aws/deploy.sh`, smoke, sign in → connect GitHub → run shop-app live. Then ROOK-040 (skip PyPI, tag v0.1.0) + video | ROOK-041 |
