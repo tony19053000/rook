@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-11 IST · **By:** M11 public website done (ROOK-043–046), not pushed
+**Last updated:** 2026-10-11 IST · **By:** ROOK-047 full-width layout committed a3a89fb; not pushed
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████████████████░]  97%  45 / 46 tickets
+OVERALL   [█████████████████████████████░]  97%  46 / 47 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -23,7 +23,7 @@ M7  Server            [██████████] 100%   1 / 1    ROOK-029
 M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030…032
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
-M11 Public website    [██████████] 100%   4 / 4    ROOK-043…046
+M11 Public website    [██████████] 100%   5 / 5    ROOK-043…047
 USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -90,6 +90,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-044 | Home page: parallax hero, walkthrough, sections | P1 | DONE | reviewer PASS r2 (r1 FAIL: frame text contrast → frame-scoped overrides + contrast test). 365 vitest. bf5f61d. Follow-up: app pages' own contrast gaps (--faint, 5 agent colours, accent text) |
 | ROOK-045 | Docs, Security, Sign-in, final audit | P1 | DONE | reviewer PASS r1 (415 vitest, lint, build, secret grep clean, 360 px all pages). 8e33e90 |
 | ROOK-046 | Site polish: no-JS sign-in, copy-rule negation | P2 | DONE | reviewer PASS r1 (419 vitest). 45af3ae |
+| ROOK-047 | Site uses the full desktop width | P1 | DONE | user feedback 11 Oct; reviewer PASS r1 (419 vitest; no overflow 360–2560 px). a3a89fb |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 

@@ -230,6 +230,10 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 - The certification/audit banned pattern is shielded by a negation only when the negation governs the term: "not just audited but certified" is caught; "no third-party audit or penetration test, and no certifications" still passes.
 - **AC:** tests for both; typecheck, lint, test and build pass.
 
+**ROOK-047 · Site uses the full desktop width** · P1 · deps: 046
+- User feedback (11 Oct, 1920 px screen): the site looks like a tablet layout. The header spans the full width (logo at the far left, CTAs at the far right); content containers widen (about 1440 px) with larger side padding on large screens; the hero headline, product figure, walkthrough, feature grid and footer use the extra width; paragraphs keep a readable measure.
+- **AC:** no horizontal scroll from 360 px to 2560 px; at 1920 px the header and content reach near the edges; existing tests pass; typecheck, lint, test and build pass.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)
