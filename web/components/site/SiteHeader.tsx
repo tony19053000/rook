@@ -1,14 +1,14 @@
 import Link from "next/link";
-import { ButtonLink } from "./Button";
+import { HeaderAccountCtas, MobileAccountLink } from "./AccountHint";
 import { Container } from "./Container";
 import { Logo } from "./Logo";
 import { NavLinkItem } from "./NavLinkItem";
-import { cta, headerCopy, headerNav } from "@/content/site";
+import { headerCopy, headerNav } from "@/content/site";
 
 const NAV_LINK = "rounded-md px-3 py-2 text-sm text-site-muted transition-colors hover:text-site-ink";
 
 // The sticky, translucent site header (06 §3). A server component: the mobile menu is a native <details>, so it
-// opens and closes without JS.
+// opens and closes without JS. The account CTAs are the one client island (AccountHint.tsx).
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-site-line bg-site-bg/80 backdrop-blur-md">
@@ -27,16 +27,8 @@ export function SiteHeader() {
           </ul>
         </nav>
 
-        <div className="ml-auto flex items-center gap-2">
-          {/* Wrapped: `hidden` on the link itself would lose to the button's own display class. */}
-          <span className="hidden md:block">
-            <ButtonLink href={cta.signIn.href} variant="ghost" size="sm">
-              {cta.signIn.label}
-            </ButtonLink>
-          </span>
-          <ButtonLink href={cta.demo.href} size="sm">
-            {cta.demo.label}
-          </ButtonLink>
+        <div className="ml-auto">
+          <HeaderAccountCtas />
         </div>
 
         <details className="group md:hidden">
@@ -55,7 +47,7 @@ export function SiteHeader() {
                 </li>
               ))}
               <li>
-                <NavLinkItem link={cta.signIn} className="block rounded-md px-3 py-3 text-base text-site-ink hover:bg-site-raised" />
+                <MobileAccountLink className="block rounded-md px-3 py-3 text-base text-site-ink hover:bg-site-raised" />
               </li>
             </ul>
           </nav>

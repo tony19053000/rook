@@ -5,16 +5,26 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SiteLayout from "@/app/(site)/layout";
+import DocsPage from "@/app/(site)/docs/page";
+import LoginPage from "@/app/(site)/login/page";
 import HomePage from "@/app/(site)/page";
 import PricingPage from "@/app/(site)/pricing/page";
 import PrivacyPage from "@/app/(site)/privacy/page";
+import SecurityPage from "@/app/(site)/security/page";
 import TermsPage from "@/app/(site)/terms/page";
 import NotFound from "@/app/not-found";
 import { PricingView } from "./PricingView";
 import { LEGAL_DRAFT_BANNER, legalPlaceholders } from "@/content/legal";
 import { PRICING_PENDING_NOTICE, pricingStatus, type Plan } from "@/content/pricing";
-import { notFoundCopy } from "@/content/site";
+import { githubAction, gettingStarted } from "@/content/docs";
+import { flowSteps } from "@/content/flow";
+import { notYetTrue } from "@/content/security";
+import { footerColumns, INSTALL_COMMAND, notFoundCopy } from "@/content/site";
 import { copyViolations } from "@/lib/copyRules";
+
+// /login's sign-in island uses the App Router; these tests render pages outside Next.
+const router = { replace: vi.fn(), push: vi.fn() };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 afterEach(cleanup);
 
@@ -22,9 +32,12 @@ const inSite = (page: ReactElement) => render(<SiteLayout>{page}</SiteLayout>);
 
 const PAGES: [string, () => ReturnType<typeof render>][] = [
   ["/", () => inSite(<HomePage />)],
+  ["/docs", () => inSite(<DocsPage />)],
+  ["/security", () => inSite(<SecurityPage />)],
   ["/pricing", () => inSite(<PricingPage />)],
   ["/privacy", () => inSite(<PrivacyPage />)],
   ["/terms", () => inSite(<TermsPage />)],
+  ["/login", () => inSite(<LoginPage />)],
   ["404", () => render(<NotFound />)],
 ];
 
@@ -131,6 +144,73 @@ describe.each([
     const text = container.textContent ?? "";
     for (const placeholder of Object.values(legalPlaceholders)) expect(text).toContain(placeholder);
     expect(Object.values(legalPlaceholders)).toEqual(["[Company legal name]", "[contact email]", "[jurisdiction]"]);
+  });
+});
+
+describe("/docs (06 §5.2)", () => {
+  it("has every anchor the footer links to", () => {
+    const { container } = inSite(<DocsPage />);
+    const anchors = footerColumns.flatMap((c) => c.links).flatMap((l) => (l.href.startsWith("/docs#") ? [l.href.slice(6)] : []));
+    expect(anchors.sort()).toEqual(["getting-started", "github-action", "how-it-works"]);
+    for (const id of anchors) expect(container.querySelector(`main #${id}`), `#${id}`).not.toBeNull();
+  });
+
+  it("renders the whole 6-step flow from content/flow.ts", () => {
+    const { container } = inSite(<DocsPage />);
+    const flow = container.querySelector("#how-it-works") as HTMLElement;
+    expect(flowSteps).toHaveLength(6);
+    for (const step of flowSteps) {
+      expect(within(flow).getByRole("heading", { level: 3, name: step.title })).toBeTruthy();
+      expect(flow.textContent).toContain(step.summary);
+      for (const detail of step.details) expect(flow.textContent).toContain(detail);
+    }
+  });
+
+  it("getting started: the install command, PyPI note and the CLI commands that exist", () => {
+    const { container } = inSite(<DocsPage />);
+    const text = container.querySelector("#getting-started")?.textContent ?? "";
+    expect(text).toContain(INSTALL_COMMAND);
+    expect(text).toContain("not on PyPI yet");
+    expect(text).toContain("rook/rook.yaml");
+    expect(text).toContain("rook/counterexamples/cx_001.json");
+    for (const c of gettingStarted.commands.items) expect(text).toContain(c.usage);
+  });
+
+  it("lists exactly the commands src/rook/cli/main.py defines", () => {
+    const main = readFileSync(resolve(process.cwd(), "../src/rook/cli/main.py"), "utf8");
+    const defined = [...main.matchAll(/@app\.command\(\)\s*\ndef (\w+)\(/g)].map((m) => m[1]!);
+    expect(defined.length).toBeGreaterThanOrEqual(8);
+    const listed = gettingStarted.commands.items.map((c) => c.usage.split(" ")[1]).filter((name): name is string => name !== undefined);
+    expect(listed.sort()).toEqual(defined.sort());
+  });
+
+  it("the GitHub Action: the README workflow with the SHA placeholder and the pull_request warning", () => {
+    const { container } = inSite(<DocsPage />);
+    const text = container.querySelector("#github-action")?.textContent ?? "";
+    expect(text).toContain("tony19053000/rook@<full-commit-sha>");
+    expect(text).toMatch(/pull_request,\s*never pull_request_target/);
+    const readme = readFileSync(resolve(process.cwd(), "../README.md"), "utf8");
+    for (const line of githubAction.workflow.split("\n")) expect(readme, line).toContain(line);
+  });
+});
+
+describe("/security (06 §5.3)", () => {
+  it("ends with 'What is not yet true', listing every gap", () => {
+    const { container } = inSite(<SecurityPage />);
+    const section = container.querySelector(`#${notYetTrue.id}`) as HTMLElement;
+    expect(within(section).getByRole("heading", { level: 2, name: "What is not yet true" })).toBeTruthy();
+    expect(notYetTrue.items).toHaveLength(5);
+    for (const item of notYetTrue.items) expect(section.textContent).toContain(item);
+    const sections = [...container.querySelectorAll("main section")];
+    expect(sections.at(-1)?.id).toBe(notYetTrue.id);
+    expect(section.textContent).toMatch(/no third-party audit or penetration test/);
+    expect(section.textContent).toMatch(/Docker socket/);
+  });
+
+  it("covers data, sandboxing, AI boundaries, secrets and sign-in, and links to /privacy", () => {
+    const { container } = inSite(<SecurityPage />);
+    for (const id of ["data", "sandboxing", "ai-boundaries", "secrets", "auth", "hardening"]) expect(container.querySelector(`#${id}`), id).not.toBeNull();
+    expect(container.querySelector('#data a[href="/privacy"]')).not.toBeNull();
   });
 });
 

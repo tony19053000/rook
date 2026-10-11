@@ -24,9 +24,13 @@ describe("route move (06 §1)", () => {
       "./counterexamples/page.tsx",
       "./repositories/page.tsx",
       "./github/setup/page.tsx",
-      "./login/page.tsx",
     ]) {
       expect(exists(page), page).toBe(true);
     }
+  });
+
+  it("/login, /docs and /security are site pages (/login keeps its URL: the route group adds no segment)", () => {
+    for (const page of ["./(site)/login/page.tsx", "./(site)/docs/page.tsx", "./(site)/security/page.tsx"]) expect(exists(page), page).toBe(true);
+    expect(exists("./login/page.tsx")).toBe(false);
   });
 });

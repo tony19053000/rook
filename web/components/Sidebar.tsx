@@ -23,7 +23,7 @@ export interface RecentRun {
 }
 
 /** Which sidebar entry the current page is. */
-export type NavKey = "home" | "runs" | "counterexamples" | "rules" | "repositories" | "login" | "run";
+export type NavKey = "home" | "runs" | "counterexamples" | "rules" | "repositories" | "run";
 
 const DOT: Record<RecentStatus, string> = {
   running: "bg-accent animate-pulse-dot",
@@ -235,7 +235,6 @@ function SidebarPanel({
         ) : (
           <Link
             href="/login"
-            aria-current={active === "login" ? "page" : undefined}
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-ink px-3 py-2 text-[14px] font-medium text-app transition-opacity hover:opacity-90"
             data-sign-in
           >

@@ -26,6 +26,13 @@ export const BANNED_COPY: CopyRule[] = [
   { name: "per month / year", pattern: /\bper (month|year|seat|user\/month)\b|\/\s?(mo|month|yr|year)\b|\bmonthly\b|\bannually\b/i },
   { name: "star rating", pattern: /[★☆⭐]|\b\d(\.\d)?\s*\/\s*5\b|\b\d(\.\d)?\s*stars?\b|\brated\b/i },
   { name: "award / as seen in", pattern: /\baward[- ]winning\b|\bas seen (in|on)\b|\bfeatured in\b/i },
+  // Rook holds no certifications and has had no audit (06 §4). A claim like "SOC 2 certified" or "independently
+  // audited" is banned; a negated one ("no third-party audit", "not SOC 2 certified") is the honest line.
+  {
+    name: "certification / audit claim",
+    pattern:
+      /(?<!\b(?:no|not|nor|never|without|isn't|aren't|hasn't|haven't)\b[^.;:]{0,40})\b(?:soc ?[12]|iso ?27001|hipaa|gdpr[- ]compliant|pci[- ]dss|fedramp|(?:independently |third[- ]party )?audited|pen(?:etration)?[- ]tested|certified)\b/i,
+  },
 ];
 
 /** Banned on the pricing page and in the pricing content while prices may not be stated (06 §5.4). */

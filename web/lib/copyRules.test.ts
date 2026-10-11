@@ -31,6 +31,28 @@ describe("copy rules (06 §4, §9)", () => {
     }
   });
 
+  it("catch certification and audit claims unless they are negated", () => {
+    for (const bad of [
+      "Rook is SOC 2 certified.",
+      "SOC2 Type II",
+      "ISO 27001 compliant hosting",
+      "HIPAA-ready by design",
+      "Fully GDPR compliant",
+      "Independently audited code",
+      "Penetration tested every release",
+      "Certified secure",
+    ]) {
+      expect(copyViolations(bad), bad).toContain("certification / audit claim");
+    }
+    for (const ok of [
+      "There has been no third-party audit or penetration test, and Rook holds no certifications.",
+      "Rook is not SOC 2 certified.",
+      "It has never been penetration tested.",
+    ]) {
+      expect(copyViolations(ok), ok).toEqual([]);
+    }
+  });
+
   it("allow the true product facts", () => {
     for (const ok of [
       "Needs Python 3.12+ and Docker.",

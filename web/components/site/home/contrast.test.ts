@@ -33,7 +33,10 @@ const PAIRS: [string, string[]][] = [
   ["bad", ["app", "surface", "sunk", "bad-soft"]],
   ["warn", ["surface", "warn-soft"]],
   ["link", ["sunk"]],
-  ["accent", ["app", "surface"]],
+  // Accent text (FixCard's root cause) is drawn with --frame-accent-text (globals.css `.wt-frame .text-accent`).
+  ["frame-accent-text", ["app", "surface"]],
+  // Accent as a background: a primary button's label (cards/ui.tsx) on --accent.
+  ["accent-ink", ["accent"]],
   // The current shrink chip: --page text on a --bad chip (globals.css `.wt-frame [data-shrink] [data-current]`).
   ["page", ["bad"]],
 ];
@@ -57,6 +60,11 @@ describe("walkthrough frame contrast (06 §3)", () => {
 
   it.each(Object.entries(AGENTS))("agent %s: its derived text colour reaches 4.5:1 on the row background", (_id, info) => {
     expect(contrastRatio(readableColor(info.color, FRAME_ROW_BG), FRAME_ROW_BG)).toBeGreaterThanOrEqual(MIN_TEXT_CONTRAST);
+  });
+
+  it("accent text in a frame uses the lifted colour, and --accent itself is never overridden", () => {
+    expect(css).toMatch(/\.wt-frame \.text-accent\s*\{\s*color:\s*var\(--frame-accent-text\);/);
+    expect(Object.keys(FRAME_TOKEN_OVERRIDES)).not.toContain("--accent");
   });
 
   it("leaves the app's own token values alone", () => {

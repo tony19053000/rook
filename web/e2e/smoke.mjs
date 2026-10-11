@@ -383,7 +383,7 @@ async function main() {
   await waitFor(`${web}/login`, next);
 
   const call = client(web);
-  for (const page of ["/", "/app", "/pricing", "/privacy", "/terms", "/runs", "/login", "/repositories"]) {
+  for (const page of ["/", "/app", "/docs", "/security", "/pricing", "/privacy", "/terms", "/runs", "/login", "/repositories"]) {
     const res = await call(page);
     check(res.status === 200, `GET ${page} -> 200`);
   }

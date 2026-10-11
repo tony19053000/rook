@@ -7,8 +7,8 @@ import { useCallback, useEffect, useState } from "react";
 import { GithubSetupView, type GithubSetupStatus } from "./GithubSetupView";
 import { HomeView } from "./HomeView";
 import { RunPage } from "./RunPage";
-import { CounterexamplesView, LoginView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
-import { completeSignIn, oauthReturn, SIGN_IN_AVAILABLE, signInWithGoogle, signOutAndReload } from "@/lib/session";
+import { CounterexamplesView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
+import { SIGN_IN_AVAILABLE, signInWithGoogle } from "@/lib/session";
 import { useApi, useRepos, useRuns, useSession } from "@/lib/useShell";
 import { finishGithubConnect, SETUP_PATH, setupParams, startGithubConnect } from "@/lib/github";
 
@@ -82,54 +82,6 @@ export function CounterexamplesClient() {
 export function RulesClient() {
   const api = useApi();
   return <RulesView session={useSession(api)} runs={useRuns(api)} />;
-}
-
-export function LoginClient() {
-  const api = useApi();
-  const session = useSession(api);
-  const runs = useRuns(api);
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Back from Google: /login?code=… (PKCE) or ?error=…; the code is exchanged once, then the URL is cleaned.
-  useEffect(() => {
-    const back = oauthReturn(window.location.search);
-    if (back === null) return;
-    if ("error" in back) {
-      setError("Sign-in was cancelled or failed. Try again.");
-      router.replace("/login");
-      return;
-    }
-    setBusy(true);
-    void completeSignIn(back.code).then((message) => {
-      if (message === null) router.replace("/app");
-      else {
-        setError(message);
-        setBusy(false);
-        router.replace("/login");
-      }
-    });
-  }, [router]);
-
-  const onSignIn = () => {
-    setBusy(true);
-    setError(null);
-    void signInWithGoogle(window.location.origin).then((message) => {
-      if (message !== null) {
-        setError(message);
-        setBusy(false);
-      }
-    });
-  };
-
-  return (
-    <LoginView
-      session={session}
-      runs={runs}
-      signIn={{ available: SIGN_IN_AVAILABLE, busy, error, onSignIn, onSignOut: () => void signOutAndReload() }}
-    />
-  );
 }
 
 export function RepositoriesClient() {

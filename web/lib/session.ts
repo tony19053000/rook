@@ -3,6 +3,7 @@
 // The browser holds only the public Supabase key; the server verifies the access token on every call.
 
 import { GoTrueClient, type User } from "@supabase/auth-js";
+import { AUTH_STORAGE_KEY } from "./authStorage";
 
 export type Session =
   | { kind: "guest" }
@@ -55,7 +56,7 @@ export function authClient(): GoTrueClient | null {
     url: `${CONFIG.url}/auth/v1`,
     // Only `apikey`: the new publishable keys are not JWTs, so they never go in Authorization.
     headers: { apikey: CONFIG.key },
-    storageKey: "rook-auth",
+    storageKey: AUTH_STORAGE_KEY,
     flowType: "pkce",
     persistSession: true,
     autoRefreshToken: true,

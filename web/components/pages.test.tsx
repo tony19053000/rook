@@ -7,7 +7,7 @@ import { HomeView, SIGNED_OUT_TITLE } from "./HomeView";
 import { RepoPicker } from "./RepoPicker";
 import { RunPageView } from "./RunPage";
 import { RunsList } from "./RunsList";
-import { CounterexamplesView, LoginView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
+import { CounterexamplesView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
 import { ApiError, type RepoOption, type RunSummary } from "@/lib/api";
 import { minishopRun } from "@/lib/fixtures/minishop";
 import { CLI_INSTALL, errorView, HOSTED_GITHUB_NOTE, pickerGroups, startRun } from "@/lib/pages";
@@ -250,35 +250,7 @@ describe("run page (04 §3.2 /runs/[id])", () => {
   });
 });
 
-describe("login and repositories", () => {
-  it("login: without Supabase config Google is disabled, the demo works", () => {
-    const out = html(<LoginView session={GUEST} runs={noRuns} />);
-    expect(out).toMatch(/<button[^>]*disabled=""[^>]*>Continue with Google<\/button>/);
-    expect(out).toContain("not set up on this site");
-    expect(out).toMatch(/<a (?=[^>]*href="\/app")(?=[^>]*data-try-demo)[^>]*>/);
-    expect(out).toContain("Try the demo without signing in");
-  });
-
-  it("login: with sign-in configured the Google button is live; busy and errors show", () => {
-    const signIn = { available: true, onSignIn: () => undefined };
-    const out = html(<LoginView session={GUEST} runs={noRuns} signIn={signIn} />);
-    expect(out).toMatch(/<button(?![^>]*disabled="")[^>]*>Continue with Google<\/button>/);
-    expect(out).not.toContain("not set up");
-    expect(out).toContain("data-try-demo");
-    const busy = html(<LoginView session={GUEST} runs={noRuns} signIn={{ ...signIn, busy: true, error: "<b>nope</b>" }} />);
-    expect(busy).toMatch(/<button[^>]*disabled=""[^>]*>Signing in…<\/button>/);
-    expect(busy).toContain('role="alert"');
-    expect(busy).toContain("&lt;b&gt;nope&lt;/b&gt;");
-  });
-
-  it("login: a signed-in user sees who they are and can sign out", () => {
-    const out = html(<LoginView session={USER_NO_GH} runs={noRuns} signIn={{ available: true, onSignOut: () => undefined }} />);
-    expect(out).toContain("You&#x27;re signed in");
-    expect(out).toContain("Aayush · a@example.com");
-    expect(out).toMatch(/<button[^>]*>Sign out<\/button>/);
-    expect(out).not.toContain("Continue with Google");
-  });
-
+describe("repositories", () => {
   it("repositories: a signed-in user without GitHub gets 'Connect GitHub'; a connected one sees their repos", () => {
     const connect = async () => null;
     const out = html(<RepositoriesView session={USER_NO_GH} runs={noRuns} repos={[DEMO]} loading={false} error={null} connectGithub={connect} />);

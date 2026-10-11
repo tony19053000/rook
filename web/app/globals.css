@@ -197,6 +197,10 @@ body:has(> .site) {
   opacity: 1;
   color: var(--faint);
 }
+/* Accent-coloured text in a frame is lifted without touching --accent (a background too): frameTheme.ts. */
+.wt-frame .text-accent {
+  color: var(--frame-accent-text);
+}
 .wt-frame pre {
   overflow: hidden;
   white-space: pre-wrap;

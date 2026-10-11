@@ -82,7 +82,7 @@ describe("Google sign-in with PKCE", () => {
   it("sends the browser to Supabase with a code challenge, then exchanges the code with only the public key", async () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", KEY);
-    const { assign } = browser();
+    const { assign, store } = browser();
     const calls: { url: string; init: RequestInit }[] = [];
     const now = Math.floor(Date.now() / 1000);
     vi.stubGlobal(
@@ -129,5 +129,15 @@ describe("Google sign-in with PKCE", () => {
     expect(body.code_verifier.length).toBeGreaterThanOrEqual(43);
 
     expect(await session.getToken()).toBe("header.payload.sig");
+
+    // The header's "Open workspace" hint reads what auth-js really stored, under the one shared key.
+    const { AUTH_STORAGE_KEY, hasStoredSession } = await import("./authStorage");
+    expect(store.has(AUTH_STORAGE_KEY)).toBe(true);
+    expect(hasStoredSession(localStorage)).toBe(true);
+
+    // The app's "Sign out" (Sidebar → signOutAndReload): the local session goes, and the browser goes to the site.
+    await session.signOutAndReload();
+    expect(hasStoredSession(localStorage)).toBe(false);
+    expect(assign).toHaveBeenLastCalledWith("/");
   });
 });
