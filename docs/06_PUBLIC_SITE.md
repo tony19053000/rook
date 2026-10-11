@@ -121,7 +121,7 @@ CTAs: "Try the demo" → `/app`. "Sign in" → `/login`. Signed-in visitors see 
 ## 7. Sign-in
 
 - Sign in only on a click, never on page load. States: **idle**, **opening** (button disabled, "Opening Google…"), **failed** (the reason and a Retry button), **not configured** (`SIGN_IN_AVAILABLE` false: a plain message and a link to try the demo, no dead button). Returning from Google with `?code=` completes the sign-in the user already started, then goes to `/app`.
-- With JS off: a `<noscript>` note that sign-in needs JavaScript; the rest of the page still renders.
+- With JS off: a `<noscript>` note that sign-in needs JavaScript; the rest of the page still renders. The Google button carries `data-needs-js` and a `<noscript><style>` hides it, so there is no dead button.
 - The app keeps its account menu with **Sign out** (`components/Sidebar.tsx`).
 
 ## 8. Metadata and performance

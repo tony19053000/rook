@@ -2,7 +2,8 @@
 
 // The /login sign-in control (06 §7), driven by the state machine in lib/signIn.ts. Google sign-in starts only on
 // a click. Back from Google, `?code=` finishes the sign-in the user started (then /app) and `?error=` shows the
-// failure; either way the one-time query leaves the address bar. Nothing here calls the Rook API.
+// failure; either way the one-time query leaves the address bar. Nothing here calls the Rook API. With JS off the
+// Google button is hidden by a <noscript> style, so only the note shows (no dead button).
 
 import { useRouter } from "next/navigation";
 import { useEffect, useReducer, useRef } from "react";
@@ -10,6 +11,9 @@ import { Button, ButtonLink } from "./Button";
 import { completeSignIn, oauthReturn, SIGN_IN_AVAILABLE, signInWithGoogle } from "@/lib/session";
 import { canStart, initialSignInState, signInReducer } from "@/lib/signIn";
 import { loginCopy } from "@/content/login";
+
+/** Marks a control that does nothing without JS; the <noscript> style hides it for no-JS visitors (06 §7). */
+export const NO_JS_STYLE = "[data-needs-js]{display:none}";
 
 export function SignInPanel({ available = SIGN_IN_AVAILABLE }: { available?: boolean }) {
   const router = useRouter();
@@ -51,13 +55,21 @@ export function SignInPanel({ available = SIGN_IN_AVAILABLE }: { available?: boo
   return (
     <div className="flex flex-col gap-3" data-sign-in-state={state.kind}>
       <noscript>
+        <style>{NO_JS_STYLE}</style>
         <p className="rounded-xl border border-site-line bg-site-raised px-4 py-3 text-sm text-site-muted">{loginCopy.noscript}</p>
       </noscript>
 
       {state.kind === "unavailable" && <p className="text-sm leading-relaxed text-site-muted">{loginCopy.unavailable}</p>}
 
       {(state.kind === "idle" || state.kind === "opening") && (
-        <Button size="lg" className="w-full" onClick={start} disabled={state.kind === "opening"} aria-busy={state.kind === "opening" || undefined}>
+        <Button
+          data-needs-js=""
+          size="lg"
+          className="w-full"
+          onClick={start}
+          disabled={state.kind === "opening"}
+          aria-busy={state.kind === "opening" || undefined}
+        >
           {state.kind === "opening" ? loginCopy.opening : loginCopy.google}
         </Button>
       )}

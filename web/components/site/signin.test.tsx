@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import LoginPage from "@/app/(site)/login/page";
 import SiteLayout from "@/app/(site)/layout";
-import { SignInPanel } from "./SignInPanel";
+import { NO_JS_STYLE, SignInPanel } from "./SignInPanel";
 import { loginCopy } from "@/content/login";
 import { canStart, initialSignInState, signInReducer, type SignInState } from "@/lib/signIn";
 
@@ -181,6 +181,39 @@ describe("/login (06 §7)", () => {
   it("explains in <noscript> that sign-in needs JavaScript", () => {
     const html = renderToStaticMarkup(<LoginPage />);
     expect(html).toContain(`<noscript>`);
+    expect(html).toContain(loginCopy.noscript);
+  });
+
+  it("hides the Google button for no-JS visitors with a <noscript> style aimed at exactly that button", () => {
+    const html = renderToStaticMarkup(<SignInPanel available />);
+    const noscript = /<noscript>([\s\S]*?)<\/noscript>/.exec(html)?.[1] ?? "";
+    expect(noscript).toContain(`<style>${NO_JS_STYLE}</style>`);
+    expect(NO_JS_STYLE).toBe("[data-needs-js]{display:none}");
+    // The server markup has one marked element, and it is the Google button.
+    const marked = html.match(/<[a-z]+[^>]*\sdata-needs-js=""[^>]*>/g) ?? [];
+    expect(marked).toHaveLength(1);
+    expect(marked[0]).toMatch(/^<button /);
+    expect(html).toMatch(new RegExp(`<button [^>]*data-needs-js=""[^>]*>${loginCopy.google}</button>`));
+    // Nothing else is hidden: the demo link carries no marker.
+    expect(html).toContain(loginCopy.demo.label);
+  });
+
+  it("with JS (hydrated) the Google button is visible and clickable", async () => {
+    mocks.signIn.mockResolvedValue(null);
+    visit("/login");
+    // In a client render the <noscript> content is not applied, so nothing hides the button.
+    expect(document.querySelector("noscript style")).toBeNull();
+    const button = google();
+    expect(button.hasAttribute("data-needs-js")).toBe(true);
+    expect(getComputedStyle(button).display).not.toBe("none");
+    expect((button as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(button);
+    await waitFor(() => expect(mocks.signIn).toHaveBeenCalledTimes(1));
+  });
+
+  it("the unavailable state renders no marked button", () => {
+    const html = renderToStaticMarkup(<SignInPanel available={false} />);
+    expect(html).not.toMatch(/<button /);
     expect(html).toContain(loginCopy.noscript);
   });
 });

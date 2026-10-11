@@ -53,6 +53,27 @@ describe("copy rules (06 §4, §9)", () => {
     }
   });
 
+  it("a negation shields a term only when it governs it (no contrast word, not 'not just')", () => {
+    for (const bad of [
+      "not just audited but certified",
+      "SOC 2 certified",
+      "We are HIPAA compliant",
+      "GDPR-compliant",
+      "independently audited",
+      "not only audited, but also penetration tested",
+      "No setup needed, however it is SOC 2 certified.",
+    ]) {
+      expect(copyViolations(bad), bad).toContain("certification / audit claim");
+    }
+    for (const ok of [
+      "Rook has no third-party audit or penetration test, and no certifications",
+      "not audited",
+      "never penetration tested",
+    ]) {
+      expect(copyViolations(ok), ok).toEqual([]);
+    }
+  });
+
   it("allow the true product facts", () => {
     for (const ok of [
       "Needs Python 3.12+ and Docker.",

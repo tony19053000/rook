@@ -28,12 +28,21 @@ export const BANNED_COPY: CopyRule[] = [
   { name: "award / as seen in", pattern: /\baward[- ]winning\b|\bas seen (in|on)\b|\bfeatured in\b/i },
   // Rook holds no certifications and has had no audit (06 §4). A claim like "SOC 2 certified" or "independently
   // audited" is banned; a negated one ("no third-party audit", "not SOC 2 certified") is the honest line.
-  {
-    name: "certification / audit claim",
-    pattern:
-      /(?<!\b(?:no|not|nor|never|without|isn't|aren't|hasn't|haven't)\b[^.;:]{0,40})\b(?:soc ?[12]|iso ?27001|hipaa|gdpr[- ]compliant|pci[- ]dss|fedramp|(?:independently |third[- ]party )?audited|pen(?:etration)?[- ]tested|certified)\b/i,
-  },
+  { name: "certification / audit claim", pattern: certificationClaim() },
 ];
+
+/**
+ * A certification or audit term, unless a negation governs it: the negation comes at most 40 characters earlier in
+ * the same clause, is not "not just / not only" (which asserts the term), and no contrast word stands between them
+ * ("not just audited but certified" still claims "certified").
+ */
+function certificationClaim(): RegExp {
+  const negation = String.raw`\b(?:no|not|nor|never|without|isn't|aren't|hasn't|haven't)\b(?!\s+(?:just|only|merely|simply)\b)`;
+  const contrast = String.raw`\b(?:but|however|yet|though|although|instead)\b`;
+  const clauseChar = String.raw`(?:(?!${contrast})[^.;:])`;
+  const term = String.raw`\b(?:soc ?[12]|iso ?27001|hipaa|gdpr[- ]compliant|pci[- ]dss|fedramp|(?:independently |third[- ]party )?audited|pen(?:etration)?[- ]tested|certified)\b`;
+  return new RegExp(String.raw`(?<!${negation}${clauseChar}{0,40})${term}`, "i");
+}
 
 /** Banned on the pricing page and in the pricing content while prices may not be stated (06 §5.4). */
 export const BANNED_PRICING: CopyRule[] = [
