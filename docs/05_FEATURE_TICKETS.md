@@ -225,6 +225,11 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 - Final audit across the site: every 06 §9 test, each rule broken once and restored, a 360 px layout check, no secrets in the client bundle.
 - **AC:** all of 06 §9 passes; sign-in is never called without a click; typecheck, lint, test and build pass, with results reported.
 
+**ROOK-046 · Site polish: no-JS sign-in, copy-rule negation** · P2 · deps: 045
+- With JS off, `/login` shows no dead "Continue with Google" button (the CSP allows inline styles, so a `<noscript><style>` can hide it; or render it disabled until hydration with no layout shift). The `<noscript>` note stays.
+- The certification/audit banned pattern is shielded by a negation only when the negation governs the term: "not just audited but certified" is caught; "no third-party audit or penetration test, and no certifications" still passes.
+- **AC:** tests for both; typecheck, lint, test and build pass.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)

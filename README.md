@@ -117,7 +117,7 @@ jobs:
 
 Use `pull_request` and **never** `pull_request_target`. With `pull_request_target`, a fork's code would run with your secrets. PRs from forks get no secrets, so the action uses recorded Bob. For all inputs, see [`action.yml`](action.yml).
 
-**GitHub App "Rook"** lets the web app list your repositories after you connect GitHub. The hosted server never runs your repo's code: it only issues a short-lived installation token scoped to one repo. The CLI (`rook login`, then `rook run owner/name`) clones the repo, finds and verifies the fix locally, then pushes a `rook/fix-*` branch and opens a PR with the evidence attached.
+**GitHub App "Rook"** lets the web app list your repositories after you connect GitHub. For the CLI, the server only issues a short-lived installation token scoped to one repo. When the server enables it, a signed-in user can also run their own GitHub repo on the hosted server: the code is built and run only in a hardened Docker sandbox, with limits on concurrent runs, runs per day and Bob spend (see [`docs/03_SECURITY_ACCESS.md`](docs/03_SECURITY_ACCESS.md) §3). The CLI (`rook login`, then `rook run owner/name`) clones the repo, finds and verifies the fix locally, then pushes a `rook/fix-*` branch and opens a PR with the evidence attached.
 
 ## Architecture
 

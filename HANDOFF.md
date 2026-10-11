@@ -8,10 +8,12 @@
 
 **Updated:** 11 Oct 2026 (post-hackathon). **Current goal: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
 
-**State:** HEAD bf5f61d (+ docs). ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
+**State:** HEAD 8e33e90 (+ docs). ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
 - **ROOK-043 DONE** (reviewer PASS, committed 8976686): app home `/` → `/app`, site design system `web/components/site/`, copy `web/content/*.ts`, `/pricing` `/privacy` `/terms` 404, minimal `/`, ESLint (`npm run lint`), RTL + jsdom, `motion` dep (unused until 044). Web suite: 314 passed.
 - **ROOK-044 DONE** (reviewer PASS round 2, committed bf5f61d): full home (`components/site/home/*`, `content/{home,walkthrough}.ts`), frame contrast via `frameTheme.ts` + `lib/contrast.ts` + `AgentRow` `readableOn`. Web suite 365 passed. Follow-ups: the app pages' own contrast gaps (pre-existing); in frames, `--accent` raised to #ff7a5f makes white-on-accent 2.56:1 (not rendered today; add coverage or a separate frame text token in 045).
-- **ROOK-045 IN PROGRESS** (coder): /docs, /security, /login states, "Open workspace", final audit.
+- **ROOK-045 DONE** (reviewer PASS, committed 8e33e90): `/docs`, `/security`, `/login` (click-only states, no API calls on load), "Open workspace" hint, frame accent fix, certification copy rule. Web suite 415 passed. README hosted-runs sentence fixed (doc commit).
+- **ROOK-046 IN PROGRESS** (coder): no dead sign-in button with JS off; copy-rule negation false negative ("not just audited but certified").
+- Follow-up for the user to decide (changes the app's look): the app pages' own contrast (--faint 3.7:1, white on accent 3.77:1, 5 agent name colours).
 - Known, unrelated: `tests/unit/test_demo_apps.py` has 3 failures locally (missing Mechanic/Coordinator recording keys); they depend on the local demo builds in `~/.cache/rook/demos`, not on M11 code. Follow-up, not blocking.
 - **Don't push without asking the user**: Vercel redeploys on push to main, and this changes what `/` shows on the live URL (judging may still be open).
 - Untracked/modified user files (`docs/submission/**`, `docs/demo-apps/**`) are the user's video/deck work: never commit or edit them.
@@ -44,6 +46,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 11 Oct | – | ROOK-045 PASS r1 + committed; README fix; ROOK-046 polish started | ROOK-045 |
 | 11 Oct | – | ROOK-044 PASS r2 (r1 FAIL: frame contrast) + committed; 045 coder started | ROOK-044 |
 | 11 Oct | – | ROOK-043 reviewer PASS (2nd attempt; 1st cut off by usage limit) + committed; 044 coder started | ROOK-043 |
 | 9 Oct | – | Public website started: docs/06_PUBLIC_SITE.md, tickets ROOK-043–045 added; 043 coder running | (docs) |
