@@ -8,12 +8,13 @@
 
 **Updated:** 11 Oct 2026 (post-hackathon). **Goal done: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
 
-**State:** HEAD a3a89fb (+ docs). ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
+**State:** HEAD 4530044 (+ docs). ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
 - **ROOK-043 DONE** (reviewer PASS, committed 8976686): app home `/` → `/app`, site design system `web/components/site/`, copy `web/content/*.ts`, `/pricing` `/privacy` `/terms` 404, minimal `/`, ESLint (`npm run lint`), RTL + jsdom, `motion` dep (unused until 044). Web suite: 314 passed.
 - **ROOK-044 DONE** (reviewer PASS round 2, committed bf5f61d): full home (`components/site/home/*`, `content/{home,walkthrough}.ts`), frame contrast via `frameTheme.ts` + `lib/contrast.ts` + `AgentRow` `readableOn`. Web suite 365 passed. Follow-ups: the app pages' own contrast gaps (pre-existing); in frames, `--accent` raised to #ff7a5f makes white-on-accent 2.56:1 (not rendered today; add coverage or a separate frame text token in 045).
 - **ROOK-045 DONE** (reviewer PASS, committed 8e33e90): `/docs`, `/security`, `/login` (click-only states, no API calls on load), "Open workspace" hint, frame accent fix, certification copy rule. Web suite 415 passed. README hosted-runs sentence fixed (doc commit).
 - **ROOK-046 DONE** (reviewer PASS, committed 45af3ae): no dead sign-in button with JS off; copy-rule negation fix. **M11 complete.** Final check 11 Oct: typecheck, lint, 419 vitest, build all pass.
 - **ROOK-047 DONE** (user feedback: looked like a tablet layout at 1920 px; reviewer PASS, committed a3a89fb): full-width header, 1440 px content container, wider hero/walkthrough/grids, capped text measure. Local preview: `node node_modules/next/dist/bin/next start -p 3000` in web/ after `npm run build`.
+- **ROOK-048 DONE** (user request: no visible "demo"; reviewer PASS r2, committed 4530044): CTA "Try Rook", "example apps/repos", reworded app + server messages; guards `NO_DEMO_WORD`, `noDemo.test.tsx`, `tests/unit/test_no_demo_copy.py`. API values stay `kind: "demo"`. Server wording reaches production only after the user runs `deploy/aws/deploy.sh`; the web handles both old and new guest-limit text. Known data leftovers (not Rook copy): `admin@demo.local` in the minishop fixture app; Bob text in unused wallet-api recordings.
 - **NOT PUSHED.** Waiting for the user: push to main redeploys Vercel and makes `/` the marketing site (app at `/app`). Before pushing, nothing else is needed on Vercel/Supabase (`/login` unchanged).
 - Follow-up for the user to decide (changes the app's look): the app pages' own contrast (--faint 3.7:1, white on accent 3.77:1, 5 agent name colours).
 - Known, unrelated: `tests/unit/test_demo_apps.py` has 3 failures locally (missing Mechanic/Coordinator recording keys); they depend on the local demo builds in `~/.cache/rook/demos`, not on M11 code. Follow-up, not blocking.
@@ -48,6 +49,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct | – | ROOK-048 no visible "demo" PASS r2 + committed; localhost:3000 rebuilt | ROOK-048 |
 | 11 Oct | – | ROOK-047 full-width layout PASS + committed (user feedback); localhost:3000 rebuilt | ROOK-047 |
 | 11 Oct | – | ROOK-046 PASS + committed; M11 done (419 vitest, lint, typecheck, build green); not pushed | ROOK-046 |
 | 11 Oct | – | ROOK-045 PASS r1 + committed; README fix; ROOK-046 polish started | ROOK-045 |
