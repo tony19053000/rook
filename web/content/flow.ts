@@ -61,10 +61,10 @@ export const flowSteps: FlowStep[] = [
   {
     id: "verify",
     title: "Verify and ship",
-    summary: "The fix counts only if four engine checks pass. Then a pull request opens.",
+    summary: "The fix counts only if four engine checks pass. Then it ships on its own branch, as a pull request for a GitHub repo.",
     details: [
       "Four engine checks: exact replay, your project's tests, the generated regression test, and a fresh search with a new seed.",
-      "Then a pull request opens from a rook/fix-* branch with the steps, diagnosis, fix, test and results.",
+      "Then the fix ships on a rook/fix-* branch: for a GitHub repo, a pull request with the steps, diagnosis, fix, test and results; for a local folder, a local branch.",
     ],
   },
 ];

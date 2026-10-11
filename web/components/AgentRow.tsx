@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { AgentSprite } from "./AgentSprite";
 import { agentInfo } from "@/lib/agents";
+import { readableColor } from "@/lib/contrast";
 import { useFrame, useReducedMotion } from "@/lib/motion";
 import type { AgentItem } from "@/lib/runStore";
 import { clean } from "@/lib/safeText";
@@ -21,6 +22,9 @@ export interface AgentRowProps {
   /** Clock in ms; `startedAt` is when this row first appeared (the server ts may be skewed or replayed). */
   now?: number;
   startedAt?: number;
+  /** The #rrggbb background behind the row: the name and verb text then use a colour derived from the agent's
+   *  that reaches 4.5:1 on it (the sprite and dot keep the true colour). Unset on app pages. */
+  readableOn?: string;
 }
 
 /** Whether a finished call counts as a success: ok and not a rejection verdict (the TUI rule). */
@@ -58,8 +62,9 @@ function Verb({ text, color, frame, reduced }: { text: string; color: string; fr
   );
 }
 
-export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt }: AgentRowProps) {
+export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt, readableOn }: AgentRowProps) {
   const info = agentInfo(item.agent);
+  const textColor = readableOn ? readableColor(info.color, readableOn) : info.color;
   const mediaReduced = useReducedMotion();
   const reduced = reducedMotion ?? mediaReduced;
   const working = item.status === "working";
@@ -75,7 +80,7 @@ export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt }: A
       <div className="flex min-w-0 items-baseline gap-2" data-row="agent" data-status={item.status}>
         <span aria-hidden className="size-2 flex-none -translate-y-px rounded-full" style={{ background: info.color }} />
         <span className="min-w-0 truncate">
-          <span className="font-semibold" style={{ color: info.color }}>
+          <span className="font-semibold" style={{ color: textColor }}>
             {info.name}
           </span>{" "}
           <Mark ok={ok} /> {clean(item.summary ?? "")}
@@ -92,10 +97,10 @@ export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt }: A
       <AgentSprite look={info} px={3} frame={f} seed={seed ?? ownSeed} reducedMotion={reduced} />
       <div className="flex min-w-0 flex-col">
         <div className="truncate">
-          <span className="font-semibold" style={{ color: info.color }}>
+          <span className="font-semibold" style={{ color: textColor }}>
             {info.name}
           </span>{" "}
-          <Verb text={`${info.verb}…`} color={info.color} frame={f} reduced={reduced} />{" "}
+          <Verb text={`${info.verb}…`} color={textColor} frame={f} reduced={reduced} />{" "}
           <span className="num text-xs text-faint" suppressHydrationWarning>
             ({elapsed.toFixed(1)}s)
           </span>

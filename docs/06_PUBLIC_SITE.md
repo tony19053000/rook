@@ -58,7 +58,7 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 3. **Search.** The deterministic engine runs seeded, reproducible sequences of valid actions against the **real running app** and checks every approved rule after every step with a safe expression evaluator (no `eval`). Strategist weights and Test Designer scenarios steer it. Concurrent steps catch races.
 4. **Shrink and prove.** A failing sequence is shrunk to a minimal one (delta debugging on steps, then values), replayed on the real app (10 times by default: `engine/replayer.py` `DEFAULT_REPLAYS = 10`; it reports flaky results) and saved as a counterexample JSON plus a regression test.
 5. **Diagnose and fix.** The Detective finds the root cause and the Diagnosis Reviewer checks it against the evidence. After you approve, the Surgeon writes the fix (only in a workspace copy, only in the approved files) and the Fix Reviewer checks it.
-6. **Verify and ship.** The fix counts only if four engine checks pass: exact replay, your project's tests, the generated regression test, and a fresh search with a new seed (default budget 20,000 sequences, `engine/verifier.py`). Then a pull request opens from a `rook/fix-*` branch with the steps, diagnosis, fix, test and results.
+6. **Verify and ship.** The fix counts only if four engine checks pass: exact replay, your project's tests, the generated regression test, and a fresh search with a new seed (default budget 20,000 sequences, `engine/verifier.py`). Then the fix ships on a `rook/fix-*` branch: for a GitHub repo, a pull request with the steps, diagnosis, fix, test and results; for a local folder, a local branch (`src/rook/cli/runs.py`).
 
 **Bob.** 13 Bob agents as Bob Shell custom modes (a Coordinator + 12 specialists: Scout, Mechanic, Mapper, Lawmaker, Rule Critic, Test Designer, Strategist, Detective, Diagnosis Reviewer, Surgeon, Fix Reviewer, Guide), `src/rook/agents/registry.py`. The Coordinator picks next steps inside rails enforced in code. The Guide answers questions from live run data. Bob is the only AI in Rook. Recorded (replay) mode replays saved real Bob answers, always labelled "recorded".
 
@@ -71,8 +71,8 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 **What Rook refuses to do (guarantees), each enforced in code:**
 - Let an AI decide pass or fail. Only the deterministic engine marks a rule broken or a fix verified.
 - Execute AI-generated code. Rules go through a safe expression evaluator; actions are declarative HTTP templates; no `eval`/`exec` of model output.
-- Change your code without your approval. Only the Surgeon edits, only in a workspace copy, only the approved files (the diff is path-checked and reverted otherwise). `--auto` skips the questions but still ends in a PR.
-- Push to your default branch. Fixes arrive as a PR from `rook/fix-<id>`.
+- Change your code without your approval. Only the Surgeon edits, only in a workspace copy, only the approved files (the diff is path-checked and reverted otherwise). `--auto` skips the questions, but the fix still lands on its own branch for review (a PR for a GitHub repo).
+- Push to your default branch. Fixes land on a `rook/fix-<id>` branch: a PR for a GitHub repo, a local branch for a local folder.
 - Call anything but your sandboxed app. The engine only sends requests to the sandbox's host and port, follows no redirects elsewhere, 10 s timeout, 1 MB response cap.
 - Hand your secrets to the app or the logs. The sandbox gets none of Rook's environment; a redaction filter scrubs keys and tokens from events and logs.
 - Run arbitrary repos for guests on the hosted site. Guests run only allowlisted demo repos pinned by commit SHA.

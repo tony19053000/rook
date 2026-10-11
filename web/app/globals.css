@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 /* Visual tokens (04 §3.5): warm dark neutrals with a slightly darker sidebar. Dark is the default; light comes
-   from prefers-color-scheme or [data-theme="light"], and [data-theme="dark"] forces dark. */
-:root {
+   from prefers-color-scheme or [data-theme="light"], and [data-theme="dark"] forces dark. `.app-dark` re-declares
+   the dark values on an element, so app components shown on the dark site (the home walkthrough) stay dark
+   under a light OS theme: the light rules below only ever target :root. */
+:root,
+.app-dark {
   color-scheme: dark;
   --page: #1a1918;
   --app: #262624;
@@ -154,6 +157,50 @@ body:has(> .site) {
 }
 .site summary::-webkit-details-marker {
   display: none;
+}
+
+/* Home hero layers (components/site/home/HeroParallax.tsx): a faint grid that fades out at the edges, and a
+   soft accent glow. Decorative only. */
+.site-grid {
+  background-image:
+    linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 55% at 50% 40%, #000 40%, transparent 100%);
+}
+.site-glow {
+  background: radial-gradient(closest-side, rgb(255 106 77 / 0.28), rgb(143 176 255 / 0.1) 60%, transparent);
+  filter: blur(24px);
+}
+
+/* Home walkthrough (components/site/home/Walkthrough.tsx): the autoplay progress bar (transform only; the
+   reduced-motion rule below removes it), and app diffs that wrap instead of scrolling inside a frame. */
+@keyframes wt-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.wt-progress {
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: wt-progress linear forwards;
+}
+/* Shrink chips in a frame: the current count reads dark on --bad (white is 2.25:1), and earlier counts use
+   --faint instead of 40% opacity (frameTheme.ts has the other frame token fixes). */
+.wt-frame [data-shrink] [data-current] {
+  color: var(--page);
+}
+.wt-frame [data-shrink] .opacity-40 {
+  opacity: 1;
+  color: var(--faint);
+}
+.wt-frame pre {
+  overflow: hidden;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 @keyframes pulse-dot {

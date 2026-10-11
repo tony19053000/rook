@@ -30,12 +30,18 @@ const PAGES: [string, () => ReturnType<typeof render>][] = [
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
-/** The visible text plus the text in attributes people and screen readers get (not class or style values). */
+/**
+ * The visible text plus the text in attributes people and screen readers get (not class or style values).
+ * Text nodes are joined with spaces: textContent glues neighbours ("found1customer") and hides words from \b.
+ */
 function pageText(root: HTMLElement): string {
   const attrs = [...root.querySelectorAll("[aria-label], [alt], [title]")].flatMap((el) =>
     ["aria-label", "alt", "title"].map((name) => el.getAttribute(name) ?? ""),
   );
-  return [root.textContent ?? "", ...attrs].join("\n");
+  const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const texts: string[] = [];
+  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) texts.push(node.textContent ?? "");
+  return [...texts, ...attrs].join("\n");
 }
 
 function headingLevels(root: HTMLElement): number[] {
