@@ -46,7 +46,7 @@ router = APIRouter()
 _CX_ID = re.compile(r"[A-Za-z0-9_]{1,80}")
 _STATUSES: frozenset[str] = frozenset({"queued", "running", "done", "failed", "cancelled"})
 _HEADLINE_MAX = 120
-GUEST_LIMIT_MESSAGE = ("Demo limit reached for today. Install the CLI to run on your own repos: "
+GUEST_LIMIT_MESSAGE = ("Guest limit reached for today. Install the CLI to run on your own repos: "
                        "uv tool install git+https://github.com/tony19053000/rook")
 LIST_LIMIT = 50
 
@@ -63,7 +63,7 @@ REPLAY_SEARCH: dict[str, int | float] = {"seed": 7, "concurrency": 1, "verify_se
 def _demo_repo(state: ServerState, caller: Caller, kind: str, ref: str) -> RepoSpec:
     """Only allowlisted demo repos run on the hosted server (03 §3)."""
     if kind != "demo" and caller.is_guest:
-        raise HTTPException(403, "Guests can only run the demo repos")
+        raise HTTPException(403, "Guests can only run the example repos")
     demo = state.settings.demo(ref) if kind == "demo" else None
     if demo is None:
         raise HTTPException(403, f"This repo {REFUSED_MESSAGE}")  # never echo the input

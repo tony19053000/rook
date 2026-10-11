@@ -103,7 +103,7 @@ def check_env_value(name: str, value: str) -> str:
     return value
 
 
-REFUSED_MESSAGE = "is not an allowlisted demo repo; run arbitrary repos with the CLI"
+REFUSED_MESSAGE = "is not an allowlisted example repo; run arbitrary repos with the CLI"
 TEST_COMMAND = "test"  # the `commands` key of the project's native test command
 
 

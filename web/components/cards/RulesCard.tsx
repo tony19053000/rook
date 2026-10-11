@@ -24,7 +24,7 @@ function RowPill({ row }: { row: RuleRow }) {
   if (row.approved === true) return <Pill tone="good">Approved</Pill>;
   if (row.approved === false) return <Pill tone="idle">Not approved</Pill>;
   if (row.alreadyBroken) return <Pill tone="warn">Possibly already broken</Pill>;
-  if (row.featured) return <Pill tone="idle">Demo rule</Pill>;
+  if (row.featured) return <Pill tone="idle">Featured rule</Pill>;
   return null;
 }
 

@@ -106,7 +106,7 @@ def resolve_caller(request: Request, response: Response, verifier: TokenVerifier
     guest_id = cookies.read(request.cookies.get(GUEST_COOKIE))
     if guest_id is None:
         if not issue_guest:
-            raise HTTPException(401, "Sign in or start the demo first")
+            raise HTTPException(401, "Sign in or continue as a guest first")
         guest_id, value = cookies.issue()
         cookies.set(response, value)
     return Caller(id=guest_id, kind="guest")

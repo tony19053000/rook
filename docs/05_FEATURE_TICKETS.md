@@ -234,6 +234,11 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 - User feedback (11 Oct, 1920 px screen): the site looks like a tablet layout. The header spans the full width (logo at the far left, CTAs at the far right); content containers widen (about 1440 px) with larger side padding on large screens; the hero headline, product figure, walkthrough, feature grid and footer use the extra width; paragraphs keep a readable measure.
 - **AC:** no horizontal scroll from 360 px to 2560 px; at 1920 px the header and content reach near the edges; existing tests pass; typecheck, lint, test and build pass.
 
+**ROOK-048 · Remove the word "demo" from user-facing text** · P1 · deps: 047
+- User request (11 Oct): no visible "demo" anywhere on the site or in the web app. CTA "Try the demo" → "Try Rook"; "demo apps/repos" → "example apps/repositories"; "guest demo" → guest runs / trying Rook without an account; app headings, the "Demo rule" pill and limit messages reworded; server messages the web app shows ("Demo limit reached…", "Guests can only run the demo repos") reworded, with the web still recognising the old server message until the server is redeployed.
+- Unchanged: code identifiers, API values (`kind: "demo"`), data attributes, file names, comments, internal docs, README and the CLI.
+- **AC:** a test fails if "demo" appears in any `content/*.ts` string, any rendered site page, or the app's visible strings; web and Python suites pass; typecheck, lint and build pass.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)

@@ -183,7 +183,7 @@ async def test_one_github_run_at_a_time_server_wide(tmp_path: Path) -> None:
             session.cancel()
     assert first.status_code == 200 and demo.status_code == 200 and third.status_code == 200
     assert second.status_code == 429 and second.json()["detail"] == BUSY
-    assert not second.json()["detail"].startswith("Demo limit")  # the web maps that to the guest card
+    assert not second.json()["detail"].startswith(("Guest limit", "Demo limit"))  # the web maps that to the guest card
     assert second.headers["Retry-After"] == "60"
 
 

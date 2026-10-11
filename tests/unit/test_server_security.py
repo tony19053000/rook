@@ -259,7 +259,7 @@ async def test_guest_quota_is_3_runs_per_day(tmp_path: Path) -> None:
             await client.post(f"{API}/runs/{run_id}/cancel", headers=ALICE)
             await client.post(f"{API}/runs/{run_id}/cancel", headers=guest)
     assert codes == [200, 200, 200, 429]
-    assert refused.json()["detail"].startswith("Demo limit reached for today")
+    assert refused.json()["detail"].startswith("Guest limit reached for today")
     assert int(refused.headers["retry-after"]) >= 1
     assert user.status_code == 200
 
@@ -274,7 +274,7 @@ async def test_guest_quota_also_counts_per_ip(tmp_path: Path) -> None:
         for _ in range(11):
             response = await client.post(f"{API}/runs", json=NEW_RUN, headers=guest_headers(app)[1])
             codes.append(response.status_code)
-        assert response.json()["detail"].startswith("Demo limit reached")
+        assert response.json()["detail"].startswith("Guest limit reached")
         async with second_client(app, ip="10.3.3.3") as other:
             other_ip = await other.post(f"{API}/runs", json=NEW_RUN, headers=guest_headers(app)[1])
         for session in factory.sessions.values():

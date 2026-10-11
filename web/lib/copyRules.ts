@@ -6,6 +6,12 @@ export interface CopyRule {
   pattern: RegExp;
 }
 
+/**
+ * ROOK-048: people never see the word "demo" (it is "Try Rook" and "example repos"). The site and the web app's
+ * visible strings are both checked against it; API values like `kind: "demo"` are not user-facing.
+ */
+export const NO_DEMO_WORD: CopyRule = { name: "the word demo", pattern: /\bdemos?\b/i };
+
 /** Banned everywhere on the site. */
 export const BANNED_COPY: CopyRule[] = [
   { name: "trusted by", pattern: /\btrusted by\b/i },
@@ -29,6 +35,7 @@ export const BANNED_COPY: CopyRule[] = [
   // Rook holds no certifications and has had no audit (06 §4). A claim like "SOC 2 certified" or "independently
   // audited" is banned; a negated one ("no third-party audit", "not SOC 2 certified") is the honest line.
   { name: "certification / audit claim", pattern: certificationClaim() },
+  NO_DEMO_WORD,
 ];
 
 /**

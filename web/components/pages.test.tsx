@@ -205,7 +205,7 @@ describe("errors and limits (04 §3.6)", () => {
   it("the guest limit card shows the install command", () => {
     const view = errorView(new ApiError(429, "Demo limit reached for today. Install the CLI to run on your own repos: uv tool install git+https://github.com/tony19053000/rook"), "create");
     const out = html(<ErrorCard view={view} onRetry={() => {}} />);
-    expect(out).toContain("Demo limit reached for today");
+    expect(out).toContain("Guest limit reached for today");
     expect(out).toContain(`<code class="rounded bg-sunk px-1.5 py-0.5 font-mono text-[13px]">${CLI_INSTALL}</code>`);
     expect(out).not.toContain("Try again");
   });
@@ -277,7 +277,7 @@ describe("repositories", () => {
 
   it("repositories: a guest sees the demo list only", () => {
     const out = html(<RepositoriesView session={GUEST} runs={noRuns} repos={[DEMO, GH]} loading={false} error={null} />);
-    expect(out).toContain("Demo repositories");
+    expect(out).toContain("Example repositories");
     expect(out).toContain('data-repo="demo:tony19053000/shop-app"');
     expect(out).not.toContain("aayush/billing");
   });

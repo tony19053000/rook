@@ -149,7 +149,7 @@ describe("already_broken on the RulesCard", () => {
     const guest = html(withActions(<RulesCard item={rules} question={featured} />, { guest: true }));
     expect(count(guest, 'checked=""')).toBe(1);
     expect(guest).toContain("Approve 1 rule");
-    expect(guest).toContain("Demo rule");
+    expect(guest).toContain("Featured rule");
     const user = html(withActions(<RulesCard item={rules} question={featured} />));
     expect(count(user, 'checked=""')).toBe(8);
   });

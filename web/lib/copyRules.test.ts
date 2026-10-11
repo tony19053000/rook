@@ -74,6 +74,15 @@ describe("copy rules (06 §4, §9)", () => {
     }
   });
 
+  it("catch the word demo (ROOK-048), but not words that only start with it", () => {
+    for (const bad of ["Try the demo", "DEMO repos", "Two demos", "the demo's rule"]) {
+      expect(copyViolations(bad), bad).toContain("the word demo");
+    }
+    for (const ok of ["Try Rook", "It demonstrates the bug", "a democratic process"]) {
+      expect(copyViolations(ok), ok).toEqual([]);
+    }
+  });
+
   it("allow the true product facts", () => {
     for (const ok of [
       "Needs Python 3.12+ and Docker.",

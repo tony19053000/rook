@@ -25,9 +25,9 @@ export const securitySections: SecuritySection[] = [
     title: "How data is handled",
     items: [
       "Sign-in is Google through Supabase Auth. Supabase holds the account; the browser keeps the session in localStorage.",
-      "The Rook server stores runs, each run's redacted event log (including what you type into the composer and chat) and counterexamples. Guest demo quotas are counted per guest cookie and per client IP address, per day.",
+      "The Rook server stores runs, each run's redacted event log (including what you type into the composer and chat) and counterexamples. Guest run quotas are counted per guest cookie and per client IP address, per day.",
       "If you connect GitHub, Rook stores your installation id and keeps short-lived installation tokens in memory only.",
-      "In live runs, repo content and run data go to IBM Bob as prompts. The guest demo uses recorded Bob answers.",
+      "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs use recorded Bob answers.",
       "No analytics, ads or tracking scripts on the site or the app. Runs are not deleted automatically yet.",
     ],
     link: { label: "Read the privacy policy (draft)", href: "/privacy" },
@@ -41,7 +41,7 @@ export const securitySections: SecuritySection[] = [
       "Only the workspace copy of your repo is mounted, never your home folder or the original. Ports are published on 127.0.0.1 only, and at run time the app gets an internal network wherever the app allows it.",
       "The sandbox gets none of Rook's environment, so Rook's keys never reach your app.",
       "The engine sends requests only to the sandbox's host and port, follows no redirects elsewhere, and uses a 10 s timeout and a 1 MB response cap.",
-      "On the hosted site, guests run only allowlisted demo repos pinned by commit SHA, as a separate unprivileged user. A signed-in user's own GitHub repo, when the server enables it, runs only in a Docker sandbox with the same hardening.",
+      "On the hosted site, guests run only allowlisted example repos pinned by commit SHA, as a separate unprivileged user. A signed-in user's own GitHub repo, when the server enables it, runs only in a Docker sandbox with the same hardening.",
     ],
   },
   {
@@ -97,7 +97,7 @@ export const notYetTrue = {
     "There has been no third-party audit or penetration test, and Rook holds no certifications.",
     "On the hosted server, the container that starts sandboxes has access to the Docker socket. That is root-equivalent on the host if the server itself had a remote-code-execution bug. This is accepted for the hackathon; the long-term fix is a separate runner host.",
     "Prompt injection from repo text is bounded by Bob's tool permissions and the engine's checks, not eliminated.",
-    "The offline settings for the allowlisted demo apps' test commands are best effort.",
+    "The offline settings for the allowlisted example apps' test commands are best effort.",
     "There is no automatic data deletion and no self-serve account deletion yet.",
   ],
 } as const;

@@ -65,7 +65,7 @@ export const privacyPolicy: LegalDoc = {
       id: "cookies",
       heading: "Cookies and browser storage",
       items: [
-        "rook_guest: a signed, httpOnly, SameSite=Lax cookie that identifies a guest browser for the demo quota.",
+        "rook_guest: a signed, httpOnly, SameSite=Lax cookie that identifies a guest browser for the guest run quota.",
         "rook_login: a signed cookie that lasts 10 minutes, set only while you sign in to the CLI.",
         "localStorage rook-auth: your sign-in session.",
         "localStorage rook.sidebar.collapsed: whether you collapsed the app's sidebar.",
@@ -85,7 +85,7 @@ export const privacyPolicy: LegalDoc = {
       id: "ibm-bob",
       heading: "IBM Bob",
       paragraphs: [
-        "In live runs, repository content and run data are sent to IBM Bob as prompts. The guest demo uses recorded IBM Bob answers instead.",
+        "In live runs, repository content and run data are sent to IBM Bob as prompts. Guest runs use recorded IBM Bob answers instead.",
       ],
     },
     {
@@ -129,7 +129,7 @@ export const termsOfService: LegalDoc = {
       heading: "The hosted service",
       paragraphs: [
         `${site.name} is a hackathon-stage project. There are no paid plans and no billing.`,
-        "Guests can run only the allowlisted demo repositories, with recorded IBM Bob answers, and have a daily run limit.",
+        "Guests can run only the allowlisted example repositories, with recorded IBM Bob answers, and have a daily run limit.",
         "Runs of your own GitHub repositories on the hosted server are available only when the server enables them, with a daily limit per user.",
         "Limits and features may change or be withdrawn at any time.",
       ],

@@ -152,7 +152,7 @@ describe("new run body (02 §11 POST /runs)", () => {
     expect(newRunBody(DEMO, "x".repeat(2000), false)).toHaveProperty("body");
     // the hosted server runs only demo repos: a GitHub repo gets the CLI command instead of a 403
     expect(newRunBody({ kind: "github", ref: "alice/shop" }, "find bugs", false)).toEqual({
-      error: "The hosted server runs only the demo repositories. Run this one with the CLI: rook run alice/shop",
+      error: "The hosted server runs only the example repositories. Run this one with the CLI: rook run alice/shop",
     });
   });
 });
@@ -204,7 +204,7 @@ describe("errors (04 §3.6)", () => {
   it("the guest limit 429 shows the limit copy with the CLI install command", () => {
     const view = errorView(new ApiError(429, "Demo limit reached for today. Install the CLI to run on your own repos: uv tool install git+https://github.com/tony19053000/rook", 3600), "create");
     expect(view.kind).toBe("limit");
-    expect(view.title).toBe("Demo limit reached for today");
+    expect(view.title).toBe("Guest limit reached for today");
     expect(view.message).toContain(CLI_INSTALL);
     expect(view.retryable).toBe(false);
   });

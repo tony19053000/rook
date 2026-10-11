@@ -38,7 +38,7 @@ export function GithubSetupView({ session, runs, status, connectGithub }: Github
           <>
             <h1 className="font-serif text-[28px] font-normal tracking-tight">GitHub connected</h1>
             <p className="text-muted">
-              Your shared repositories are in the repo picker. The hosted server runs the demo repositories; run your own with the CLI:{" "}
+              Your shared repositories are in the repo picker. The hosted server runs the example repositories; run your own with the CLI:{" "}
               <code className="font-mono">rook run owner/name</code>
             </p>
             <Link href="/app" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">

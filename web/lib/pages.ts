@@ -173,7 +173,7 @@ export function moveIndex(current: number, delta: number, count: number): number
 
 /** The CLI hint for a GitHub repo this server won't run (an older server, or GitHub not linked). */
 export function cliHint(ref: string): string {
-  return `The hosted server runs only the demo repositories. Run this one with the CLI: rook run ${ref}`;
+  return `The hosted server runs only the example repositories. Run this one with the CLI: rook run ${ref}`;
 }
 
 /**
@@ -258,10 +258,11 @@ export function errorView(error: unknown, action: ErrorAction): ErrorView {
   }
   switch (error.status) {
     case 429: {
-      if (/^demo limit/i.test(error.message)) {
+      // "Guest limit …"; servers before ROOK-048 send "Demo limit …".
+      if (/^(guest|demo) limit/i.test(error.message)) {
         return {
           kind: "limit",
-          title: "Demo limit reached for today",
+          title: "Guest limit reached for today",
           message: `Install the CLI to run on your own repos: ${CLI_INSTALL}`,
           retryable: false,
         };
@@ -279,7 +280,7 @@ export function errorView(error: unknown, action: ErrorAction): ErrorView {
       return {
         kind: "unavailable",
         title: "Not available on this server",
-        message: detailOf(error, "The server isn't set up to do this right now. Try a demo repository."),
+        message: detailOf(error, "The server isn't set up to do this right now. Try an example repository."),
         retryable: false,
       };
     case 501:

@@ -194,7 +194,7 @@ export function Countdown({ left, onStop, what }: { left: number | null; onStop:
   if (left === null) return null;
   return (
     <span data-countdown className="num inline-flex items-center gap-2 text-[12.5px] text-muted" role="timer" aria-live="off">
-      Demo: {what} in {left}s
+      Auto: {what} in {left}s
       <button type="button" className="underline hover:text-ink" onClick={onStop}>
         Stop
       </button>

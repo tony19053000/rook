@@ -110,7 +110,7 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 5. **Privacy** and **Terms**: drafts, with the banner and visible placeholders `[Company legal name]`, `[contact email]`, `[jurisdiction]`. Privacy describes only §4 "Data the app actually processes".
 6. **Sign-in** (`/login`) and a branded **404**.
 
-CTAs: "Try the demo" → `/app`. "Sign in" → `/login`. Signed-in visitors see **"Open workspace"** → `/app` instead (a client-side hint read from `localStorage` `rook-auth` without loading the auth library; the server render shows the signed-out CTAs).
+CTAs: "Try Rook" → `/app`. "Sign in" → `/login`. Signed-in visitors see **"Open workspace"** → `/app` instead (a client-side hint read from `localStorage` `rook-auth` without loading the auth library; the server render shows the signed-out CTAs).
 
 ## 6. Walkthrough (home)
 

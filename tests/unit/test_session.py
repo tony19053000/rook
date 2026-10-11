@@ -823,7 +823,7 @@ def test_a_local_folder_is_copied_and_never_touched(tmp_path: Path) -> None:
 
 def test_demo_repos_must_be_allowlisted(tmp_path: Path) -> None:
     sha = "a" * 40
-    with pytest.raises(NotAllowlistedError, match="not an allowlisted demo repo"):
+    with pytest.raises(NotAllowlistedError, match="not an allowlisted example repo"):
         prepare_workspace(RepoSpec(kind="demo", ref="acme/shop", commit=sha), "r_abcdefghijkl", root=tmp_path)
     with pytest.raises(NotAllowlistedError):  # the hosted server runs demo repos only
         prepare_workspace(RepoSpec(kind="local", ref=str(tmp_path)), "r_abcdefghijkl", root=tmp_path / "w",
@@ -840,7 +840,7 @@ async def test_a_session_on_a_repo_that_is_not_allowlisted_fails_cleanly(tmp_pat
     session = Session(RepoSpec(kind="demo", ref="acme/shop", commit="b" * 40),
                       options=SessionOptions(auto=True, hosted=True), workspaces_root=tmp_path)
     result = await session.run()
-    assert result.status == "failed" and "not an allowlisted demo repo" in result.summary
+    assert result.status == "failed" and "not an allowlisted example repo" in result.summary
     assert [e.data["phase"] for e in history(session) if e.type == "run.phase"] == ["PREPARE"]
 
 

@@ -115,8 +115,11 @@ from rook.sandbox.process import ProcessSandbox
 from rook.store.repo import CxStatus, RunRecord, Store
 
 # Why a fix cannot be verified on a demo app that runs from its pristine copy (live mode on the server).
-_PRISTINE_NOTE = ("the server runs the original demo app, never AI-patched code from a live run. "
+_PRISTINE_NOTE = ("the server runs the original example app, never AI-patched code from a live run. "
                   "Run `rook` from the CLI to fix and verify on your own copy.")
+# Why a server that allows workspace runs still runs this live run's app from its original copy.
+_ORIGINAL_COPY_NOTE = ("The example app runs from its original copy: only replayed runs may run patched code on "
+                       "this server")
 LAUNCH_WAIT = 120.0  # how long cancel waits for a sandbox that is still starting, before stopping it
 _ANSWER_MAX = 10_000
 _RULE_IDS_MAX = 200
@@ -270,7 +273,7 @@ def process_launcher(workspace: Workspace, allowlist: Allowlist = DEFAULT_ALLOWL
     from its pristine app dir, or from the run's workspace copy with `run_workspace` (replay mode only)."""
     entry = workspace.demo
     if entry is None:
-        raise ValueError("the process launcher runs allowlisted demo repos only")
+        raise ValueError("the process launcher runs allowlisted example repos only")
     run_from = workspace.path if run_workspace else None
 
     def launch(plan: SandboxPlan, values: Mapping[str, str], summary: RepoSummary) -> StartedApp:
@@ -630,8 +633,7 @@ class Session:
         await self._log("info", f"Workspace ready: a copy of {self.repo.name} "
                                 f"(base {self.workspace.base_commit[:12]})")
         if self._run_workspace and self.workspace.demo is not None and not self._runs_workspace():
-            await self._log("warn", "The demo app runs from its original copy: only replayed runs may run "
-                                    "patched code on this server")
+            await self._log("warn", _ORIGINAL_COPY_NOTE)
 
     def _runs_workspace(self) -> bool:
         """A demo app may run from the workspace only when the server allows it AND every Bob call replays

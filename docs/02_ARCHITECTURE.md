@@ -430,8 +430,8 @@ guest_quota(key TEXT PK, day TEXT, runs INTEGER, coins REAL)
   server-wide, or the queue is full ("Rook is busy with another run on a GitHub repo; try again in a few
   minutes", `Retry-After: 60`), and the caller's daily limit `ROOK_USER_RUNS_PER_DAY` (default 5, counted last so
   a refused request never uses one: "You've used today's N runs on your GitHub repos; try again tomorrow",
-  `Retry-After` = seconds to UTC midnight). None of these messages starts with "Demo limit" (the web maps that
-  prefix to the guest CLI card). The run: clone at HEAD of the default branch with the token in the git child env
+  `Retry-After` = seconds to UTC midnight). None of these messages starts with "Guest limit" or "Demo limit" (the web
+  maps those prefixes to the guest CLI card). The run: clone at HEAD of the default branch with the token in the git child env
   only; **live Bob** whatever `ROOK_BOB_MODE` says (the Bob mode is chosen per run: demo → `ROOK_BOB_MODE`, github
   → `live`); budget `ROOK_USER_RUN_BUDGET` (default 1.5 coins) plus the daily cap; the app in a DockerSandbox (§8);
   questions answered by the user in the browser (`options.auto` only if they ask); SHIP through `GitHubShipper`

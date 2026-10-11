@@ -64,7 +64,7 @@ export const features: HomeItem[] = [
   },
   {
     title: "Any backend with an HTTP API",
-    body: "In any language. The demo apps are written in Node.js, Python (FastAPI) and Go.",
+    body: "In any language. The example apps are written in Node.js, Python (FastAPI) and Go.",
   },
   {
     title: "13 Bob agents, one deciding engine",
@@ -103,7 +103,7 @@ export const refusals: HomeItem[] = [
   },
   {
     title: "Run arbitrary repos for guests",
-    body: "On the hosted site, guests run only allowlisted demo repos, pinned by commit SHA.",
+    body: "On the hosted site, guests run only allowlisted example repos, pinned by commit SHA.",
   },
 ];
 
@@ -116,7 +116,7 @@ export const scopeSection = {
 
 export const scope: string[] = [
   "No paid plans, no billing, no team accounts and no SSO.",
-  "The hosted guest demo offers shop-app only, with recorded IBM Bob answers labelled \"recorded\". Guests get 3 runs a day.",
+  "Guest runs on the hosted site offer shop-app only, with recorded IBM Bob answers labelled \"recorded\". Guests get 3 runs a day.",
   "Signed-in users with the GitHub App linked can run their own repos on the hosted server only when the server enables it: one such run at a time server-wide, 5 per user per day. Otherwise the CLI runs your repos on your machine.",
   "HTTP APIs only: no libraries, pure frontends, mobile apps or ML notebooks.",
   "Not on PyPI yet: install from GitHub. Live runs need Docker and your own IBM Bob key.",
@@ -152,12 +152,12 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
     {
       question: "Which languages does it work with?",
       answer:
-        "Any backend with an HTTP API, in any language. The demo apps are Node.js, Python (FastAPI) and Go. Libraries, pure frontends, mobile apps and ML notebooks are out of scope.",
+        "Any backend with an HTTP API, in any language. The example apps are Node.js, Python (FastAPI) and Go. Libraries, pure frontends, mobile apps and ML notebooks are out of scope.",
     },
     {
       question: "Do I need an account?",
       answer:
-        "Not for the hosted demo, or for running the CLI on a folder on your machine. Signing in with Google is needed to work with your GitHub repos, from the web app or the CLI.",
+        "Not for trying Rook on the hosted site, or for running the CLI on a folder on your machine. Signing in with Google is needed to work with your GitHub repos, from the web app or the CLI.",
     },
     {
       question: "Will Rook change my code?",
@@ -167,7 +167,7 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
     {
       question: "Is my code sent to an AI?",
       answer:
-        "In live runs, repo content and run data go to IBM Bob as prompts. The hosted guest demo uses recorded Bob answers. Bob is the only AI in Rook.",
+        "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs on the hosted site use recorded Bob answers. Bob is the only AI in Rook.",
     },
     { question: "What does it cost?", answer: costAnswer(status) },
   ];
@@ -176,7 +176,7 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
 export const closingCta = {
   id: "get-started",
   title: "See it break, then see it fixed",
-  body: "Try the hosted demo in your browser, or install the CLI and point it at your own backend.",
+  body: "Try Rook on the hosted site in your browser, or install the CLI and point it at your own backend.",
   installLabel: "Install the CLI (Python 3.12+, Docker, IBM Bob Shell)",
   installCommand: INSTALL_COMMAND,
   docsLink: { label: "Read how it works", href: "/docs" },

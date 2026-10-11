@@ -32,7 +32,7 @@ export interface NavLink {
 }
 
 export const cta = {
-  demo: { label: "Try the demo", href: "/app" },
+  demo: { label: "Try Rook", href: "/app" },
   signIn: { label: "Sign in", href: "/login" },
   /** Replaces both for a visitor this browser remembers as signed in (06 §5). */
   workspace: { label: "Open workspace", href: "/app" },

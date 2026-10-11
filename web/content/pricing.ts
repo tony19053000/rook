@@ -28,6 +28,6 @@ export const pricingCopy = {
   pendingDetails: [
     "There is no paid plan and no billing in Rook today.",
     `The code is open source under the ${site.licence}: you can install the CLI and run it on your own machine. Live runs need Docker and your own IBM Bob key.`,
-    "The hosted demo is open without an account.",
+    "Guest runs on the hosted site are open without an account.",
   ],
 } as const;

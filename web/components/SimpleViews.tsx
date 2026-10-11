@@ -124,8 +124,8 @@ export function RepositoriesView({ session, runs, repos, loading, error, onRetry
           </section>
         )}
         <section className="flex flex-col gap-2">
-          <h2 className="text-[13px] font-semibold text-muted">Demo repositories</h2>
-          {groups.demo.length === 0 ? <p className="text-muted">No demo repositories on this server.</p> : <RepoList repos={groups.demo} />}
+          <h2 className="text-[13px] font-semibold text-muted">Example repositories</h2>
+          {groups.demo.length === 0 ? <p className="text-muted">No example repositories on this server.</p> : <RepoList repos={groups.demo} />}
         </section>
         {session.kind === "guest" && (
           <p className="text-[13px] text-muted">
@@ -145,7 +145,7 @@ export function RepositoriesView({ session, runs, repos, loading, error, onRetry
     );
   return (
     <AppShell {...shellProps(session, runs)} active="repositories">
-      <Title sub="The hosted server runs the demo repositories. Use the CLI for your own.">Repositories</Title>
+      <Title sub="The hosted server runs the example repositories. Use the CLI for your own.">Repositories</Title>
       {body}
     </AppShell>
   );
