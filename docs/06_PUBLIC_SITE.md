@@ -36,6 +36,7 @@ Route-move rules:
 - A real design system: colour tokens, a type scale, spacing, a grid and reusable `Section`, `Card`, `Badge`, `Button` and `CodeBlock` components (under `web/components/site/`). Site tokens are scoped so they don't change the app's tokens.
 - An SVG logo mark and wordmark for Rook, and a favicon (`app/icon.svg`, replacing the current one).
 - A sticky translucent header with navigation and a **mobile menu built on native `<details>`** (works without JS); a **skip link** to `#main`; a full footer with **Product, Docs, Company and Legal** columns.
+- Layout widths: the header bar spans the full viewport (logo at the left padding, CTAs at the right padding); page content sits in a container up to about 1440 px (`max-w-[90rem]`) whose side padding grows on large screens, and grids, the hero figure and the walkthrough use that width. Paragraphs, leads, lists and FAQ answers keep a readable measure (`max-w-2xl`/`max-w-3xl`); long-form pages (security, legal, 404, sign-in) use the narrow column.
 - Text contrast at least 4.5:1 (3:1 for large text and UI borders), visible focus rings, keyboard access, layout working from **360 px** wide with no horizontal scroll.
 
 ### Motion

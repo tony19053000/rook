@@ -7,7 +7,7 @@ import { Section } from "@/components/site/Section";
 import { HeroFigure } from "@/components/site/home/HeroFigure";
 import { HeroParallax } from "@/components/site/home/HeroParallax";
 import { Walkthrough } from "@/components/site/home/Walkthrough";
-import { type } from "@/components/site/tokens";
+import { measure, type } from "@/components/site/tokens";
 import {
   closingCta,
   faqSection,
@@ -70,7 +70,7 @@ export default function HomePage() {
       </Section>
 
       <Section id={refusalsSection.id} eyebrow={refusalsSection.eyebrow} title={refusalsSection.title} intro={refusalsSection.intro}>
-        <ul className="grid gap-x-10 gap-y-6 md:grid-cols-2">
+        <ul className="grid gap-x-10 gap-y-6 md:grid-cols-2 xl:grid-cols-4 xl:gap-x-8">
           {refusals.map((item) => (
             <li key={item.title} className="flex gap-4 border-t border-site-line pt-5">
               <span aria-hidden className="font-mono text-site-accent">
@@ -85,8 +85,8 @@ export default function HomePage() {
         </ul>
       </Section>
 
-      <Section id={scopeSection.id} eyebrow={scopeSection.eyebrow} title={scopeSection.title} intro={scopeSection.intro} width="narrow">
-        <ul className="flex flex-col gap-3">
+      <Section id={scopeSection.id} eyebrow={scopeSection.eyebrow} title={scopeSection.title} intro={scopeSection.intro}>
+        <ul className={`flex flex-col gap-3 ${measure}`}>
           {scope.map((line) => (
             <li key={line} className={`${type.body} flex gap-3`}>
               <span aria-hidden className="text-site-faint">
@@ -98,8 +98,8 @@ export default function HomePage() {
         </ul>
       </Section>
 
-      <Section id={faqSection.id} eyebrow={faqSection.eyebrow} title={faqSection.title} width="narrow">
-        <div className="flex flex-col divide-y divide-site-line border-y border-site-line">
+      <Section id={faqSection.id} eyebrow={faqSection.eyebrow} title={faqSection.title}>
+        <div className={`${measure} flex flex-col divide-y divide-site-line border-y border-site-line`}>
           {faq.map((item) => (
             <details key={item.question} className="group py-1">
               <summary className="flex cursor-pointer items-center justify-between gap-4 rounded-md py-4 font-medium text-site-ink">

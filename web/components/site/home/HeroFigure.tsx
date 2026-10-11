@@ -5,7 +5,7 @@ import { heroFigure } from "@/content/home";
 export function HeroFigure() {
   const f = heroFigure;
   return (
-    <figure className="mx-auto w-full max-w-3xl">
+    <figure className="mx-auto w-full max-w-3xl lg:max-w-5xl 2xl:max-w-6xl">
       <div className="overflow-hidden rounded-2xl border border-site-line bg-site-card/90 shadow-[0_30px_120px_-40px_rgba(255,106,77,0.45)] backdrop-blur">
         <div className="flex items-center gap-2 border-b border-site-line px-4 py-3">
           <span aria-hidden className="flex gap-1.5">

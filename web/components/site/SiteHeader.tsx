@@ -1,18 +1,18 @@
 import Link from "next/link";
 import { HeaderAccountCtas, MobileAccountLink } from "./AccountHint";
-import { Container } from "./Container";
 import { Logo } from "./Logo";
 import { NavLinkItem } from "./NavLinkItem";
+import { gutter } from "./tokens";
 import { headerCopy, headerNav } from "@/content/site";
 
 const NAV_LINK = "rounded-md px-3 py-2 text-sm text-site-muted transition-colors hover:text-site-ink";
 
-// The sticky, translucent site header (06 §3). A server component: the mobile menu is a native <details>, so it
+// The sticky, translucent site header (06 §3), spanning the full viewport width. A server component: the mobile menu is a native <details>, so it
 // opens and closes without JS. The account CTAs are the one client island (AccountHint.tsx).
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-site-line bg-site-bg/80 backdrop-blur-md">
-      <Container className="flex h-16 items-center gap-2">
+      <div className={`flex h-16 w-full items-center gap-2 ${gutter}`}>
         <Link href="/" aria-label={headerCopy.homeLabel} className="mr-2 rounded-md">
           <Logo />
         </Link>
@@ -40,7 +40,7 @@ export function SiteHeader() {
             </svg>
           </summary>
           <nav aria-label={headerCopy.mobileNavLabel} className="absolute inset-x-0 top-16 border-b border-site-line bg-site-bg">
-            <ul className="mx-auto flex max-w-6xl flex-col px-3 py-3">
+            <ul className="flex w-full flex-col px-2 py-3 sm:px-5">
               {headerNav.map((link) => (
                 <li key={link.href}>
                   <NavLinkItem link={link} className="block rounded-md px-3 py-3 text-base text-site-ink hover:bg-site-raised" />
@@ -52,7 +52,7 @@ export function SiteHeader() {
             </ul>
           </nav>
         </details>
-      </Container>
+      </div>
     </header>
   );
 }

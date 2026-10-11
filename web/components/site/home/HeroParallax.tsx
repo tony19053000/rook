@@ -44,7 +44,7 @@ export function HeroParallax({ labelledBy, text, figure }: HeroParallaxProps) {
           style={reduced ? undefined : { y: glowY, scale: glowScale }}
         />
         <Container className="pt-20 pb-20 sm:pt-28 sm:pb-28">
-          <div data-hero-text className="mx-auto flex max-w-4xl flex-col items-center text-center">
+          <div data-hero-text className="mx-auto flex max-w-4xl flex-col items-center text-center xl:max-w-6xl">
             {text}
           </div>
           <m.div data-layer="figure" className="mt-16 sm:mt-20" style={reduced ? undefined : { y: figureY }}>

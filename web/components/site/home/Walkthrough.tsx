@@ -97,7 +97,7 @@ export function Walkthrough({ steps = flowSteps, frames = walkthroughFrames }: W
   const summaryId = (i: number) => `${uid}-summary-${i}`;
 
   return (
-    <div ref={root} className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
+    <div ref={root} className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10 2xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] 2xl:gap-14">
       <div className="flex min-w-0 flex-col gap-4">
         <div
           role="tablist"
