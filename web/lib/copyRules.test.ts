@@ -1,11 +1,16 @@
 import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { collectStrings, copyViolations } from "./copyRules";
+import { collectStrings, copyViolations, NO_HACKATHON, NO_PLACEHOLDER } from "./copyRules";
 import * as pricing from "@/content/pricing";
 
 // Every module in web/content/, so a new content file is scanned without touching this test.
 const CONTENT_FILES = readdirSync(resolve(process.cwd(), "content")).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"));
+
+/** The only content allowed to name the hackathon: the About page's story (06 §4 "Positioning"). */
+const HACKATHON_ALLOWED = new Set(["about.ts"]);
+/** Still drafts with placeholders until ROOK-056 puts them in effect; delete the entry there to tighten the guards. */
+const PENDING_ROOK_056 = new Set(["legal.ts"]);
 
 describe("copy rules (06 §4, §9)", () => {
   it("catch social proof and invented numbers", () => {
@@ -117,6 +122,30 @@ describe("copy rules (06 §4, §9)", () => {
         expect(copyViolations(text, { pricing: isPricing }), `${file}: ${text}`).toEqual([]);
       }
     }
+  });
+
+  it("catch the word hackathon and [placeholders], but not CLI syntax (ROOK-053)", () => {
+    for (const bad of ["A hackathon-stage project", "Built for the Hackathon"]) expect(NO_HACKATHON.pattern.test(bad), bad).toBe(true);
+    for (const bad of ["Contact: [contact email]", "[Company legal name]", "under the laws of [jurisdiction]", "Effective [date]", "See [...]", "[TBD]", "[ … ]"]) {
+      expect(NO_PLACEHOLDER.pattern.test(bad), bad).toBe(true);
+    }
+    for (const ok of ["rook run [repo]", "rook replay <cx> --base-url <url>", "a list [1, 2]", "Early access, open source."]) {
+      expect(NO_PLACEHOLDER.pattern.test(ok), ok).toBe(false);
+    }
+  });
+
+  it("no hackathon outside the About story, and no [placeholders], in content/*.ts (ROOK-053)", async () => {
+    let aboutMentions = 0;
+    for (const file of CONTENT_FILES) {
+      if (PENDING_ROOK_056.has(file)) continue;
+      const mod: unknown = await import(`../content/${file}`);
+      for (const text of collectStrings(mod)) {
+        expect(NO_PLACEHOLDER.pattern.test(text), `${file}: ${text}`).toBe(false);
+        if (HACKATHON_ALLOWED.has(file)) aboutMentions += Number(NO_HACKATHON.pattern.test(text));
+        else expect(NO_HACKATHON.pattern.test(text), `${file}: ${text}`).toBe(false);
+      }
+    }
+    expect(aboutMentions, "the About story names the hackathon once").toBe(1);
   });
 
   it("the pricing content states no price while plans is empty", () => {

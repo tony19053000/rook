@@ -4,8 +4,19 @@ export const REPO_URL = "https://github.com/tony19053000/rook";
 export const INSTALL_COMMAND = `uv tool install git+${REPO_URL}`;
 export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
 export const REPO_DOCS_URL = `${REPO_URL}/tree/main/docs`;
-/** Shown as-is until a real address is chosen (06 §5.5). */
-export const CONTACT_PLACEHOLDER = "[contact email]";
+/** The site's public origin (06 §4 "Site URL"): metadataBase, the sitemap, robots and OG URLs derive from it. */
+export const SITE_URL = "https://rook-weld-six.vercel.app";
+/** Contact, support and privacy requests (06 §4 "Operator and contact"). */
+export const CONTACT_EMAIL = "c40534394@gmail.com";
+export const ISSUES_URL = `${REPO_URL}/issues`;
+
+/** Who runs Rook (06 §4): one individual developer, not a company. */
+export const operator = { name: "Aayush Kumar", location: "India" } as const;
+
+/** A mailto: link to CONTACT_EMAIL with a prefilled subject (the contact page has no form backend). */
+export function mailtoHref(subject: string): string {
+  return `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
+}
 
 export const site = {
   name: "Rook",
@@ -14,13 +25,14 @@ export const site = {
     "Rook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.",
   tagline: "Find the smallest sequence that breaks your software, before your users do.",
   builtOn: "Built on IBM Bob.",
+  stage: "Early access, open source.",
   licence: "MIT licence",
 } as const;
 
 export const metadataCopy = {
   defaultTitle: "Rook · find the smallest sequence that breaks your software",
   titleTemplate: "%s · Rook",
-  description: `${site.oneLiner} ${site.builtOn}`,
+  description: `${site.oneLiner} ${site.stage} ${site.builtOn}`,
   ogAlt: "Rook: find the smallest sequence that breaks your software",
 } as const;
 
@@ -34,14 +46,17 @@ export interface NavLink {
 export const cta = {
   demo: { label: "Try Rook", href: "/app" },
   signIn: { label: "Sign in", href: "/login" },
+  /** 06 §5 wants /docs/getting-started; until ROOK-055 adds that guide, the getting-started section of /docs. */
+  docs: { label: "Read the docs", href: "/docs#getting-started" },
   /** Replaces both for a visitor this browser remembers as signed in (06 §5). */
   workspace: { label: "Open workspace", href: "/app" },
 } as const;
 
 export const headerNav: NavLink[] = [
-  { label: "How it works", href: "/docs" },
+  { label: "Docs", href: "/docs" },
   { label: "Security", href: "/security" },
   { label: "Pricing", href: "/pricing" },
+  { label: "Roadmap", href: "/roadmap" },
   { label: "GitHub", href: REPO_URL, external: true },
 ];
 
@@ -56,8 +71,6 @@ export const headerCopy = {
 export interface FooterColumn {
   heading: string;
   links: NavLink[];
-  /** A plain line after the links. */
-  note?: string;
 }
 
 export const footerColumns: FooterColumn[] = [
@@ -67,14 +80,16 @@ export const footerColumns: FooterColumn[] = [
       { label: "Overview", href: "/" },
       { label: cta.demo.label, href: cta.demo.href },
       { label: "Pricing", href: "/pricing" },
+      { label: "Roadmap", href: "/roadmap" },
       { label: cta.signIn.label, href: cta.signIn.href },
     ],
   },
   {
     heading: "Docs",
     links: [
+      // The install, rules and data guides join this column with ROOK-055 (06 §8).
+      { label: "Getting started", href: cta.docs.href },
       { label: "How it works", href: "/docs#how-it-works" },
-      { label: "Getting started", href: "/docs#getting-started" },
       { label: "GitHub Action", href: "/docs#github-action" },
       { label: "Docs on GitHub", href: REPO_DOCS_URL, external: true },
     ],
@@ -82,10 +97,10 @@ export const footerColumns: FooterColumn[] = [
   {
     heading: "Company",
     links: [
-      { label: "GitHub repository", href: REPO_URL, external: true },
-      { label: site.licence, href: LICENSE_URL, external: true },
+      { label: "About", href: "/about" },
+      { label: "Contact", href: "/contact" },
+      { label: "GitHub", href: REPO_URL, external: true },
     ],
-    note: `Contact: ${CONTACT_PLACEHOLDER}`,
   },
   {
     heading: "Legal",
@@ -98,7 +113,10 @@ export const footerColumns: FooterColumn[] = [
 ];
 
 export const footerCopy = {
-  note: `Open source under the ${site.licence}. A hackathon-stage project built for the IBM Bob 2.0 Hackathon.`,
+  note: `Early access. ${site.builtOn}`,
+  /** Followed by the licence link. */
+  openSource: "Open source under the",
+  licenceLink: { label: site.licence, href: LICENSE_URL, external: true } satisfies NavLink,
   navLabel: "Footer",
 } as const;
 

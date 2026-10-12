@@ -7,8 +7,9 @@ import { measure, type } from "@/components/site/tokens";
 import { docsCopy, githubAction, gettingStarted, howItWorks } from "@/content/docs";
 import { flowSteps } from "@/content/flow";
 import { REPO_URL } from "@/content/site";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: docsCopy.title, description: docsCopy.description };
+export const metadata: Metadata = pageMetadata(docsCopy.title, docsCopy.description, "/docs");
 
 const SECTIONS = [howItWorks, gettingStarted, githubAction];
 const LINK = "text-site-link underline underline-offset-4";

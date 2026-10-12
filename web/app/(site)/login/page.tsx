@@ -5,8 +5,9 @@ import { Container } from "@/components/site/Container";
 import { SignInPanel } from "@/components/site/SignInPanel";
 import { space, type } from "@/components/site/tokens";
 import { loginCopy } from "@/content/login";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: loginCopy.title, description: loginCopy.description };
+export const metadata: Metadata = pageMetadata(loginCopy.title, loginCopy.description, "/login");
 
 // /login (06 §7): the URL is in the Supabase redirect allowlist, so it never moves. The page is a server
 // component; only the sign-in control is a client island, and nothing calls the API on load.

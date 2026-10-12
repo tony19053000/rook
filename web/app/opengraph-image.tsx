@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { ROOK_PATH } from "@/components/site/Logo";
 import { metadataCopy, site } from "@/content/site";
 
-// The Open Graph / Twitter card image (06 §8): dark, the logo and the one-liner. Rendered by next/og with its
+// The Open Graph / Twitter card image (06 §8): dark, the logo, the stage (early access, open source) and the one-liner. Rendered by next/og with its
 // built-in font, so nothing is fetched.
 export const alt = metadataCopy.ogAlt;
 export const size = { width: 1200, height: 630 };
@@ -30,6 +30,9 @@ export default function OpenGraphImage() {
             <path fill="#ff6a4d" d={ROOK_PATH} />
           </svg>
           <div style={{ fontSize: 64, fontWeight: 700, letterSpacing: "-0.03em" }}>{site.name}</div>
+          <div style={{ marginLeft: "auto", fontSize: 24, color: "#a1a1aa", border: "1px solid #34343b", borderRadius: 999, padding: "8px 20px" }}>
+            {site.stage.replace(/\.$/, "")}
+          </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <div style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.03em", maxWidth: 1000 }}>{site.tagline}</div>

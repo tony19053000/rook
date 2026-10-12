@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ButtonLink } from "@/components/site/Button";
 import { Card } from "@/components/site/Card";
@@ -24,6 +25,9 @@ import { plans, pricingStatus } from "@/content/pricing";
 import { cta } from "@/content/site";
 import { walkthroughCopy } from "@/content/walkthrough";
 
+// The title, description and cards are the site defaults (app/layout.tsx).
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
 const HERO_TITLE_ID = "hero-title";
 
 // The marketing home (06 §5.1). A server component: only the hero's parallax and the walkthrough are client
@@ -45,8 +49,8 @@ export default function HomePage() {
               <ButtonLink href={cta.demo.href} size="lg">
                 {cta.demo.label}
               </ButtonLink>
-              <ButtonLink href={cta.signIn.href} variant="secondary" size="lg">
-                {cta.signIn.label}
+              <ButtonLink href={cta.docs.href} variant="secondary" size="lg">
+                {cta.docs.label}
               </ButtonLink>
             </div>
           </>

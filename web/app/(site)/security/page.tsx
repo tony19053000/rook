@@ -4,8 +4,9 @@ import { Container } from "@/components/site/Container";
 import { Section } from "@/components/site/Section";
 import { type } from "@/components/site/tokens";
 import { notYetTrue, securityCopy, securitySections } from "@/content/security";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = { title: securityCopy.title, description: securityCopy.description };
+export const metadata: Metadata = pageMetadata(securityCopy.title, securityCopy.description, "/security");
 
 const LIST = "flex list-disc flex-col gap-3 pl-5 text-base leading-relaxed text-site-muted marker:text-site-faint";
 const LINK = "text-site-link underline underline-offset-4";

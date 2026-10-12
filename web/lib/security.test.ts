@@ -1,8 +1,14 @@
+import * as pageStaticInfo from "next/dist/build/analysis/get-page-static-info";
 import { describe, expect, it } from "vitest";
 import { NextRequest } from "next/server";
 import { config, middleware } from "../middleware";
 import nextConfig from "../next.config";
 import { contentSecurityPolicy, newNonce, PROXY_SECRET_HEADER, proxyRequestHeaders, SECURITY_HEADERS } from "./security";
+
+// Next's own matcher compiler (used at build time); it is exported at runtime but not in Next's type declarations.
+const { getMiddlewareMatchers } = pageStaticInfo as unknown as {
+  getMiddlewareMatchers: (matcher: string[], nextConfig: object) => { regexp: string }[];
+};
 
 function directives(csp: string): Map<string, string[]> {
   return new Map(csp.split("; ").map((d) => {
@@ -88,8 +94,40 @@ describe("middleware", () => {
     }
   });
 
-  it("runs on the API and the pages, not on static files", () => {
-    expect(config.matcher).toEqual(["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|icon.svg).*)"]);
+  it("runs on everything but /_next/static/ (compiled the way Next compiles it)", () => {
+    const matchers = getMiddlewareMatchers(config.matcher, {}).map((m) => new RegExp(m.regexp));
+    const runs = (path: string) => matchers.some((re) => re.test(path));
+    for (const path of [
+      "/",
+      "/about",
+      "/app",
+      "/api/v1/runs",
+      "/opengraph-image",
+      "/twitter-image",
+      "/sitemap.xmlx",
+      "/robots.txtevil",
+      "/icon.svgx",
+      "/favicon.icoabc",
+      "/_next/staticx",
+      "/_next/imagex",
+      "/sitemapxxml",
+      "/sitemap.xml/x",
+      // The matcher sees the raw path; these decode to pages, so they must get the CSP.
+      "/_next/image",
+      "/_next/image/..%2fabout",
+      "/_next/image/..%2f..%2fabout",
+      "/_next/image/..%2f..%2fapp",
+      // Files: a CSP header on them is harmless, and nothing is skipped by a name a page could imitate.
+      "/sitemap.xml",
+      "/robots.txt",
+      "/icon.svg",
+      "/favicon.ico",
+    ]) {
+      expect(runs(path), `middleware runs on ${path}`).toBe(true);
+    }
+    for (const path of ["/_next/static/chunks/main.js", "/_next/static/css/app.css"]) {
+      expect(runs(path), `middleware skips ${path}`).toBe(false);
+    }
   });
 });
 

@@ -1,13 +1,13 @@
 // The legal drafts (06 §5.5). Privacy describes only what the app actually processes (06 §4); Terms states only
 // true facts. Both stay visibly marked as drafts with placeholders until legal review.
 
-import { CONTACT_PLACEHOLDER, LICENSE_URL, REPO_URL, site } from "./site";
+import { LICENSE_URL, REPO_URL, site } from "./site";
 
 export const LEGAL_DRAFT_BANNER = "Draft — pending legal review, not yet in effect";
 
 export const legalPlaceholders = {
   company: "[Company legal name]",
-  contact: CONTACT_PLACEHOLDER,
+  contact: "[contact email]",
   jurisdiction: "[jurisdiction]",
 } as const;
 

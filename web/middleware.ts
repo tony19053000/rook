@@ -33,6 +33,8 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  // Everything but the static build output and the icon (files, not pages: they need no CSP).
-  matcher: ["/api/:path*", "/((?!_next/static|_next/image|favicon.ico|icon.svg).*)"],
+  // Everything but the hashed build output under /_next/static/ (plain files that never render HTML). The matcher
+  // sees the raw, still percent-encoded path, so nothing else is skipped: a CSP header on an image, the sitemap,
+  // robots or the icon is harmless, while a skipped path like /_next/image/..%2fabout could render a page without it.
+  matcher: ["/api/:path*", "/((?!_next/static/).*)"],
 };

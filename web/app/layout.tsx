@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
-import { metadataCopy, site } from "@/content/site";
-import { siteUrl } from "@/lib/config";
+import { metadataCopy, site, SITE_URL } from "@/content/site";
 import "./globals.css";
 
 // Self-hosted by next/font at build time, so the CSP needs no third-party font origin (03 §8).
@@ -15,7 +14,8 @@ const newsreader = Newsreader({ subsets: ["latin"], weight: ["400", "500"], vari
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  metadataBase: siteUrl(process.env.NEXT_PUBLIC_SITE_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL),
+  // Absolute OG/Twitter/canonical URLs (06 §4 "Site URL"): one constant, so a custom domain is one change.
+  metadataBase: new URL(SITE_URL),
   title: { default: metadataCopy.defaultTitle, template: metadataCopy.titleTemplate },
   description: metadataCopy.description,
   applicationName: site.name,

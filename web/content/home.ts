@@ -2,10 +2,10 @@
 // action. Every claim comes from 06 §4. The walkthrough's copy and sample data are in ./walkthrough.ts.
 
 import { pricingCopy, type PricingStatus } from "./pricing";
-import { INSTALL_COMMAND, site } from "./site";
+import { INSTALL_COMMAND, operator, site } from "./site";
 
 export const homeHero = {
-  eyebrow: site.builtOn.replace(/\.$/, ""),
+  eyebrow: "Early access · Open source",
   heading: "Find the smallest sequence that breaks your software, before your users do.",
   lead: site.oneLiner,
 } as const;
@@ -111,13 +111,13 @@ export const scopeSection = {
   id: "today",
   eyebrow: "Honest scope",
   title: "Where Rook is today",
-  intro: "A hackathon-stage project, built for the IBM Bob 2.0 Hackathon in September 2026. Here is exactly what that means.",
+  intro: "Rook is in early access. Here is exactly what works today, and what doesn't yet.",
 } as const;
 
 export const scope: string[] = [
   "No paid plans, no billing, no team accounts and no SSO.",
-  "Guest runs on the hosted site offer shop-app only, with recorded IBM Bob answers labelled \"recorded\". Guests get 3 runs a day.",
-  "Signed-in users with the GitHub App linked can run their own repos on the hosted server only when the server enables it: one such run at a time server-wide, 5 per user per day. Otherwise the CLI runs your repos on your machine.",
+  "Guest runs on the hosted site offer two example repos, shop-app (Node.js) and minishop (Python), with recorded IBM Bob answers labelled \"recorded\". Guests get 3 runs a day.",
+  "Hosted runs of your own repos are turned off on the hosted server for now. Run your own repos with the CLI on your machine.",
   "HTTP APIs only: no libraries, pure frontends, mobile apps or ML notebooks.",
   "Not on PyPI yet: install from GitHub. Live runs need Docker and your own IBM Bob key.",
   "In the web app, editing a single rule, replaying a counterexample and downloading the test are not built yet.",
@@ -168,6 +168,10 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
       question: "Is my code sent to an AI?",
       answer:
         "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs on the hosted site use recorded Bob answers. Bob is the only AI in Rook.",
+    },
+    {
+      question: "Who makes Rook?",
+      answer: `${operator.name}, an individual developer in ${operator.location}. Rook is an early-access, open-source project under the ${site.licence}, built on IBM Bob.`,
     },
     { question: "What does it cost?", answer: costAnswer(status) },
   ];

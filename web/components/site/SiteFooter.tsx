@@ -14,7 +14,10 @@ export function SiteFooter() {
             <Logo size={24} />
           </Link>
           <p className="mt-4 text-sm leading-relaxed text-site-muted">{site.oneLiner}</p>
-          <p className="mt-4 text-sm leading-relaxed text-site-faint">{footerCopy.note}</p>
+          <p className="mt-4 text-sm leading-relaxed text-site-faint">
+            {footerCopy.note} {footerCopy.openSource}{" "}
+            <NavLinkItem link={footerCopy.licenceLink} className="text-site-muted underline underline-offset-4 hover:text-site-ink" />.
+          </p>
         </div>
         <nav aria-label={footerCopy.navLabel} className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {footerColumns.map((column) => (
@@ -26,7 +29,6 @@ export function SiteFooter() {
                     <NavLinkItem link={link} className="text-sm text-site-muted transition-colors hover:text-site-ink" />
                   </li>
                 ))}
-                {column.note && <li className="text-sm text-site-muted">{column.note}</li>}
               </ul>
             </div>
           ))}

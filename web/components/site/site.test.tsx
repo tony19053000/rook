@@ -5,11 +5,14 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import SiteLayout from "@/app/(site)/layout";
+import AboutPage from "@/app/(site)/about/page";
+import ContactPage from "@/app/(site)/contact/page";
 import DocsPage from "@/app/(site)/docs/page";
 import LoginPage from "@/app/(site)/login/page";
 import HomePage from "@/app/(site)/page";
 import PricingPage from "@/app/(site)/pricing/page";
 import PrivacyPage from "@/app/(site)/privacy/page";
+import RoadmapPage from "@/app/(site)/roadmap/page";
 import SecurityPage from "@/app/(site)/security/page";
 import TermsPage from "@/app/(site)/terms/page";
 import NotFound from "@/app/not-found";
@@ -20,7 +23,7 @@ import { githubAction, gettingStarted } from "@/content/docs";
 import { flowSteps } from "@/content/flow";
 import { notYetTrue } from "@/content/security";
 import { footerColumns, INSTALL_COMMAND, notFoundCopy } from "@/content/site";
-import { copyViolations } from "@/lib/copyRules";
+import { copyViolations, NO_HACKATHON, NO_PLACEHOLDER } from "@/lib/copyRules";
 
 // /login's sign-in island uses the App Router; these tests render pages outside Next.
 const router = { replace: vi.fn(), push: vi.fn() };
@@ -35,11 +38,18 @@ const PAGES: [string, () => ReturnType<typeof render>][] = [
   ["/docs", () => inSite(<DocsPage />)],
   ["/security", () => inSite(<SecurityPage />)],
   ["/pricing", () => inSite(<PricingPage />)],
+  ["/roadmap", () => inSite(<RoadmapPage />)],
+  ["/about", () => inSite(<AboutPage />)],
+  ["/contact", () => inSite(<ContactPage />)],
   ["/privacy", () => inSite(<PrivacyPage />)],
   ["/terms", () => inSite(<TermsPage />)],
   ["/login", () => inSite(<LoginPage />)],
   ["404", () => render(<NotFound />)],
 ];
+
+/** ROOK-053 scope: only /about tells the hackathon story; the legal drafts keep their placeholders until ROOK-056. */
+const HACKATHON_PAGES = new Set(["/about"]);
+const PENDING_ROOK_056 = new Set(["/privacy", "/terms"]);
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
@@ -90,6 +100,15 @@ describe.each(PAGES)("site page %s (06 §9)", (path, renderPage) => {
     expect(copyViolations(pageText(container), { pricing: path === "/pricing" })).toEqual([]);
   });
 
+  it("says hackathon only on /about, and shows no [placeholders] (ROOK-053)", () => {
+    const { container } = renderPage();
+    const text = pageText(container);
+    if (!PENDING_ROOK_056.has(path)) {
+      expect(text.match(new RegExp(NO_PLACEHOLDER.pattern.source, "g")) ?? [], path).toEqual([]);
+      expect(NO_HACKATHON.pattern.test(text), path).toBe(HACKATHON_PAGES.has(path));
+    }
+  });
+
   it("header: Sign in, Try Rook, the <details> menu; footer: the four columns", () => {
     renderPage();
     const header = screen.getByRole("banner");
@@ -105,7 +124,7 @@ describe("pricing (06 §5.4)", () => {
   it("shows the launch notice while no plans are set", () => {
     inSite(<PricingPage />);
     expect(screen.getByText(PRICING_PENDING_NOTICE)).toBeTruthy();
-    expect(pricingStatus([])).toEqual({ kind: "pending", notice: "Pricing will be published at launch" });
+    expect(pricingStatus([])).toEqual({ kind: "pending", notice: "Hosted plans are not offered or priced yet" });
   });
 
   it("derives the status from plans: with a plan the notice goes", () => {

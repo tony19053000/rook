@@ -92,10 +92,10 @@ export const securitySections: SecuritySection[] = [
 export const notYetTrue = {
   id: "not-yet-true",
   title: "What is not yet true",
-  intro: "Rook is a hackathon-stage project. These are the gaps we know about today.",
+  intro: "Rook is in early access. These are the gaps we know about today.",
   items: [
     "There has been no third-party audit or penetration test, and Rook holds no certifications.",
-    "On the hosted server, the container that starts sandboxes has access to the Docker socket. That is root-equivalent on the host if the server itself had a remote-code-execution bug. This is accepted for the hackathon; the long-term fix is a separate runner host.",
+    "On the hosted server, the container that starts sandboxes has access to the Docker socket. That is root-equivalent on the host if the server itself had a remote-code-execution bug. This is accepted for now; the long-term fix is a separate runner host.",
     "Prompt injection from repo text is bounded by Bob's tool permissions and the engine's checks, not eliminated.",
     "The offline settings for the allowlisted example apps' test commands are best effort.",
     "There is no automatic data deletion and no self-serve account deletion yet.",

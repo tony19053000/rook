@@ -12,6 +12,21 @@ export interface CopyRule {
  */
 export const NO_DEMO_WORD: CopyRule = { name: "the word demo", pattern: /\bdemos?\b/i };
 
+/**
+ * ROOK-053: the site presents Rook as early access, not a hackathon entry. Only the About story may say it
+ * (06 §4 "Positioning"); the tests scope this rule to everything else.
+ */
+export const NO_HACKATHON: CopyRule = { name: "the word hackathon", pattern: /\bhackathons?\b/i };
+
+/**
+ * ROOK-053: no fill-in-later text such as "[contact email]", "[Company legal name]", "[jurisdiction]" or "[...]".
+ * A capitalised or placeholder-ish word in square brackets counts; CLI syntax like "rook run [repo]" does not.
+ */
+export const NO_PLACEHOLDER: CopyRule = {
+  name: "a [placeholder]",
+  pattern: /\[\s*(?:\.\.\.|…)\s*\]|\[(?:[A-Z][^\]\n]*|[^\]\n]*\b(?:email|name|jurisdiction|date|address|company|legal|tbd|todo|placeholder|insert)\b[^\]\n]*)\]/,
+};
+
 /** Banned everywhere on the site. */
 export const BANNED_COPY: CopyRule[] = [
   { name: "trusted by", pattern: /\btrusted by\b/i },
