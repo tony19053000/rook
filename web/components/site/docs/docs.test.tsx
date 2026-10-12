@@ -382,6 +382,13 @@ describe("/docs/data: what goes to IBM Bob", () => {
     const hosted = container.querySelector("#hosted") as HTMLElement;
     expect(hosted.textContent).toMatch(/Runs older than 30 days are deleted automatically/);
     expect(hosted.textContent).toMatch(/older than 2 days/);
+    // ROOK-052 built the buttons: the guide names them as the app labels them, and no longer says "ask by email".
+    expect(repoFile("web/components/RunPage.tsx")).toContain('label="Delete run"');
+    expect(repoFile("web/components/Sidebar.tsx")).toContain('label="Delete my data"');
+    expect(hosted.textContent).toMatch(/use Delete run\. Its events and counterexamples go with it/);
+    expect(hosted.textContent).toMatch(/with Delete my data in the account menu/);
+    expect(hosted.textContent).not.toMatch(/not in the web app yet/);
+    expect(hosted.textContent).toMatch(/The Rook server cannot delete it, so it is deleted on request by email/);
     const mail = new URL(hosted.querySelector('a[href^="mailto:"]')!.getAttribute("href")!);
     expect(mail.pathname).toBe(CONTACT_EMAIL);
     expect(mail.searchParams.get("subject")).toBe("Rook: privacy request");

@@ -182,8 +182,9 @@ export const dataGuide: DocGuide = {
           kind: "list",
           items: [
             "Runs older than 30 days are deleted automatically, with their events and counterexamples. Guest run counts older than 2 days are deleted too.",
-            "The Rook server can delete one run, or all of a signed-in user's runs and GitHub link, when its owner asks. Buttons for this are not in the web app yet, so for now ask by email.",
-            "Your sign-in account itself is held by Supabase, the sign-in service, and is deleted on request by email.",
+            "You can delete a run yourself: open it in the web app and use Delete run. Its events and counterexamples go with it.",
+            "Signed in, you can delete all your Rook server data, your runs and your GitHub link, with Delete my data in the account menu. You are then signed out.",
+            "Your sign-in account itself is held by Supabase, the sign-in service. The Rook server cannot delete it, so it is deleted on request by email.",
           ],
         },
         { kind: "email", label: `Email ${CONTACT_EMAIL}`, subject: "Rook: privacy request" },
