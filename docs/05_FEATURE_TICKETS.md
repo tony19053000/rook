@@ -307,6 +307,17 @@ Streams: **CI** 049 · **server** 050 → 051 · **web**, strictly in order (the
 - Security headers and HTTPS on the live URL (after deploy).
 - **AC:** a repeatable script (`web/e2e/audit.mjs`) that does the above against a URL, passing on local `next start`.
 
+## M13 · UI polish (user request 12 Oct: "modern, polished, production-level UI")
+
+**ROOK-058 · Public site visual redesign** · P1 · deps: M12
+- A full visual pass over every site page (home, docs + guides, security, pricing, roadmap, about, contact, privacy, terms, login, 404): typography scale, spacing rhythm, colour and surface system, header/footer, cards, code blocks, tables, buttons, focus states, tasteful motion. Quality bar: Linear / Vercel / Resend. Copy and facts unchanged (06 §4).
+- Keeps every rule in 06 §2, §3, §9: nonce CSP, no third-party scripts, self-hosted fonts, transform/opacity-only motion, reduced motion still, complete without JS, contrast 4.5:1, 360–2560 px.
+- **AC:** before/after screenshots at 360 and 1440 px for every page; typecheck, lint, test pass; `e2e/audit.mjs` passes on a scratch build.
+
+**ROOK-059 · Web app visual redesign** · P1 · deps: M12
+- The same pass over the app (`/app`, `/runs`, `/runs/[id]`, `/rules`, `/counterexamples`, `/repositories`, `/github/setup`): sidebar, composer, repo picker, agent rows, cards (rules, search, counterexample, fix, verify), empty/loading/error states, dialogs, light and dark themes. Behaviour and text unchanged.
+- **AC:** before/after screenshots (dark + light, 360 and 1440 px); the app contrast test passes; typecheck, lint, test pass.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)
