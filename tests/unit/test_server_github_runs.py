@@ -44,7 +44,7 @@ from rook.sandbox.base import SandboxError
 from rook.sandbox.compose import Hardening, render
 from rook.sandbox.docker import DockerSandbox
 from rook.server.config import ServerSettings
-from rook.server.github_runs import BUSY, DockerProbe, same_path_mount
+from rook.server.github_runs import BUSY, NOT_CONFIGURED, DockerProbe, same_path_mount
 from rook.server.runs import GitHubAccess, RunSpec, default_session_factory
 from rook.store.repo import RunRecord, Store
 
@@ -61,7 +61,7 @@ def _forget_secrets() -> Any:
 
 def gh_run_app(tmp_path: Path, fake: FakeGitHub, factory: Any = None, *, docker: bool = True,
                **extra: Any) -> Any:
-    values = {**settings_for(), "bob_key_set": True, **extra}
+    values = {**settings_for(), "bob_key_set": True, "github_runs_max": 1, **extra}
     return make_app(tmp_path, factory, github_transport=httpx.MockTransport(fake), docker_ready=lambda: docker,
                     **values)
 
@@ -104,6 +104,24 @@ async def test_not_configured_is_503_and_me_says_so(tmp_path: Path, extra: dict[
         response = await client.post(f"{API}/runs", json=GH_RUN, headers=ALICE)
         me = (await client.get(f"{API}/me", headers=ALICE)).json()
     assert response.status_code == 503 and "not available on this server" in response.json()["detail"]
+    assert me["github_connected"] is True and me["can_run_github"] is False
+
+
+async def test_by_default_github_runs_are_off_and_the_error_points_to_the_cli(tmp_path: Path) -> None:
+    """ROOK-050: everything else is set up (App, BOB_API_KEY, Docker), but a server runs users' repos only when
+    its operator opts in (ROOK_GITHUB_RUNS_MAX > 0, the compose override)."""
+    fake = FakeGitHub()
+    values = {**settings_for(), "bob_key_set": True}
+    app = make_app(tmp_path, github_transport=httpx.MockTransport(fake), docker_ready=lambda: True, **values)
+    assert state_of(app).settings.github_runs_max == 0
+    async with client_for(app) as client:
+        await link(client, fake, ALICE, 11, ["alice/shop"])
+        response = await client.post(f"{API}/runs", json=GH_RUN, headers=ALICE)
+        me = (await client.get(f"{API}/me", headers=ALICE)).json()
+    detail = response.json()["detail"]
+    assert response.status_code == 503 and detail == NOT_CONFIGURED
+    assert "on your machine with the rook CLI" in detail and "uv tool install" in detail and "rook run" in detail
+    assert "alice/shop" not in detail  # errors never echo the request
     assert me["github_connected"] is True and me["can_run_github"] is False
 
 
@@ -409,7 +427,8 @@ def test_settings_read_the_limits_and_only_whether_the_bob_key_is_set() -> None:
     assert (settings.sandbox_memory, settings.sandbox_cpus) == ("1500m", 1.5)
     assert "bob_prod_secretvalue" not in repr(settings) and "bob_prod_secretvalue" not in settings.model_dump_json()
     defaults = ServerSettings.from_env({})
-    assert not defaults.bob_key_set and defaults.github_runs_max == 1 and defaults.user_run_budget == 1.5
+    assert not defaults.bob_key_set and defaults.github_runs_max == 0 and defaults.user_run_budget == 1.5
+    assert ServerSettings().github_runs_max == 0  # off unless the operator opts in (ROOK-050)
     with pytest.raises(ValueError):
         ServerSettings.from_env({"ROOK_SANDBOX_NETWORK": "bad net; rm"})
 

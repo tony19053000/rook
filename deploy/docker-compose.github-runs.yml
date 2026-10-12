@@ -1,0 +1,30 @@
+# OPT-IN override (ROOK-050): hosted runs of a signed-in user's own GitHub repos (ROOK-041, 03 §3).
+#   docker compose -f docker-compose.yml -f docker-compose.github-runs.yml up -d --build
+# (`ROOK_GITHUB_RUNS=1 deploy/aws/deploy.sh` does this and writes DOCKER_GID and COMPOSE_FILE to deploy/.env.)
+# WARNING: this mounts the host's Docker socket into the rook container. Socket access is ROOT-EQUIVALENT on the
+# host: a remote-code-execution bug in the server would own the EC2 host. The long-term fix is a separate runner
+# host (03 §3). Without this file the server runs only the allowlisted example repos and has no socket.
+services:
+  rook:
+    environment:
+      # DockerSandbox containers are SIBLINGS started through the host's daemon, which resolves bind paths ON THE
+      # HOST, so the workspaces live on a host folder mounted at the SAME path here; the sandbox's port proxy joins
+      # the `rook-sandbox` network (not a host port) to be reachable (02 §8).
+      ROOK_WORKSPACES: /var/lib/rook/workspaces
+      ROOK_SANDBOX_NETWORK: rook-sandbox
+      ROOK_GITHUB_RUNS_MAX: ${ROOK_GITHUB_RUNS_MAX:-1}
+      ROOK_USER_RUNS_PER_DAY: ${ROOK_USER_RUNS_PER_DAY:-5}
+      ROOK_USER_RUN_BUDGET: ${ROOK_USER_RUN_BUDGET:-1.5}
+    volumes:
+      - /var/lib/rook/workspaces:/var/lib/rook/workspaces
+      # Root-equivalent on the host (03 §3): only the server process gets it; Caddy never does.
+      - /var/run/docker.sock:/var/run/docker.sock
+    group_add:
+      - "${DOCKER_GID:?set DOCKER_GID to the group id of /var/run/docker.sock (deploy/aws/deploy.sh writes it)}"
+    networks: [default, sandbox]
+
+networks:
+  # The server and the sandboxes' port proxies only; the apps themselves stay on their own internal networks.
+  sandbox:
+    name: rook-sandbox
+    driver: bridge

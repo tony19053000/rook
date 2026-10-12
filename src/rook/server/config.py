@@ -102,7 +102,9 @@ class ServerSettings(BaseModel):
     # Hosted runs of a signed-in user's own GitHub repos (ROOK-041, 03 §3). They need the App, BOB_API_KEY (only
     # whether it is set is kept here, never the value) and Docker; they always use live Bob.
     bob_key_set: bool = False
-    github_runs_max: int = Field(default=1, ge=0)  # at once, server-wide (queued ones count); 0 turns them off
+    # At once, server-wide (queued ones count); 0 (the default, ROOK-050) turns them off: they need the Docker
+    # socket, which is root on the host, so a server runs them only when its operator opts in.
+    github_runs_max: int = Field(default=0, ge=0)
     user_runs_per_day: int = Field(default=5, ge=0)  # GitHub runs per signed-in user per UTC day
     user_run_budget: float = Field(default=1.5, ge=0)  # Bobcoins per GitHub run
     sandbox_network: str | None = Field(default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")

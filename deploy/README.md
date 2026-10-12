@@ -7,7 +7,8 @@ proxies `/api/v1/*` to it. Design and settings: `docs/02_ARCHITECTURE.md` §14; 
 | File | What |
 |---|---|
 | `Dockerfile`, `start.sh` | the server image (build from the repo root) and its entry point |
-| `docker-compose.yml`, `Caddyfile` | rook + Caddy |
+| `docker-compose.yml`, `Caddyfile` | rook + Caddy (no Docker socket: only the recorded example runs) |
+| `docker-compose.github-runs.yml` | OPT-IN override for hosted runs of users' own GitHub repos: mounts the host's Docker socket (root on the host) |
 | `demos/` | the sandbox allowlist, the demo catalog, and the pinned demo repos (`repos.txt`, `build-demos.sh`) |
 | `pack-bob.sh`, `vendor/` | the optional Bob Shell for live mode (gitignored, never committed) |
 | `smoke.py` | checks a running server like a guest would (health, repos, one replay demo run that must end `done` with a reviewed diagnosis; the fix is printed, not required) |
@@ -49,10 +50,28 @@ uv run python deploy/smoke.py https://<ip-dashes>.sslip.io
 
 # live Bob (after steps 1 and BOB_API_KEY): redeploy in live mode, with the daily coin cap
 ROOK_BOB_MODE=live ROOK_DAILY_COIN_CAP=2 deploy/aws/deploy.sh
+
+# OPT-IN, not recommended: hosted runs of signed-in users' own GitHub repos (see "Hosted GitHub runs" below)
+ROOK_GITHUB_RUNS=1 deploy/aws/deploy.sh
 ```
 
 Other commands: `deploy/aws/ssh.sh` (a shell), `deploy/aws/ssh.sh 'cd rook/deploy && sudo docker compose logs --tail 100'`,
 `deploy/aws/destroy.sh` (deletes everything, asks first).
+
+## Hosted GitHub runs (off by default)
+
+The default stack runs only the recorded guest runs of the allowlisted example repos, as subprocesses in the rook
+container (ProcessSandbox). It mounts **no Docker socket**, needs no `DOCKER_GID`, and sets
+`ROOK_GITHUB_RUNS_MAX=0`, so `/me.can_run_github` is false and a GitHub run request is answered with how to run the
+repo with the `rook` CLI. Users run their own repos on their own machine.
+
+`ROOK_GITHUB_RUNS=1 deploy/aws/deploy.sh` turns hosted GitHub runs on: it reads the host socket's group id, creates
+`/var/lib/rook/workspaces`, writes `DOCKER_GID` and `COMPOSE_FILE=docker-compose.yml:docker-compose.github-runs.yml`
+to `deploy/.env` (so `set-secret.sh` and any `docker compose` you run in `deploy/` keep the override) and starts
+the stack with `-f docker-compose.yml -f docker-compose.github-runs.yml`. **The socket is root-equivalent on the
+host** (03 §3); the long-term fix is a separate runner host. Running `deploy.sh` again without `ROOK_GITHUB_RUNS=1`
+turns them off (the rook container is recreated without the socket; the unused `rook-sandbox` network and the
+`/var/lib/rook/workspaces` folder stay on the host until removed by hand).
 
 ## Notes
 

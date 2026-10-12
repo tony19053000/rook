@@ -1,8 +1,9 @@
 """Hosted runs of a signed-in user's own GitHub repos (ROOK-041, 02 §11, 03 §3).
 
-Whether the server can run them at all (`not_configured`): the GitHub App, BOB_API_KEY (they use live Bob),
-`github_runs_max > 0` and a working Docker (`DockerProbe`). When the server itself runs in a container, the
-probe also checks the two things that make a DockerSandbox work from there:
+Off by default (ROOK-050: `github_runs_max` 0; the hosted stack has no Docker socket unless the operator adds
+deploy/docker-compose.github-runs.yml). Whether the server can run them at all (`not_configured`): the GitHub App,
+BOB_API_KEY (they use live Bob), `github_runs_max > 0` and a working Docker (`DockerProbe`). When the server
+itself runs in a container, the probe also checks the two things that make a DockerSandbox work from there:
 - the workspaces folder is on a bind mount with the SAME path on the host and in the container (the Docker
   daemon resolves compose bind paths on the host, so `/x/ws/<run>` must mean the same folder to both);
 - the server container is on `sandbox_network`, the network the sandbox's port proxy joins (a port published
@@ -31,7 +32,10 @@ log = logging.getLogger(__name__)
 
 PROBE_TTL = 60.0
 IN_CONTAINER_MARKER = Path("/.dockerenv")
-NOT_CONFIGURED = "Running your own GitHub repos is not available on this server"
+CLI_INSTALL = "uv tool install git+https://github.com/tony19053000/rook"
+# Hosted GitHub runs are off by default (ROOK-050, 03 §3), so this is what most users see: point them at the CLI.
+NOT_CONFIGURED = ("Running your own GitHub repos is not available on this server. Run it on your machine with "
+                  f"the rook CLI: {CLI_INSTALL}, then rook run <owner>/<repo>")
 BUSY = "Rook is busy with another run on a GitHub repo; try again in a few minutes"
 NOT_LINKED = "Connect GitHub first (the Rook GitHub App is not installed for you)"
 NOT_YOURS = "This repo is not shared with the Rook GitHub App in your GitHub installation"

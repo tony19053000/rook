@@ -4,6 +4,9 @@
 #   ROOK_WEB_ORIGINS=https://rook-xyz.vercel.app  (CORS; the Vercel origin once you have it)
 #   ROOK_BOB_MODE=replay|live|record              (default replay; live needs the vendored Bob + BOB_API_KEY)
 #   ROOK_DAILY_COIN_CAP=2                         (Bobcoins per day for the whole server)
+#   ROOK_GITHUB_RUNS=1                            (OPT-IN, default off: hosted runs of users' own GitHub repos.
+#                                                  Adds docker-compose.github-runs.yml, which mounts the host's
+#                                                  Docker socket: root on the host, 03 §3)
 # The optional vendored Bob Shell (deploy/vendor/, see deploy/pack-bob.sh) is copied with the repo.
 set -euo pipefail
 # shellcheck source=deploy/aws/lib.sh
@@ -12,6 +15,7 @@ source "$(dirname "$0")/lib.sh"
 web_origins=${ROOK_WEB_ORIGINS:-http://localhost:3000}
 bob_mode=${ROOK_BOB_MODE:-replay}
 coin_cap=${ROOK_DAILY_COIN_CAP:-2}
+github_runs=${ROOK_GITHUB_RUNS:-0}
 origin_re='^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$'
 IFS=, read -r -a origins <<< "$web_origins"
 for origin in "${origins[@]}"; do
@@ -19,6 +23,7 @@ for origin in "${origins[@]}"; do
 done
 [[ "$bob_mode" =~ ^(replay|live|record)$ ]] || die "ROOK_BOB_MODE must be replay, live or record"
 [[ "$coin_cap" =~ ^[0-9]+(\.[0-9]+)?$ ]] || die "ROOK_DAILY_COIN_CAP must be a number"
+[[ "$github_runs" =~ ^[01]$ ]] || die "ROOK_GITHUB_RUNS must be 0 or 1"
 
 ip=$(public_ip)
 host=$(host_for_ip "$ip")
@@ -49,15 +54,24 @@ rsync -az --delete \
     --exclude '.pytest_cache/' --exclude '.ruff_cache/' --exclude '.next/' \
     -e "ssh ${SSH_OPTS[*]}" "$REPO_ROOT/" "$target:$REMOTE_DIR/"
 
-# User GitHub runs (ROOK-041): the rook container reaches Docker through the host socket (as that socket's group)
-# and keeps workspaces on a host folder mounted at the same path (owned by the image's `rook` user, uid 10001).
-docker_gid=$(remote 'stat -c %g /var/run/docker.sock') || die "cannot read the Docker socket's group on the host"
-[[ "$docker_gid" =~ ^[0-9]+$ ]] || die "unexpected Docker socket group id: '$docker_gid'"
-remote 'sudo install -d -o 10001 -g 10001 -m 750 /var/lib/rook/workspaces'
+settings=$(printf 'ROOK_HOST=%s\nROOK_WEB_ORIGINS=%s\nROOK_BOB_MODE=%s\nROOK_DAILY_COIN_CAP=%s\n' \
+    "$host" "$web_origins" "$bob_mode" "$coin_cap")
+compose_files="-f docker-compose.yml"
+if [[ "$github_runs" == "1" ]]; then
+    # Hosted GitHub runs (ROOK-041, opt-in since ROOK-050): the rook container reaches Docker through the host
+    # socket (as that socket's group) and keeps workspaces on a host folder mounted at the same path (owned by the
+    # image's `rook` user, uid 10001). COMPOSE_FILE in deploy/.env makes every later `docker compose` in deploy/
+    # (set-secret.sh, logs) use the override too.
+    echo "ROOK_GITHUB_RUNS=1: hosted GitHub runs ON; the rook container gets the host's Docker socket (root on the host)."
+    docker_gid=$(remote 'stat -c %g /var/run/docker.sock') || die "cannot read the Docker socket's group on the host"
+    [[ "$docker_gid" =~ ^[0-9]+$ ]] || die "unexpected Docker socket group id: '$docker_gid'"
+    remote 'sudo install -d -o 10001 -g 10001 -m 750 /var/lib/rook/workspaces'
+    settings+=$(printf '\nDOCKER_GID=%s\nCOMPOSE_FILE=docker-compose.yml:docker-compose.github-runs.yml' "$docker_gid")
+    compose_files+=" -f docker-compose.github-runs.yml"
+fi
 
 echo "Writing the non-secret settings (deploy/.env on the host)..."
-printf 'ROOK_HOST=%s\nROOK_WEB_ORIGINS=%s\nROOK_BOB_MODE=%s\nROOK_DAILY_COIN_CAP=%s\nDOCKER_GID=%s\n' \
-    "$host" "$web_origins" "$bob_mode" "$coin_cap" "$docker_gid" | remote "cat > $REMOTE_DIR/deploy/.env"
+printf '%s\n' "$settings" | remote "cat > $REMOTE_DIR/deploy/.env"
 
 # A guest-cookie key made ON the host (it never leaves it), unless one was set with set-secret.sh.
 remote "sudo install -d -m 700 /etc/rook && sudo touch /etc/rook/rook.env && sudo chmod 600 /etc/rook/rook.env \
@@ -65,7 +79,8 @@ remote "sudo install -d -m 700 /etc/rook && sudo touch /etc/rook/rook.env && sud
          || openssl rand -hex 32 | sudo python3 $REMOTE_DIR/deploy/aws/remote/set_env.py ROOK_GUEST_SECRET; }"
 
 echo "Building and starting (the first build takes a few minutes)..."
-remote "cd $REMOTE_DIR/deploy && sudo docker compose up -d --build --remove-orphans && sudo docker image prune -f >/dev/null"
+remote "cd $REMOTE_DIR/deploy && sudo docker compose $compose_files up -d --build --remove-orphans \
+    && sudo docker image prune -f >/dev/null"
 
 url="https://$host/api/v1/health"
 echo "Waiting for $url (Caddy gets the Let's Encrypt certificate on the first request)..."

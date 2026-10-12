@@ -19,6 +19,7 @@ from rook.server.deps import NOT_FOUND, AnyCaller, OwnedRun, ServerState, State,
 from rook.server.github_link import AppGitHub, SetupError
 from rook.server.github_runs import (
     BUSY,
+    CLI_INSTALL,
     NOT_CONFIGURED,
     NOT_LINKED,
     NOT_YOURS,
@@ -46,8 +47,7 @@ router = APIRouter()
 _CX_ID = re.compile(r"[A-Za-z0-9_]{1,80}")
 _STATUSES: frozenset[str] = frozenset({"queued", "running", "done", "failed", "cancelled"})
 _HEADLINE_MAX = 120
-GUEST_LIMIT_MESSAGE = ("Guest limit reached for today. Install the CLI to run on your own repos: "
-                       "uv tool install git+https://github.com/tony19053000/rook")
+GUEST_LIMIT_MESSAGE = f"Guest limit reached for today. Install the CLI to run on your own repos: {CLI_INSTALL}"
 LIST_LIMIT = 50
 
 
