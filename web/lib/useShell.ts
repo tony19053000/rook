@@ -146,3 +146,25 @@ export function useRepos(api: Pick<ApiClient, "repos">): ReposView {
 
   return { repos, loading, error, retry };
 }
+
+/** The server's Bob mode (GET /health `bob_mode`), or null until it answers (or if it doesn't). */
+export function useBobMode(api: Pick<ApiClient, "health">): string | null {
+  const [mode, setMode] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.health().then(
+      (health) => {
+        if (!cancelled && typeof health.bob_mode === "string") setMode(health.bob_mode);
+      },
+      () => {
+        // unknown: the composer then claims neither "live" nor "recorded"
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [api]);
+
+  return mode;
+}

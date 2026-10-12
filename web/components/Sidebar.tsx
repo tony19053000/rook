@@ -6,9 +6,11 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { DeleteConfirm } from "./DeleteConfirm";
 import { Icon, RookMark, type IconName } from "./icons";
+import { CONTACT_EMAIL } from "@/content/site";
 import { startGithubConnect } from "@/lib/github";
-import { runHref } from "@/lib/pages";
+import { runDelete, runHref } from "@/lib/pages";
 import { clean } from "@/lib/safeText";
 import { signOutAndReload } from "@/lib/session";
 import { accountMenuItems, runAccountAction, type AccountMenuKey } from "@/lib/sidebarPrefs";
@@ -64,6 +66,8 @@ export interface SidebarProps {
   onSignOut?: () => void | Promise<void>;
   /** Defaults to the GitHub App install flow (GET /github/install-url). An error message, or null. */
   onConnectGithub?: () => Promise<string | null>;
+  /** Defaults to DELETE /me/data ("Delete my data" in the account menu); afterwards the browser signs out. */
+  onDeleteData?: () => Promise<unknown>;
   /** Render with the account menu open (tests and stories). */
   defaultMenuOpen?: boolean;
 }
@@ -139,6 +143,7 @@ function SidebarPanel({
   onToggle,
   onSignOut,
   onConnectGithub,
+  onDeleteData,
   defaultMenuOpen = false,
 }: SidebarProps) {
   const name = clean(userName);
@@ -230,6 +235,7 @@ function SidebarPanel({
             githubConnected={githubConnected}
             onSignOut={onSignOut}
             onConnectGithub={onConnectGithub}
+            onDeleteData={onDeleteData}
             defaultOpen={defaultMenuOpen}
           />
         ) : (
@@ -253,10 +259,11 @@ interface AccountRowProps {
   githubConnected: boolean;
   onSignOut?: SidebarProps["onSignOut"];
   onConnectGithub?: SidebarProps["onConnectGithub"];
+  onDeleteData?: SidebarProps["onDeleteData"];
   defaultOpen: boolean;
 }
 
-function AccountRow({ name, email, coins, githubConnected, onSignOut, onConnectGithub, defaultOpen }: AccountRowProps) {
+function AccountRow({ name, email, coins, githubConnected, onSignOut, onConnectGithub, onDeleteData, defaultOpen }: AccountRowProps) {
   const api = useApi();
   const [open, setOpen] = useState(defaultOpen);
   const [error, setError] = useState<string | null>(null);
@@ -308,6 +315,23 @@ function AccountRow({ name, email, coins, githubConnected, onSignOut, onConnectG
               </button>
             ),
           )}
+          <DeleteConfirm
+            name="data"
+            label="Delete my data"
+            confirmLabel="Yes, delete my data"
+            triggerRole="menuitem"
+            triggerClassName={`${ITEM} text-[13.5px]`}
+            icon={<Icon name="trash" className="text-muted" />}
+            explain={
+              <>
+                This deletes all your runs (their events, counterexamples and workspace files) and your GitHub link from Rook&apos;s server, then signs
+                you out. It can&apos;t be undone. Your sign-in account itself is removed on request: email {CONTACT_EMAIL}.
+              </>
+            }
+            run={() => runDelete(onDeleteData ?? (() => api.deleteMyData()), "data")}
+            onDeleted={onSignOut ?? signOutAndReload}
+            onRefresh={() => window.location.reload()}
+          />
           {error !== null && (
             <p role="alert" className="px-2.5 pb-1 text-[12.5px] text-bad">
               {clean(error)}

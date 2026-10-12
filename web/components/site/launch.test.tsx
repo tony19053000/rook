@@ -16,11 +16,14 @@ import HomePage from "@/app/(site)/page";
 import { metadata as rootMetadata } from "@/app/layout";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
+import { DOCS_OVERVIEW, GUIDE_PAGES } from "./docs/testPages";
 import { aboutCopy, aboutLinks } from "@/content/about";
 import { contactChannels } from "@/content/contact";
+import { docsNav, guides } from "@/content/docsGuides";
 import { PRICING_PENDING_NOTICE, pricingCopy, useWays } from "@/content/pricing";
 import { roadmapLists } from "@/content/roadmap";
-import { CONTACT_EMAIL, cta, footerColumns, headerNav, ISSUES_URL, operator, REPO_URL, SITE_URL } from "@/content/site";
+import { loginCopy } from "@/content/login";
+import { CONTACT_EMAIL, cta, footerColumns, headerNav, ISSUES_URL, notFoundCopy, operator, REPO_URL, SITE_URL } from "@/content/site";
 import { ROBOTS_DISALLOW, SITEMAP_PATHS } from "@/lib/seo";
 
 const router = { replace: vi.fn(), push: vi.fn() };
@@ -61,7 +64,7 @@ describe("every header, footer and CTA link resolves (ROOK-053)", () => {
   });
 
   it("each internal href is an existing app/**/page.tsx route", () => {
-    const links = [...headerNav, ...footerColumns.flatMap((c) => c.links), ...Object.values(cta), ...aboutLinks, ...useWays.map((w) => w.link), pricingCopy.interest.link];
+    const links = [...headerNav, ...footerColumns.flatMap((c) => c.links), ...Object.values(cta), ...aboutLinks, ...useWays.map((w) => w.link), pricingCopy.interest.link, loginCopy.cliLink, notFoundCopy.home, notFoundCopy.docs];
     const internal = links.flatMap((l) => (internalPath(l.href) === null ? [] : [l.href]));
     expect(internal.length).toBeGreaterThan(15);
     for (const href of internal) expect(routes, href).toContain(internalPath(href));
@@ -76,12 +79,60 @@ describe("every header, footer and CTA link resolves (ROOK-053)", () => {
     }
   });
 
+  // ROOK-055: every link on every docs page, the ones written in the guides' copy included.
+  const docsPages = [DOCS_OVERVIEW, ...GUIDE_PAGES];
+
+  it("finds the docs guides among the routes", () => {
+    for (const [path] of docsPages) expect(routes, path).toContain(path);
+    expect(docsPages).toHaveLength(7);
+  });
+
+  it("each internal href in the docs copy is an existing route", () => {
+    const blocks = guides.flatMap((g) => g.sections.flatMap((s) => [...s.blocks, ...(s.subsections ?? []).flatMap((sub) => sub.blocks)]));
+    const links = [...docsNav, ...blocks.flatMap((b) => (b.kind === "links" ? b.items : []))];
+    const internal = links.flatMap((l) => (internalPath(l.href) === null ? [] : [l.href]));
+    expect(internal.length).toBeGreaterThan(15);
+    for (const href of internal) expect(routes, href).toContain(internalPath(href));
+    for (const l of links) expect(l.external === true, l.href).toBe(internalPath(l.href) === null);
+  });
+
+  it("each href on each rendered docs page resolves: the route exists, and so does the anchor on its page", () => {
+    // The ids of every page an anchor may point at: the docs pages, each rendered once.
+    const idsByPath = new Map<string, Set<string>>();
+    const hrefsByPath = new Map<string, string[]>();
+    for (const [path, page] of docsPages) {
+      const { container } = inSite(page());
+      idsByPath.set(path, new Set([...container.querySelectorAll("[id]")].map((el) => el.id)));
+      hrefsByPath.set(path, [...container.querySelectorAll("a[href]")].map((a) => a.getAttribute("href")!));
+      cleanup();
+    }
+    let anchors = 0;
+    for (const [path, hrefs] of hrefsByPath) {
+      expect(hrefs.length, path).toBeGreaterThan(20);
+      for (const href of hrefs) {
+        const target = href.startsWith("#") ? path : internalPath(href);
+        if (target === null) {
+          expect(href, `${path}: an external link`).toMatch(/^(https:\/\/|mailto:)/);
+          continue;
+        }
+        expect(routes, `${path}: ${href}`).toContain(target);
+        const hash = href.split("#")[1];
+        if (hash === undefined) continue;
+        const ids = idsByPath.get(target);
+        expect(ids, `${path}: ${href} points into a page this test does not render`).toBeDefined();
+        expect(ids!.has(hash), `${path}: ${href}`).toBe(true);
+        anchors += 1;
+      }
+    }
+    expect(anchors).toBeGreaterThan(40);
+  });
+
   it("the header and footer follow 06 §8 (footer: Product, Docs, Company, Legal)", () => {
     expect(headerNav.map((l) => l.label)).toEqual(["Docs", "Security", "Pricing", "Roadmap", "GitHub"]);
     const columns = Object.fromEntries(footerColumns.map((c) => [c.heading, c.links.map((l) => l.label)]));
     expect(columns).toEqual({
       Product: ["Overview", "Try Rook", "Pricing", "Roadmap", "Sign in"],
-      Docs: ["Getting started", "How it works", "GitHub Action", "Docs on GitHub"],
+      Docs: ["Getting started", "Install", "Rules", "GitHub Action", "Data and IBM Bob"],
       Company: ["About", "Contact", "GitHub"],
       Legal: ["Privacy", "Terms", "Security"],
     });
@@ -89,8 +140,7 @@ describe("every header, footer and CTA link resolves (ROOK-053)", () => {
 
   it('the CTAs: "Try Rook" → /app and "Read the docs" → the getting-started docs', () => {
     expect(cta.demo).toEqual({ label: "Try Rook", href: "/app" });
-    expect(cta.docs.label).toBe("Read the docs");
-    expect(cta.docs.href.startsWith("/docs")).toBe(true);
+    expect(cta.docs).toEqual({ label: "Read the docs", href: "/docs/getting-started" });
     inSite(<HomePage />);
     const hero = document.querySelector("[data-hero]") as HTMLElement;
     expect(within(hero).getByRole("link", { name: "Read the docs" }).getAttribute("href")).toBe(cta.docs.href);

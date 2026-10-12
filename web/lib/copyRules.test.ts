@@ -10,8 +10,6 @@ const CONTENT_FILES = readdirSync(resolve(process.cwd(), "content")).filter((f) 
 
 /** The only content allowed to name the hackathon: the About page's story (06 §4 "Positioning"). */
 const HACKATHON_ALLOWED = new Set(["about.ts"]);
-/** Still drafts with placeholders until ROOK-056 puts them in effect; delete the entry there to tighten the guards. */
-const PENDING_ROOK_056 = new Set(["legal.ts"]);
 
 describe("copy rules (06 §4, §9)", () => {
   it("catch social proof and invented numbers", () => {
@@ -163,7 +161,6 @@ describe("copy rules (06 §4, §9)", () => {
   it("no hackathon outside the About story, and no [placeholders], in content/*.ts (ROOK-053)", async () => {
     let aboutMentions = 0;
     for (const file of CONTENT_FILES) {
-      if (PENDING_ROOK_056.has(file)) continue;
       const mod: unknown = await import(`../content/${file}`);
       for (const text of collectStrings(mod)) {
         expect(NO_PLACEHOLDER.pattern.test(text), `${file}: ${text}`).toBe(false);

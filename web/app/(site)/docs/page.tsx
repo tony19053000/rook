@@ -1,27 +1,24 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Card } from "@/components/site/Card";
-import { CodeBlock } from "@/components/site/CodeBlock";
 import { Container } from "@/components/site/Container";
+import { InlineCode } from "@/components/site/InlineCode";
 import { Section } from "@/components/site/Section";
 import { measure, type } from "@/components/site/tokens";
-import { docsCopy, githubAction, gettingStarted, howItWorks } from "@/content/docs";
+import { cliReference, docsCopy, guidesIndex, howItWorks } from "@/content/docs";
+import { guides } from "@/content/docsGuides";
 import { flowSteps } from "@/content/flow";
-import { REPO_URL } from "@/content/site";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata(docsCopy.title, docsCopy.description, "/docs");
 
-const SECTIONS = [howItWorks, gettingStarted, githubAction];
+const SECTIONS = [howItWorks, guidesIndex, cliReference];
 const LINK = "text-site-link underline underline-offset-4";
 
-function SubHeading({ children }: { children: string }) {
-  return <h3 className={`${type.h3} text-site-ink`}>{children}</h3>;
-}
-
-// /docs (06 §5.2): the six steps from content/flow.ts, then getting started and the GitHub Action. A server
-// component; the anchors are the ones the footer links to.
+// The docs overview (06 §1, ROOK-055): the six steps from content/flow.ts, the index of the guides and the CLI's
+// commands. A server component. Each guide's card carries the last segment of its path as its id, so the anchors
+// /docs#getting-started and /docs#github-action from before the guides existed still land on the right card.
 export default function DocsPage() {
-  const { requirements, install, firstRun, commands, files } = gettingStarted;
   return (
     <>
       <Container className="pt-14 sm:pt-20">
@@ -60,83 +57,34 @@ export default function DocsPage() {
         </ol>
       </Section>
 
-      <Section id={gettingStarted.id} title={gettingStarted.title} intro={gettingStarted.intro}>
-        {/* One column of readable width; from xl, setup on the left and the reference on the right. */}
-        <div className="grid grid-cols-1 gap-12 xl:grid-cols-2 xl:gap-16">
-          <div className={`flex min-w-0 flex-col gap-12 ${measure}`}>
-            <div>
-              <SubHeading>{requirements.heading}</SubHeading>
-              <ul className="mt-3 flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-site-muted marker:text-site-faint">
-                {requirements.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <SubHeading>{install.heading}</SubHeading>
-              <div className="mt-3">
-                <CodeBlock code={install.command} prompt />
-              </div>
-              <p className={`${type.small} mt-3`}>{install.note}</p>
-            </div>
-
-            <div>
-              <SubHeading>{firstRun.heading}</SubHeading>
-              {firstRun.paragraphs.map((p) => (
-                <p key={p} className={`${type.body} mt-3`}>
-                  {p}
-                </p>
-              ))}
-              <div className="mt-4">
-                <CodeBlock code={firstRun.examples.join("\n")} />
-              </div>
-            </div>
-          </div>
-
-          <div className={`flex min-w-0 flex-col gap-12 ${measure}`}>
-            <div>
-              <SubHeading>{commands.heading}</SubHeading>
-              <dl className="mt-4 flex flex-col divide-y divide-site-line rounded-2xl border border-site-line bg-site-card">
-                {commands.items.map((c) => (
-                  <div key={c.usage} className="flex flex-col gap-1 px-5 py-4">
-                    <dt className="font-mono text-sm break-words text-site-ink">{c.usage}</dt>
-                    <dd className={type.small}>{c.purpose}</dd>
-                  </div>
-                ))}
-              </dl>
-            </div>
-
-            <div>
-              <SubHeading>{files.heading}</SubHeading>
-              <div className="mt-3">
-                <CodeBlock code={files.code} />
-              </div>
-              <p className={`${type.small} mt-3`}>{files.note}</p>
-            </div>
-          </div>
-        </div>
+      <Section id={guidesIndex.id} title={guidesIndex.title} intro={guidesIndex.intro}>
+        <ul data-guides className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {guides.map((guide) => (
+            <li key={guide.path} id={guide.path.split("/").pop()} className="flex scroll-mt-24 flex-col rounded-2xl border border-site-line bg-site-card p-6">
+              <h3 className={`${type.h3} text-site-ink`}>{guide.navLabel}</h3>
+              <p className={`${type.body} mt-2 flex-1`}>{guide.summary}</p>
+              <p className="mt-4 text-sm">
+                <Link href={guide.path} className={LINK}>
+                  {docsCopy.guideLink}
+                  <span className="sr-only">: {guide.navLabel}</span>
+                </Link>
+              </p>
+            </li>
+          ))}
+        </ul>
       </Section>
 
-      <Section id={githubAction.id} title={githubAction.title} intro={githubAction.intro}>
-        {/* From xl, the workflow on the left and its notes beside it. */}
-        <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] xl:items-start xl:gap-10">
-          <div className="min-w-0">
-            <CodeBlock code={githubAction.workflow} label={githubAction.workflowLabel} />
-          </div>
-          <div className={`flex min-w-0 flex-col gap-5 ${measure}`}>
-            <p className={type.small}>{githubAction.pinNote}</p>
-            <div role="note" className="rounded-xl border border-site-warn/40 bg-site-warn-soft px-4 py-3">
-              <p className="text-sm font-semibold text-site-warn">{githubAction.warningTitle}</p>
-              <p className="mt-1 text-sm leading-relaxed text-site-warn">{githubAction.warning}</p>
+      <Section id={cliReference.id} title={cliReference.title} intro={cliReference.intro}>
+        <dl className={`flex flex-col divide-y divide-site-line rounded-2xl border border-site-line bg-site-card ${measure}`}>
+          {cliReference.items.map((c) => (
+            <div key={c.usage} className="flex flex-col gap-1 px-5 py-4">
+              <dt className="font-mono text-sm break-words text-site-ink">{c.usage}</dt>
+              <dd className={type.small}>
+                <InlineCode text={c.purpose} />
+              </dd>
             </div>
-            <p className={type.small}>
-              <a href={`${REPO_URL}/blob/main/${githubAction.more.path}`} className={LINK} rel="noopener noreferrer">
-                {githubAction.more.label}
-              </a>
-            </p>
-          </div>
-        </div>
+          ))}
+        </dl>
       </Section>
     </>
   );

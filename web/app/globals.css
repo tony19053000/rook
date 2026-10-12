@@ -14,11 +14,12 @@
   --sunk: #1f1e1d;
   --ink: #f0eee6;
   --muted: #aeaba2;
-  --faint: #807e76;
+  --faint: #9d9c96;
   --line: #3a3935;
   --hover: #34332f;
   --accent: #e0563f;
-  --accent-ink: #ffffff;
+  --accent-ink: #141413;
+  --accent-text: #e67865;
   --link: #8aa6ff;
   --good: #6bd9a0;
   --good-soft: #15301f;
@@ -38,16 +39,18 @@
     --sunk: #f0eee6;
     --ink: #1f1e1d;
     --muted: #5f5e59;
-    --faint: #8f8d85;
+    --faint: #6a6862;
     --line: #e3e0d6;
     --hover: #ebe8df;
-    --accent: #d9452f;
+    --accent: #cc412c;
+    --accent-ink: #ffffff;
+    --accent-text: #cc412c;
     --link: #2f5bd3;
-    --good: #1c8a55;
+    --good: #197b4c;
     --good-soft: #e2f3e9;
     --bad: #c2372f;
     --bad-soft: #fbe8e6;
-    --warn: #a86a12;
+    --warn: #996010;
     --warn-soft: #fbf0dc;
   }
 }
@@ -61,16 +64,18 @@
   --sunk: #f0eee6;
   --ink: #1f1e1d;
   --muted: #5f5e59;
-  --faint: #8f8d85;
+  --faint: #6a6862;
   --line: #e3e0d6;
   --hover: #ebe8df;
-  --accent: #d9452f;
+  --accent: #cc412c;
+  --accent-ink: #ffffff;
+  --accent-text: #cc412c;
   --link: #2f5bd3;
-  --good: #1c8a55;
+  --good: #197b4c;
   --good-soft: #e2f3e9;
   --bad: #c2372f;
   --bad-soft: #fbe8e6;
-  --warn: #a86a12;
+  --warn: #996010;
   --warn-soft: #fbf0dc;
 }
 
@@ -230,6 +235,26 @@ body {
 :focus-visible {
   outline: 2px solid var(--link);
   outline-offset: 2px;
+}
+
+/* Contrast (04 §3.7, text at least 4.5:1; lib/appContrast.test.ts checks the pairs). Accent-coloured TEXT uses
+   --accent-text, lifted in the dark theme where --accent itself (also a button background) is 3.5:1 on a card.
+   The mark (an svg) keeps the brand colour. A frame on the site sets its own (`.wt-frame .text-accent`). */
+.text-accent:not(svg) {
+  color: var(--accent-text);
+}
+/* Agent names and verbs (components/AgentRow.tsx): each row carries its agent's readable colour for both
+   themes; the theme picks one. `.app-dark` (app components on the dark site) always takes the dark one. */
+.agent-row {
+  --agent-text: var(--agent-on-dark);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) .agent-row:not(.app-dark *) {
+    --agent-text: var(--agent-on-light);
+  }
+}
+:root[data-theme="light"] .agent-row:not(.app-dark *) {
+  --agent-text: var(--agent-on-light);
 }
 
 /* 04 §3.5: tabular numbers for every counter. */

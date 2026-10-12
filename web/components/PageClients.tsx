@@ -9,7 +9,7 @@ import { HomeView } from "./HomeView";
 import { RunPage } from "./RunPage";
 import { CounterexamplesView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
 import { SIGN_IN_AVAILABLE, signInWithGoogle } from "@/lib/session";
-import { useApi, useRepos, useRuns, useSession } from "@/lib/useShell";
+import { useApi, useBobMode, useRepos, useRuns, useSession } from "@/lib/useShell";
 import { finishGithubConnect, SETUP_PATH, setupParams, startGithubConnect } from "@/lib/github";
 
 export function HomeClient() {
@@ -17,6 +17,7 @@ export function HomeClient() {
   const session = useSession(api);
   const runs = useRuns(api);
   const repos = useRepos(api);
+  const bobMode = useBobMode(api);
   const router = useRouter();
 
   const connectGithub = useCallback(() => startGithubConnect(api, (url) => window.location.assign(url)), [api]);
@@ -27,6 +28,7 @@ export function HomeClient() {
       session={session}
       runs={runs}
       repos={repos}
+      bobMode={bobMode}
       navigate={(href) => router.push(href)}
       connectGithub={connectGithub}
       signIn={SIGN_IN_AVAILABLE ? signIn : undefined}
@@ -66,7 +68,8 @@ export function RunClient({ runId }: { runId: string }) {
   const api = useApi();
   const session = useSession(api);
   const runs = useRuns(api);
-  return <RunPage key={runId} runId={runId} api={api} session={session} runs={runs} />;
+  const router = useRouter();
+  return <RunPage key={runId} runId={runId} api={api} session={session} runs={runs} navigate={(href) => router.push(href)} />;
 }
 
 export function RunsClient() {

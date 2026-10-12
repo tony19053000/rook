@@ -14,7 +14,7 @@ import { SearchCard } from "./cards/SearchCard";
 import { VerifyCard } from "./cards/VerifyCard";
 import { attachQuestions } from "@/lib/questions";
 import type { ChatItem, LogItem, RulesItem, RunState, TranscriptItem } from "@/lib/runStore";
-import { cleanMultiline } from "@/lib/safeText";
+import { cleanMultiline, plainMarkdown } from "@/lib/safeText";
 
 function ChatRow({ item }: { item: ChatItem }) {
   const text = cleanMultiline(item.text).trim();
@@ -28,7 +28,7 @@ function ChatRow({ item }: { item: ChatItem }) {
   return (
     <div data-chat="guide" className="whitespace-pre-wrap break-words">
       <span className="font-semibold text-muted">◆ Guide </span>
-      {text}
+      {plainMarkdown(text)}
     </div>
   );
 }

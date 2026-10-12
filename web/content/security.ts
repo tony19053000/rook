@@ -28,9 +28,10 @@ export const securitySections: SecuritySection[] = [
       "The Rook server stores runs, each run's redacted event log (including what you type into the composer and chat) and counterexamples. Guest run quotas are counted per guest cookie and per client IP address, per day.",
       "If you connect GitHub, Rook stores your installation id and keeps short-lived installation tokens in memory only.",
       "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs use recorded Bob answers.",
-      "No analytics, ads or tracking scripts on the site or the app. Runs are not deleted automatically yet.",
+      "No analytics, ads or tracking scripts on the site or the app.",
+      "You can delete a run, or all your data on the Rook server, from the web app. Runs older than 30 days and guest quota rows older than 2 days are deleted automatically.",
     ],
-    link: { label: "Read the privacy policy (draft)", href: "/privacy" },
+    link: { label: "Read the privacy policy", href: "/privacy" },
   },
   {
     id: "sandboxing",
@@ -41,7 +42,7 @@ export const securitySections: SecuritySection[] = [
       "Only the workspace copy of your repo is mounted, never your home folder or the original. Ports are published on 127.0.0.1 only, and at run time the app gets an internal network wherever the app allows it.",
       "The sandbox gets none of Rook's environment, so Rook's keys never reach your app.",
       "The engine sends requests only to the sandbox's host and port, follows no redirects elsewhere, and uses a 10 s timeout and a 1 MB response cap.",
-      "On the hosted site, guests run only allowlisted example repos pinned by commit SHA, as a separate unprivileged user. A signed-in user's own GitHub repo, when the server enables it, runs only in a Docker sandbox with the same hardening.",
+      "On the hosted site, guests run only allowlisted example repos pinned by commit SHA, with recorded Bob answers, in a process sandbox as a separate unprivileged user. The hosted server mounts no Docker socket, and hosted runs of your own repos are turned off. Run your own repo with the CLI on your machine.",
     ],
   },
   {
@@ -95,9 +96,9 @@ export const notYetTrue = {
   intro: "Rook is in early access. These are the gaps we know about today.",
   items: [
     "There has been no third-party audit or penetration test, and Rook holds no certifications.",
-    "On the hosted server, the container that starts sandboxes has access to the Docker socket. That is root-equivalent on the host if the server itself had a remote-code-execution bug. This is accepted for now; the long-term fix is a separate runner host.",
+    "Hosted runs of your own repos are off. Starting sandboxes from the server needs the Docker socket, which is root-equivalent on the host, so the hosted server no longer mounts it. Turning hosted runs back on needs a separate runner host.",
     "Prompt injection from repo text is bounded by Bob's tool permissions and the engine's checks, not eliminated.",
     "The offline settings for the allowlisted example apps' test commands are best effort.",
-    "There is no automatic data deletion and no self-serve account deletion yet.",
+    "Your Supabase sign-in account is deleted by emailing the contact address, not self-serve. Run and server data deletion is self-serve in the web app.",
   ],
 } as const;

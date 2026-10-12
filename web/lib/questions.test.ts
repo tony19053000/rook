@@ -202,7 +202,7 @@ describe("question prompts", () => {
     expect(describeAnswer(true)).toBe("Yes");
     expect(describeAnswer({ name: "API_KEY", provided: true })).toBe("API_KEY provided");
     expect(describeAnswer(["r1", "r2"])).toBe("Approve r1, r2");
-    expect(describeAnswer("<b>\x1b[2J")).toBe("<b>[2J");
+    expect(describeAnswer("<b>\x1b[2J")).toBe("<b>");
     expect(describeRulesAnswer(["a"])).toBe("Approved 1 rule");
     expect(describeRulesAnswer(["a", "b"])).toBe("Approved 2 rules");
     expect(describeRulesAnswer("none")).toBe("Rejected all rules");

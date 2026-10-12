@@ -16,10 +16,13 @@ describe("home helpers (04 §3.2, §3.3)", () => {
     expect(firstName(GUEST)).toBe("");
   });
 
-  it("bobModeLabel: replay for examples, live otherwise", () => {
-    expect(bobModeLabel(DEMO)).toBe("IBM Bob · replay");
+  it("bobModeLabel: an example follows the server's Bob mode, your own repo is live, and unknown claims neither", () => {
+    expect(bobModeLabel(DEMO, "replay")).toBe("IBM Bob · recorded answers");
+    expect(bobModeLabel(DEMO, "live")).toBe("IBM Bob · live");
+    expect(bobModeLabel(DEMO)).toBe("IBM Bob");
     expect(bobModeLabel(GH)).toBe("IBM Bob · live");
-    expect(bobModeLabel(null)).toBe("IBM Bob · live");
+    expect(bobModeLabel(GH, "replay")).toBe("IBM Bob · live");
+    expect(bobModeLabel(null, "replay")).toBe("IBM Bob");
   });
 
   it("filterGroups: matches name or owner/name, case-insensitive, keeps the GitHub group shape", () => {

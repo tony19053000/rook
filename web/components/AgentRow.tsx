@@ -4,13 +4,13 @@
 // On agent.finished it collapses to `● Name ✓ summary` (✗ if the call failed or its verdict is a rejection).
 // Only engine rows carry verdicts about the app; this ✓/✗ is just how the agent call went.
 
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { AgentSprite } from "./AgentSprite";
-import { agentInfo } from "@/lib/agents";
+import { agentInfo, agentTextColors } from "@/lib/agents";
 import { readableColor } from "@/lib/contrast";
 import { useFrame, useReducedMotion } from "@/lib/motion";
 import type { AgentItem } from "@/lib/runStore";
-import { clean } from "@/lib/safeText";
+import { clean, plainMarkdown } from "@/lib/safeText";
 import { newSeed, shimmerLevels, type ShimmerLevel } from "@/lib/sprite";
 
 export interface AgentRowProps {
@@ -23,7 +23,8 @@ export interface AgentRowProps {
   now?: number;
   startedAt?: number;
   /** The #rrggbb background behind the row: the name and verb text then use a colour derived from the agent's
-   *  that reaches 4.5:1 on it (the sprite and dot keep the true colour). Unset on app pages. */
+   *  that reaches 4.5:1 on it (the sprite and dot keep the true colour). Unset on app pages, where the row
+   *  carries one readable colour per theme and app/globals.css (`.agent-row`) picks the theme's. */
   readableOn?: string;
 }
 
@@ -64,7 +65,10 @@ function Verb({ text, color, frame, reduced }: { text: string; color: string; fr
 
 export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt, readableOn }: AgentRowProps) {
   const info = agentInfo(item.agent);
-  const textColor = readableOn ? readableColor(info.color, readableOn) : info.color;
+  const themed = agentTextColors(info.color);
+  const textColor = readableOn ? readableColor(info.color, readableOn) : "var(--agent-text)";
+  const rowClass = readableOn ? "" : " agent-row";
+  const rowStyle = readableOn ? undefined : ({ "--agent-on-dark": themed.dark, "--agent-on-light": themed.light } as CSSProperties);
   const mediaReduced = useReducedMotion();
   const reduced = reducedMotion ?? mediaReduced;
   const working = item.status === "working";
@@ -77,13 +81,13 @@ export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt, rea
   if (!working) {
     const ok = agentSucceeded(item);
     return (
-      <div className="flex min-w-0 items-baseline gap-2" data-row="agent" data-status={item.status}>
+      <div className={`flex min-w-0 items-baseline gap-2${rowClass}`} style={rowStyle} data-row="agent" data-status={item.status}>
         <span aria-hidden className="size-2 flex-none -translate-y-px rounded-full" style={{ background: info.color }} />
         <span className="min-w-0 truncate">
           <span className="font-semibold" style={{ color: textColor }}>
             {info.name}
           </span>{" "}
-          <Mark ok={ok} /> {clean(item.summary ?? "")}
+          <Mark ok={ok} /> {plainMarkdown(clean(item.summary ?? ""))}
           {item.recorded && <span className="ml-2 rounded bg-sunk px-1.5 text-[11px] italic text-faint">recorded</span>}
         </span>
       </div>
@@ -93,7 +97,7 @@ export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt, rea
   const f = reduced ? 0 : (frame ?? tick);
   const elapsed = Math.max(0, ((now ?? Date.now()) - (startedAt ?? mountedAt)) / 1000);
   return (
-    <div className="flex min-w-0 items-center gap-2.5" data-row="agent" data-status="working">
+    <div className={`flex min-w-0 items-center gap-2.5${rowClass}`} style={rowStyle} data-row="agent" data-status="working">
       <AgentSprite look={info} px={3} frame={f} seed={seed ?? ownSeed} reducedMotion={reduced} />
       <div className="flex min-w-0 flex-col">
         <div className="truncate">
@@ -105,7 +109,7 @@ export function AgentRow({ item, reducedMotion, frame, seed, now, startedAt, rea
             ({elapsed.toFixed(1)}s)
           </span>
         </div>
-        <div className="truncate font-mono text-xs text-muted">⎿ {clean(item.detail)}</div>
+        <div className="truncate font-mono text-xs text-muted">⎿ {plainMarkdown(clean(item.detail))}</div>
       </div>
     </div>
   );

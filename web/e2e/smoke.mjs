@@ -48,6 +48,10 @@ const RECORDINGS = ["understand", "rules", "design", "diagnose", "surgeon", "ses
 const DEMO_REF = "rook-demo/minishop";
 const DEMO_COMMIT = createHash("sha1").update("rook-e2e-minishop").digest("hex");
 const REQUEST = "find and fix a bug";
+// The site pages (06 §1: lib/seo.ts SITEMAP_PATHS plus /login) and the app pages a guest can open.
+const DOCS_GUIDES = ["getting-started", "install", "rules", "counterexamples", "github-action", "data"].map((slug) => `/docs/${slug}`);
+const SITE_PAGES = ["/", "/docs", ...DOCS_GUIDES, "/security", "/pricing", "/roadmap", "/about", "/contact", "/privacy", "/terms", "/login"];
+const APP_PAGES = ["/app", "/runs", "/repositories"];
 
 const API_PORT = Number(process.env.ROOK_E2E_API_PORT ?? 8765);
 const PYTHON = process.env.ROOK_E2E_PYTHON ?? join(ROOT, ".venv", "bin", "python");
@@ -383,9 +387,13 @@ async function main() {
   await waitFor(`${web}/login`, next);
 
   const call = client(web);
-  for (const page of ["/", "/app", "/docs", "/security", "/pricing", "/privacy", "/terms", "/runs", "/login", "/repositories"]) {
+  for (const page of [...SITE_PAGES, ...APP_PAGES]) {
     const res = await call(page);
     check(res.status === 200, `GET ${page} -> 200`);
+  }
+  for (const page of DOCS_GUIDES) {
+    const html = await (await call(page)).text();
+    check(/<h1[\s>]/.test(html) && html.includes('aria-label="On this page"'), `${page} renders its heading and table of contents`);
   }
   check((await call("/no-such-page")).status === 404, "GET /no-such-page -> the branded 404");
   const setupQuery = `?installation_id=1&setup_action=install&state=${"s".repeat(24)}`;

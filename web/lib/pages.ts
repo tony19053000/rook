@@ -1,7 +1,7 @@
 // Pure logic behind the pages (04 §3.2, §3.3, §3.6): the recents, the repo picker groups, the new-run body,
 // and how every API failure reads. Kept free of React so it is unit-tested directly.
 
-import { ApiError, type ApiClient, type CreateRunBody, type RepoOption, type RunSummary } from "./api";
+import { ApiError, TIMEOUT_STATUS, type ApiClient, type CreateRunBody, type RepoOption, type RunSummary } from "./api";
 import { short } from "./cardText";
 import type { RecentRun, RecentStatus, SidebarProps } from "@/components/Sidebar";
 import { clean } from "./safeText";
@@ -142,9 +142,15 @@ export function filterGroups(groups: PickerGroups, query: string): PickerGroups 
   return { ...groups, github: groups.github === null ? null : groups.github.filter(hit), demo: groups.demo.filter(hit) };
 }
 
-/** The composer's mode line: examples replay a recorded Bob session, a user's own repo runs Bob live. */
-export function bobModeLabel(repo: Pick<RepoOption, "kind"> | null): string {
-  return repo !== null && repo.kind === "demo" ? "IBM Bob · replay" : "IBM Bob · live";
+/**
+ * The composer's mode line. A user's own repo always runs Bob live; an example repo follows the server's Bob
+ * mode (GET /health `bob_mode`): `replay` means recorded answers. Until the server has said, it claims neither.
+ */
+export function bobModeLabel(repo: Pick<RepoOption, "kind"> | null, serverMode: string | null = null): string {
+  if (repo === null) return "IBM Bob";
+  if (repo.kind === "github") return "IBM Bob · live";
+  if (serverMode === null) return "IBM Bob";
+  return serverMode === "replay" ? "IBM Bob · recorded answers" : "IBM Bob · live";
 }
 
 /** The first name for the home greeting ("Aayush Kumar" → "Aayush", an email → its local part), cleaned. */
@@ -175,6 +181,12 @@ export function moveIndex(current: number, delta: number, count: number): number
 export function cliHint(ref: string): string {
   return `The hosted server runs only the example repositories. Run this one with the CLI: rook run ${ref}`;
 }
+
+/** What signing in adds, and where your own repos run (`/app`, 06 §4: hosted runs of your own repos are off). */
+export const SIGN_IN_ADDS = "Signing in keeps your run history with your account and lets you link GitHub to see your repos.";
+export const OWN_REPOS_NOTE = "Your own repos run on your machine with the CLI. Hosted runs of your own repos are turned off.";
+/** 06 §4: guests get 3 runs a day. */
+export const GUEST_LIMIT_NOTE = "Guests get 3 example runs a day on the hosted server. Come back tomorrow, or run Rook on your own machine.";
 
 /**
  * The POST /runs body, or why not. A GitHub repo runs on the server only when GET /me said `can_run_github`
@@ -213,7 +225,13 @@ export async function startRun(
     const { run_id } = await api.createRun(checked.body);
     return { kind: "started", runId: run_id, href: runHref(run_id) };
   } catch (e) {
-    return { kind: "error", error: errorView(e, "create") };
+    const error = errorView(e, "create");
+    // Hosted runs of your own repos are off (503): the same two commands the server names, as code.
+    const ownRepoOff = error.kind === "unavailable" && repo !== null && repo.kind === "github";
+    if (!ownRepoOff) return { kind: "error", error };
+    // The server's sentence already spells the commands out inline; say it once, with the commands below.
+    const message = /rook run/.test(error.message) ? OWN_REPOS_NOTE : error.message;
+    return { kind: "error", error: { ...error, message, commands: [CLI_INSTALL, `rook run ${repo.ref}`] } };
   }
 }
 
@@ -229,6 +247,8 @@ export interface ErrorView {
   title: string;
   message: string;
   retryable: boolean;
+  /** Shell commands shown under the message as code (the CLI way to do what the server refused). */
+  commands?: string[];
 }
 
 const TITLES: Record<ErrorAction, string> = {
@@ -312,7 +332,80 @@ export function errorView(error: unknown, action: ErrorAction): ErrorView {
 
 /** Every string an ErrorView shows, cleaned (the detail came from the server). */
 export function cleanErrorView(view: ErrorView): ErrorView {
-  return { ...view, title: clean(view.title), message: clean(view.message) };
+  return { ...view, title: clean(view.title), message: clean(view.message), commands: view.commands?.map(clean) };
+}
+
+// ---------------------------------------------------------------------------
+// Deletion (ROOK-051 routes: DELETE /runs/{id}, DELETE /me/data)
+// ---------------------------------------------------------------------------
+
+export type DeleteTarget = "run" | "data";
+
+export type DeleteOutcome =
+  | { kind: "deleted" }
+  /** No answer in time: the server may still be deleting (stopping a running run takes up to 30 s). */
+  | { kind: "pending"; message: string }
+  | { kind: "error"; message: string; retryable: boolean };
+
+export const STILL_DELETING = "Still deleting. The server can take up to 30 seconds to stop a running run. Refresh in a moment.";
+
+/** Statuses that mean "no answer in time", from the browser (408) or a proxy in front of the server. */
+const TIMEOUT_STATUSES: readonly number[] = [TIMEOUT_STATUS, 504, 524];
+
+/** Runs a deletion and says how it went in plain words; never throws. */
+export async function runDelete(action: () => Promise<unknown>, target: DeleteTarget): Promise<DeleteOutcome> {
+  try {
+    await action();
+    return { kind: "deleted" };
+  } catch (e) {
+    if (!(e instanceof ApiError)) {
+      return { kind: "error", message: "Couldn't reach the server, so nothing was deleted. Check your connection and try again.", retryable: true };
+    }
+    if (TIMEOUT_STATUSES.includes(e.status)) return { kind: "pending", message: STILL_DELETING };
+    switch (e.status) {
+      case 401:
+        return { kind: "error", message: "Your session expired. Sign in again, then delete.", retryable: false };
+      case 403:
+        return { kind: "error", message: detailOf(e, "The server refused this request. Reload the page and try again."), retryable: true };
+      case 404:
+        return target === "run"
+          ? { kind: "error", message: "This run is already gone, or it belongs to someone else.", retryable: false }
+          : { kind: "error", message: "This server can't delete account data yet. Email us and we will delete it.", retryable: false };
+      case 429:
+        return { kind: "error", message: `Too many requests right now. ${retryText(e.retryAfter) || "Wait a moment and try again."}`, retryable: true };
+      default:
+        return { kind: "error", message: `The server had a problem (HTTP ${e.status}). Try again.`, retryable: true };
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Recorded vs live (06 §4: never blur the two)
+// ---------------------------------------------------------------------------
+
+export type RunMode = "recorded" | "live";
+
+export const RUN_MODE_TEXT: Record<RunMode, { label: string; explain: string }> = {
+  recorded: {
+    label: "Recorded example run",
+    explain: "Bob's answers are replayed from a saved real run. The engine still runs live against the real app.",
+  },
+  live: { label: "Live run", explain: "Bob is called live for this run, and the engine runs against the real app." },
+};
+
+/**
+ * How this run gets Bob's answers, or null while nothing says yet. The server marks every finished agent call
+ * (`recorded` on agent.finished), so that decides; before the first one, only a GitHub repo is known (always
+ * live, 02 §11). One recorded call is enough to call the run recorded.
+ */
+export function runMode(state: {
+  items: readonly { kind: string; status?: string; recorded?: boolean }[];
+  created: { repo: { kind: string } } | null;
+}): RunMode | null {
+  const finished = state.items.filter((item) => item.kind === "agent" && item.status !== "working");
+  if (finished.some((item) => item.recorded === true)) return "recorded";
+  if (finished.length > 0) return "live";
+  return state.created?.repo.kind === "github" ? "live" : null;
 }
 
 // ---------------------------------------------------------------------------

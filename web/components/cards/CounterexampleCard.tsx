@@ -22,7 +22,7 @@ export function ShrinkChips({ counts, done }: { counts: number[]; done: boolean 
             )}
             <span
               data-current={current || undefined}
-              className={`rounded-md border px-2.5 py-0.5 ${current ? "border-bad bg-bad text-white" : "border-line opacity-40"}`}
+              className={`rounded-md border px-2.5 py-0.5 ${current ? "border-bad bg-bad text-page" : "border-line text-faint"}`}
             >
               {count}
             </span>

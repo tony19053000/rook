@@ -5,7 +5,23 @@ import type { Metadata } from "next";
 import { metadataCopy, site, SITE_URL } from "@/content/site";
 
 /** The public site pages, as in app/(site)/ (/login is a utility page, not listed). */
-export const SITEMAP_PATHS = ["/", "/docs", "/security", "/pricing", "/roadmap", "/about", "/contact", "/privacy", "/terms"] as const;
+export const SITEMAP_PATHS = [
+  "/",
+  "/docs",
+  "/docs/getting-started",
+  "/docs/install",
+  "/docs/rules",
+  "/docs/counterexamples",
+  "/docs/github-action",
+  "/docs/data",
+  "/security",
+  "/pricing",
+  "/roadmap",
+  "/about",
+  "/contact",
+  "/privacy",
+  "/terms",
+] as const;
 
 /** The app routes, the dev story pages and the API: not for crawlers. */
 export const ROBOTS_DISALLOW = ["/app", "/runs", "/rules", "/counterexamples", "/repositories", "/github", "/dev", "/api"] as const;

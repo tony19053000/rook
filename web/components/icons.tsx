@@ -13,7 +13,8 @@ export type IconName =
   | "check"
   | "github"
   | "signout"
-  | "signin";
+  | "signin"
+  | "trash";
 
 const PATHS: Record<IconName, ReactNode> = {
   plus: <path d="M12 5v14M5 12h14" />,
@@ -60,6 +61,7 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="M10 17l5-5-5-5M15 12H3" />
     </>
   ),
+  trash: <path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" />,
 };
 
 export function Icon({ name, size = 16, className = "" }: { name: IconName; size?: number; className?: string }) {

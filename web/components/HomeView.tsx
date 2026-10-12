@@ -22,8 +22,10 @@ import {
   errorView,
   firstName,
   HOSTED_GITHUB_NOTE,
+  OWN_REPOS_NOTE,
   pickerGroups,
   shellProps,
+  SIGN_IN_ADDS,
   startRun,
   type ErrorView,
 } from "@/lib/pages";
@@ -49,9 +51,11 @@ export interface HomeViewProps {
   signIn?: () => Promise<string | null>;
   /** The repo picked on first render (tests; nothing by default). */
   defaultSelected?: RepoOption | null;
+  /** The server's Bob mode from GET /health, or null while unknown: example repos are recorded only on `replay`. */
+  bobMode?: string | null;
 }
 
-export function HomeView({ api, session, runs, repos, navigate, connectGithub, signIn, defaultSelected = null }: HomeViewProps) {
+export function HomeView({ api, session, runs, repos, navigate, connectGithub, signIn, defaultSelected = null, bobMode = null }: HomeViewProps) {
   const [selected, setSelected] = useState<RepoOption | null>(defaultSelected);
   const [auto, setAuto] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -127,7 +131,7 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, s
         placeholder={creating ? "Starting the run…" : undefined}
         auto={auto}
         onAutoChange={setAuto}
-        status={bobModeLabel(selected)}
+        status={bobModeLabel(selected, bobMode)}
         picker={
           <RepoPicker
             groups={groups}
@@ -190,6 +194,9 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, s
               {creating ? "Starting the example…" : "Try an example without signing in"}
             </button>
           </div>
+          <p className="mt-2 max-w-[520px] text-[13px] text-muted" data-sign-in-adds>
+            {SIGN_IN_ADDS} {OWN_REPOS_NOTE}
+          </p>
         </div>
       ) : (
         <div className="flex items-center justify-center gap-2.5 pt-[10vh] text-center" data-greeting>
@@ -198,6 +205,12 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, s
             {name ? `What should Rook check next, ${name}?` : "What should Rook check next?"}
           </h1>
         </div>
+      )}
+      {!guest && !hostedGithub && (
+        <p className="mx-auto max-w-[520px] text-center text-[13px] text-muted" data-own-repos-note>
+          {OWN_REPOS_NOTE} Pick one of your repos below to get its <code className="font-mono">rook run</code> command, or pick an example repo to
+          run here.
+        </p>
       )}
       {createError !== null && (
         <div className="mt-6">

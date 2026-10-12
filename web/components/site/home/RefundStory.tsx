@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Badge } from "../Badge";
+import { InlineCode } from "../InlineCode";
 import { type } from "../tokens";
 import { runScreenshot } from "@/content/home";
 import {
@@ -35,23 +36,6 @@ function Stage({ stage, children, className = "" }: StageProps) {
       </div>
       {children}
     </article>
-  );
-}
-
-/** Text with `code` spans, as the Detective writes it. */
-function WithCode({ text }: { text: string }) {
-  return (
-    <>
-      {text.split("`").map((part, i) =>
-        i % 2 === 1 ? (
-          <code key={i} className="rounded bg-site-raised px-1 py-0.5 font-mono text-[0.9em] text-site-ink">
-            {part}
-          </code>
-        ) : (
-          part
-        ),
-      )}
-    </>
   );
 }
 
@@ -160,7 +144,7 @@ export function RefundStory() {
             {refundDiagnosis.file}:{refundDiagnosis.line}
           </p>
           <blockquote className="border-l-2 border-site-accent/60 pl-4 text-base leading-relaxed text-site-ink">
-            <WithCode text={refundDiagnosis.sentence} />
+            <InlineCode text={refundDiagnosis.sentence} />
           </blockquote>
         </Stage>
 

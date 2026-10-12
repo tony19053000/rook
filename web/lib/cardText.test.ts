@@ -3,7 +3,7 @@ import { checkName, compact, cxTitle, diffLines, observedPairs, observedText, sa
 
 describe("short and compact", () => {
   it("cleans control characters and cuts with an ellipsis", () => {
-    expect(short("a\x1b[31mb\x00c\u009b", 10)).toBe("a[31mbc");
+    expect(short("a\x1b[31mb\x00c\u009b", 10)).toBe("abc");
     expect(short("line1\nline2", 100)).toBe("line1 line2");
     expect(short("abcdef", 4)).toBe("abc…");
   });
@@ -19,7 +19,7 @@ describe("steps and observed values (the TUI's step_text / observed_text)", () =
   it("reads a step as actor: action(params)", () => {
     expect(stepText({ action: "refund", actor: "customer", params: { amount: 1 }, refs: { order_id: 0 } })).toBe("customer: refund(amount=1)");
     expect(stepText({ parallel: [{ action: "a" }, { action: "b" }] })).toBe("at the same time: a() | b()");
-    expect(stepText({ action: "x\x1b]0;evil\x07", params: { "k\n": "v\x00" } })).toBe("x]0;evil(k =v)");
+    expect(stepText({ action: "x\x1b]0;evil\x07", params: { "k\n": "v\x00" } })).toBe("x(k =v)");
   });
 
   it("splits a flat observed dict into boxes, anything else is JSON", () => {
@@ -39,7 +39,7 @@ describe("diffLines", () => {
   it("classifies red and green lines and cleans them", () => {
     const { lines, more } = diffLines("--- a/app.py\n+++ b/app.py\n@@ -1 +1 @@\n ctx\n-old\x1b[0m\r\n+new\n");
     expect(lines.map((l) => l.kind)).toEqual(["meta", "meta", "hunk", "context", "remove", "add"]);
-    expect(lines[4]!.text).toBe("-old[0m");
+    expect(lines[4]!.text).toBe("-old");
     expect(more).toBe(0);
   });
 

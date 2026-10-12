@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ApiError, apiUrl, createApiClient, retryAfterSeconds, runEventsUrl, toRepoOption, toRunDetail, toRunSummary, type RunSummary } from "./api";
+import { ApiError, apiUrl, createApiClient, DELETE_TIMEOUT_MS, TIMEOUT_STATUS, retryAfterSeconds, runEventsUrl, toRepoOption, toRunDetail, toRunSummary, type RunSummary } from "./api";
 
 const SUMMARY: RunSummary = {
   id: "r_1",
@@ -180,5 +180,61 @@ describe("Retry-After", () => {
       retryAfter: 60,
       message: "The server is busy; try again in a few minutes",
     });
+  });
+});
+
+describe("deletion (ROOK-051 routes)", () => {
+  it("deleteRun sends DELETE /runs/{id} with the token and the guest cookie, and no body", async () => {
+    const { fetch, calls } = mockFetch(() => Response.json({ ok: true }));
+    const api = createApiClient({ baseUrl: "", getToken: () => "jwt-1", fetch });
+    expect(await api.deleteRun("r 1/2")).toEqual({ ok: true });
+    expect(calls).toHaveLength(1);
+    expect(calls[0]!.url).toBe("/api/v1/runs/r%201%2F2");
+    expect(calls[0]!.method).toBe("DELETE");
+    expect(calls[0]!.headers.get("Authorization")).toBe("Bearer jwt-1");
+    expect(calls[0]!.credentials).toBe("include");
+    expect(calls[0]!.body).toBeUndefined();
+  });
+
+  it("deleteMyData sends DELETE /me/data and returns how many runs went", async () => {
+    const { fetch, calls } = mockFetch(() => Response.json({ ok: true, runs_deleted: 4 }));
+    const api = createApiClient({ baseUrl: "https://api.example", getToken: () => "jwt-1", fetch });
+    expect(await api.deleteMyData()).toEqual({ ok: true, runs_deleted: 4 });
+    expect(calls[0]!.url).toBe("https://api.example/api/v1/me/data");
+    expect(calls[0]!.method).toBe("DELETE");
+  });
+
+  it("a refusal carries the server's reason: 404 for a run that isn't yours, 403 for a cross-site request", async () => {
+    const notFound = createApiClient({ baseUrl: "", fetch: mockFetch(() => Response.json({ detail: "Run not found" }, { status: 404 })).fetch });
+    await expect(notFound.deleteRun("r_x")).rejects.toMatchObject({ status: 404, message: "Run not found" });
+    const crossSite = createApiClient({ baseUrl: "", fetch: mockFetch(() => Response.json({ detail: "Cross-site request refused" }, { status: 403 })).fetch });
+    await expect(crossSite.deleteMyData()).rejects.toMatchObject({ status: 403, message: "Cross-site request refused" });
+  });
+
+  it("gives up after the delete timeout with a 408 ApiError (the server may still be deleting)", async () => {
+    const hanging: typeof globalThis.fetch = (_input, init) =>
+      new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")));
+      });
+    const api = createApiClient({ baseUrl: "", fetch: hanging, deleteTimeoutMs: 10 });
+    const error = await api.deleteRun("r_1").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).status).toBe(TIMEOUT_STATUS);
+    expect(DELETE_TIMEOUT_MS).toBeGreaterThan(30_000); // longer than the server's 30 s to stop a running run
+  });
+
+  it("a network failure is not a timeout: the original error comes through", async () => {
+    const api = createApiClient({ baseUrl: "", fetch: async () => Promise.reject(new TypeError("offline")), deleteTimeoutMs: 1000 });
+    await expect(api.deleteRun("r_1")).rejects.toBeInstanceOf(TypeError);
+  });
+
+  it("other requests carry no abort signal", async () => {
+    let signal: AbortSignal | null | undefined;
+    const fetch: typeof globalThis.fetch = async (_input, init) => {
+      signal = init?.signal;
+      return Response.json([]);
+    };
+    await createApiClient({ baseUrl: "", fetch }).listRuns();
+    expect(signal).toBeUndefined();
   });
 });

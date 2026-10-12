@@ -190,7 +190,7 @@ describe("agent characters (04 §1.3 table)", () => {
   });
 
   it("an unknown id gets a readable, cleaned neutral character", () => {
-    expect(agentInfo("new_agent\x1b[2J")).toMatchObject({ name: "New Agent[2J", shape: "circle", verb: "Working" });
+    expect(agentInfo("new_agent\x1b[2J")).toMatchObject({ name: "New Agent", shape: "circle", verb: "Working" });
     expect(workerName("fuzzer")).toBe("Fuzzer");
     expect(workerName("testrunner")).toBe("Test Runner");
   });

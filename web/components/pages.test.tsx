@@ -35,7 +35,12 @@ const run = (patch: Partial<RunSummary> = {}): RunSummary => ({
   ...patch,
 });
 const noRuns = { runs: [], loading: false, error: null };
-const fakeApi = { createRun: async () => ({ run_id: "r_new" }), answer: async () => ({ ok: true }), chat: async () => ({ ok: true }) };
+const fakeApi = {
+  createRun: async () => ({ run_id: "r_new" }),
+  answer: async () => ({ ok: true }),
+  chat: async () => ({ ok: true }),
+  deleteRun: async () => ({ ok: true }),
+};
 const repos = (list: RepoOption[], patch: Partial<{ loading: boolean; error: unknown }> = {}) => ({ repos: list, loading: false, error: null, retry: () => {}, ...patch });
 
 describe("home (04 §3.2 /)", () => {
@@ -93,7 +98,11 @@ describe("home (04 §3.2 /)", () => {
 
   it("the mode line says replay for an example and live for your own repo", () => {
     const demo = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={DEMO} />);
-    expect(demo).toContain("IBM Bob · replay");
+    expect(demo).not.toContain("IBM Bob · ");
+    const recorded = html(
+      <HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={DEMO} bobMode="replay" />,
+    );
+    expect(recorded).toContain("IBM Bob · recorded answers");
     const gh = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={GH} />);
     expect(gh).toContain("IBM Bob · live");
   });
@@ -206,7 +215,8 @@ describe("errors and limits (04 §3.6)", () => {
     const view = errorView(new ApiError(429, "Demo limit reached for today. Install the CLI to run on your own repos: uv tool install git+https://github.com/tony19053000/rook"), "create");
     const out = html(<ErrorCard view={view} onRetry={() => {}} />);
     expect(out).toContain("Guest limit reached for today");
-    expect(out).toContain(`<code class="rounded bg-sunk px-1.5 py-0.5 font-mono text-[13px]">${CLI_INSTALL}</code>`);
+    expect(out).toContain(`font-mono text-[13px]">${CLI_INSTALL}</code>`);
+    expect(out).toContain("Guests get 3 example runs a day");
     expect(out).not.toContain("Try again");
   });
 

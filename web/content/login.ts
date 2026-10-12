@@ -17,5 +17,5 @@ export const loginCopy = {
   noscript: "Sign-in with Google needs JavaScript. Turn it on in your browser to sign in.",
   demo: { label: `${cta.demo.label} without signing in`, href: cta.demo.href },
   guestNote: "Guests can run the example repos a few times a day. To run Rook on your own repos, install the CLI.",
-  cliLink: { label: "Getting started", href: "/docs#getting-started" },
+  cliLink: { label: "Getting started", href: "/docs/getting-started" },
 } as const;

@@ -5,6 +5,7 @@
 
 import { stepText } from "./cardText";
 import raw from "./fixtures/minishop-run.json";
+import { isRepoFile, REPO_FILE_ATTR } from "./verbatim";
 
 interface RawEvent {
   type: string;
@@ -39,8 +40,9 @@ export function isRecordedData(el: Element): boolean {
 
 /**
  * The text a copy scan reads from a rendered page: every text node (and aria-label, alt and title), one per line,
- * except the text inside an element for which `isRecordedData` holds. A marked element with any other text is
- * read like the rest, so the mark cannot hide prose.
+ * except the text inside an element for which `isRecordedData` holds, or `isRepoFile` (lib/verbatim.ts: a whole
+ * repo file shown unchanged). A marked element with any other text is read like the rest, so a mark cannot hide
+ * prose.
  */
 export function scannableText(root: Element): string {
   const attrs = [...root.querySelectorAll("[aria-label], [alt], [title]")].flatMap((el) =>
@@ -51,6 +53,8 @@ export function scannableText(root: Element): string {
   for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
     const marked = node.parentElement?.closest(`[${RUN_DATA_ATTR}]`);
     if (marked && isRecordedData(marked)) continue;
+    const file = node.parentElement?.closest(`[${REPO_FILE_ATTR}]`);
+    if (file && isRepoFile(file)) continue;
     texts.push(node.textContent ?? "");
   }
   return [...texts, ...attrs].join("\n");

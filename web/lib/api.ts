@@ -97,6 +97,16 @@ export interface Ok {
   ok: boolean;
 }
 
+/** `DELETE /me/data` (ROOK-051). */
+export interface DataDeleted extends Ok {
+  runs_deleted: number;
+}
+
+/** A deletion waits this long: the server can take up to 30 s to stop a running run first. */
+export const DELETE_TIMEOUT_MS = 45_000;
+/** The status of an ApiError raised because the browser gave up waiting (no response arrived). */
+export const TIMEOUT_STATUS = 408;
+
 export class ApiError extends Error {
   constructor(
     readonly status: number,
@@ -115,6 +125,8 @@ export interface ApiClientOptions {
   /** Returns the Supabase JWT, or null for a guest (the `rook_guest` cookie goes with credentials). */
   getToken?: () => string | null | Promise<string | null>;
   fetch?: typeof fetch;
+  /** How long a deletion waits for the server (DELETE_TIMEOUT_MS by default). */
+  deleteTimeoutMs?: number;
 }
 
 export function apiUrl(baseUrl: string, path: string): string {
@@ -209,18 +221,29 @@ export function toRunDetail(value: unknown): RunDetail | null {
 export function createApiClient(options: ApiClientOptions) {
   const doFetch = options.fetch ?? globalThis.fetch.bind(globalThis);
 
-  async function request<T>(method: "GET" | "POST", path: string, body?: unknown): Promise<T> {
+  async function request<T>(method: "GET" | "POST" | "DELETE", path: string, body?: unknown, timeoutMs?: number): Promise<T> {
     const headers: Record<string, string> = { Accept: "application/json" };
     const token = options.getToken ? await options.getToken() : null;
     if (token) headers.Authorization = `Bearer ${token}`;
     if (body !== undefined) headers["Content-Type"] = "application/json";
-    const response = await doFetch(apiUrl(options.baseUrl, path), {
-      method,
-      headers,
-      credentials: "include",
-      cache: "no-store",
-      body: body === undefined ? undefined : JSON.stringify(body),
-    });
+    const abort = timeoutMs === undefined ? null : new AbortController();
+    const timer = abort === null ? null : setTimeout(() => abort.abort(), timeoutMs);
+    let response: Response;
+    try {
+      response = await doFetch(apiUrl(options.baseUrl, path), {
+        method,
+        headers,
+        credentials: "include",
+        cache: "no-store",
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal: abort?.signal,
+      });
+    } catch (e) {
+      if (abort?.signal.aborted) throw new ApiError(TIMEOUT_STATUS, "The server did not answer in time.");
+      throw e;
+    } finally {
+      if (timer !== null) clearTimeout(timer);
+    }
     if (!response.ok) {
       throw new ApiError(response.status, await errorMessage(response), retryAfterSeconds(response.headers.get("Retry-After")));
     }
@@ -228,6 +251,7 @@ export function createApiClient(options: ApiClientOptions) {
   }
 
   const run = (id: string) => `/runs/${encodeURIComponent(id)}`;
+  const deleteTimeout = options.deleteTimeoutMs ?? DELETE_TIMEOUT_MS;
 
   return {
     health: () => request<Health>("GET", "/health"),
@@ -244,6 +268,10 @@ export function createApiClient(options: ApiClientOptions) {
       request<Ok>("POST", `${run(id)}/answers`, { question_id: questionId, answer }),
     chat: (id: string, text: string) => request<Ok>("POST", `${run(id)}/chat`, { text }),
     cancel: (id: string) => request<Ok>("POST", `${run(id)}/cancel`),
+    /** Deletes the run with its events, counterexamples and workspace files (a live run is stopped first). */
+    deleteRun: (id: string) => request<Ok>("DELETE", run(id), undefined, deleteTimeout),
+    /** Deletes every run of the signed-in caller and their `users` row (the GitHub link). */
+    deleteMyData: () => request<DataDeleted>("DELETE", "/me/data", undefined, deleteTimeout),
     replayCounterexample: (cxId: string) =>
       request<{ run_id: string }>("POST", `/counterexamples/${encodeURIComponent(cxId)}/replay`),
     githubInstallUrl: () => request<{ url: string }>("GET", "/github/install-url"),

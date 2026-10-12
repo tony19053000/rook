@@ -29,11 +29,14 @@ function mix(hex: string, toward: string, t: number): string {
   return `#${a.map((c, i) => Math.round(c + (b[i]! - c) * t).toString(16).padStart(2, "0")).join("")}`;
 }
 
-/** `color` itself if it reads on `background`, else the least mix toward white that does. */
-export function readableColor(color: string, background: string, min = MIN_TEXT_CONTRAST): string {
+/**
+ * `color` itself if it reads on `background`, else the least mix toward white that does. On a light background
+ * pass `toward: "#000000"` (the app's light theme) to darken instead.
+ */
+export function readableColor(color: string, background: string, min = MIN_TEXT_CONTRAST, toward: "#ffffff" | "#000000" = "#ffffff"): string {
   for (let step = 0; step <= 20; step += 1) {
-    const candidate = mix(color, "#ffffff", step / 20);
+    const candidate = mix(color, toward, step / 20);
     if (contrastRatio(candidate, background) >= min) return candidate;
   }
-  return "#ffffff";
+  return toward;
 }

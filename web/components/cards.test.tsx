@@ -260,7 +260,9 @@ describe("untrusted text (XSS and control characters)", () => {
   it("drops every control character", () => {
     // eslint-disable-next-line no-control-regex
     expect(out).not.toMatch(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/);
-    expect(out).toContain("[31mred]0;title");
+    expect(out).toContain("red");
+    expect(out).not.toContain("[31m");
+    expect(out).not.toContain("]0;title");
   });
 
   it("the card for every item type is there (nothing was skipped)", () => {

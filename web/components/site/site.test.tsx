@@ -7,7 +7,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import SiteLayout from "@/app/(site)/layout";
 import AboutPage from "@/app/(site)/about/page";
 import ContactPage from "@/app/(site)/contact/page";
+import CounterexamplesGuidePage from "@/app/(site)/docs/counterexamples/page";
+import DataGuidePage from "@/app/(site)/docs/data/page";
+import GettingStartedGuidePage from "@/app/(site)/docs/getting-started/page";
+import GithubActionGuidePage from "@/app/(site)/docs/github-action/page";
+import InstallGuidePage from "@/app/(site)/docs/install/page";
 import DocsPage from "@/app/(site)/docs/page";
+import RulesGuidePage from "@/app/(site)/docs/rules/page";
 import LoginPage from "@/app/(site)/login/page";
 import HomePage from "@/app/(site)/page";
 import PricingPage from "@/app/(site)/pricing/page";
@@ -17,12 +23,13 @@ import SecurityPage from "@/app/(site)/security/page";
 import TermsPage from "@/app/(site)/terms/page";
 import NotFound from "@/app/not-found";
 import { PricingView } from "./PricingView";
-import { LEGAL_DRAFT_BANNER, legalPlaceholders } from "@/content/legal";
 import { PRICING_PENDING_NOTICE, pricingStatus, type Plan } from "@/content/pricing";
-import { githubAction, gettingStarted } from "@/content/docs";
+import { cliReference } from "@/content/docs";
+import { guides } from "@/content/docsGuides";
+import { actionWorkflow } from "@/content/docsGithubAction";
 import { flowSteps } from "@/content/flow";
 import { notYetTrue } from "@/content/security";
-import { footerColumns, INSTALL_COMMAND, notFoundCopy } from "@/content/site";
+import { notFoundCopy } from "@/content/site";
 import { copyViolations, NO_HACKATHON, NO_PLACEHOLDER } from "@/lib/copyRules";
 import { scannableText } from "@/lib/recordedData";
 
@@ -37,6 +44,12 @@ const inSite = (page: ReactElement) => render(<SiteLayout>{page}</SiteLayout>);
 const PAGES: [string, () => ReturnType<typeof render>][] = [
   ["/", () => inSite(<HomePage />)],
   ["/docs", () => inSite(<DocsPage />)],
+  ["/docs/getting-started", () => inSite(<GettingStartedGuidePage />)],
+  ["/docs/install", () => inSite(<InstallGuidePage />)],
+  ["/docs/rules", () => inSite(<RulesGuidePage />)],
+  ["/docs/counterexamples", () => inSite(<CounterexamplesGuidePage />)],
+  ["/docs/github-action", () => inSite(<GithubActionGuidePage />)],
+  ["/docs/data", () => inSite(<DataGuidePage />)],
   ["/security", () => inSite(<SecurityPage />)],
   ["/pricing", () => inSite(<PricingPage />)],
   ["/roadmap", () => inSite(<RoadmapPage />)],
@@ -48,9 +61,8 @@ const PAGES: [string, () => ReturnType<typeof render>][] = [
   ["404", () => render(<NotFound />)],
 ];
 
-/** ROOK-053 scope: only /about tells the hackathon story; the legal drafts keep their placeholders until ROOK-056. */
+/** ROOK-053 scope: only /about tells the hackathon story. */
 const HACKATHON_PAGES = new Set(["/about"]);
-const PENDING_ROOK_056 = new Set(["/privacy", "/terms"]);
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
@@ -97,10 +109,8 @@ describe.each(PAGES)("site page %s (06 §9)", (path, renderPage) => {
   it("says hackathon only on /about, and shows no [placeholders] (ROOK-053)", () => {
     const { container } = renderPage();
     const text = pageText(container);
-    if (!PENDING_ROOK_056.has(path)) {
-      expect(text.match(new RegExp(NO_PLACEHOLDER.pattern.source, "g")) ?? [], path).toEqual([]);
-      expect(NO_HACKATHON.pattern.test(text), path).toBe(HACKATHON_PAGES.has(path));
-    }
+    expect(text.match(new RegExp(NO_PLACEHOLDER.pattern.source, "g")) ?? [], path).toEqual([]);
+    expect(NO_HACKATHON.pattern.test(text), path).toBe(HACKATHON_PAGES.has(path));
   });
 
   it("header: Sign in, Try Rook, the <details> menu; footer: the four columns", () => {
@@ -146,26 +156,19 @@ describe("pricing (06 §5.4)", () => {
   });
 });
 
-describe.each([
-  ["/privacy", () => inSite(<PrivacyPage />)],
-  ["/terms", () => inSite(<TermsPage />)],
-])("legal draft %s (06 §5.5)", (_path, renderPage) => {
-  it("shows the draft banner and the three placeholders", () => {
-    const { container } = renderPage();
-    expect(screen.getByText(LEGAL_DRAFT_BANNER)).toBeTruthy();
-    expect(LEGAL_DRAFT_BANNER).toBe("Draft — pending legal review, not yet in effect");
-    const text = container.textContent ?? "";
-    for (const placeholder of Object.values(legalPlaceholders)) expect(text).toContain(placeholder);
-    expect(Object.values(legalPlaceholders)).toEqual(["[Company legal name]", "[contact email]", "[jurisdiction]"]);
-  });
-});
-
-describe("/docs (06 §5.2)", () => {
-  it("has every anchor the footer links to", () => {
+describe("/docs, the overview (06 §1, ROOK-055)", () => {
+  it("keeps the anchors older links used: #how-it-works, #getting-started and #github-action", () => {
     const { container } = inSite(<DocsPage />);
-    const anchors = footerColumns.flatMap((c) => c.links).flatMap((l) => (l.href.startsWith("/docs#") ? [l.href.slice(6)] : []));
-    expect(anchors.sort()).toEqual(["getting-started", "github-action", "how-it-works"]);
-    for (const id of anchors) expect(container.querySelector(`main #${id}`), `#${id}`).not.toBeNull();
+    for (const id of ["how-it-works", "getting-started", "github-action", "guides", "cli"]) expect(container.querySelector(`main #${id}`), `#${id}`).not.toBeNull();
+    const ids = [...container.querySelectorAll("main [id]")].map((el) => el.id);
+    expect(new Set(ids).size, "ids are unique").toBe(ids.length);
+  });
+
+  it("every link of its table of contents resolves on the page", () => {
+    const { container } = inSite(<DocsPage />);
+    const hrefs = [...container.querySelectorAll('main nav a[href^="#"]')].map((a) => a.getAttribute("href")!);
+    expect(hrefs).toEqual(["#how-it-works", "#guides", "#cli"]);
+    for (const href of hrefs) expect(container.querySelector(`main ${href}`), href).not.toBeNull();
   });
 
   it("renders the whole 6-step flow from content/flow.ts", () => {
@@ -179,31 +182,32 @@ describe("/docs (06 §5.2)", () => {
     }
   });
 
-  it("getting started: the install command, PyPI note and the CLI commands that exist", () => {
+  it("indexes every guide: its name, its summary and a link to it", () => {
     const { container } = inSite(<DocsPage />);
-    const text = container.querySelector("#getting-started")?.textContent ?? "";
-    expect(text).toContain(INSTALL_COMMAND);
-    expect(text).toContain("not on PyPI yet");
-    expect(text).toContain("rook/rook.yaml");
-    expect(text).toContain("rook/counterexamples/cx_001.json");
-    for (const c of gettingStarted.commands.items) expect(text).toContain(c.usage);
+    const cards = [...container.querySelectorAll("#guides [data-guides] > li")] as HTMLElement[];
+    expect(guides).toHaveLength(6);
+    expect(cards.map((li) => li.querySelector("a")?.getAttribute("href"))).toEqual(guides.map((g) => g.path));
+    guides.forEach((guide, i) => {
+      expect(within(cards[i]!).getByRole("heading", { level: 3, name: guide.navLabel })).toBeTruthy();
+      expect(cards[i]!.textContent).toContain(guide.summary);
+      expect(within(cards[i]!).getByRole("link").textContent).toContain(guide.navLabel);
+    });
   });
 
   it("lists exactly the commands src/rook/cli/main.py defines", () => {
     const main = readFileSync(resolve(process.cwd(), "../src/rook/cli/main.py"), "utf8");
     const defined = [...main.matchAll(/@app\.command\(\)\s*\ndef (\w+)\(/g)].map((m) => m[1]!);
     expect(defined.length).toBeGreaterThanOrEqual(8);
-    const listed = gettingStarted.commands.items.map((c) => c.usage.split(" ")[1]).filter((name): name is string => name !== undefined);
+    const listed = cliReference.items.map((c) => c.usage.split(" ")[1]).filter((name): name is string => name !== undefined);
     expect(listed.sort()).toEqual(defined.sort());
+    const { container } = inSite(<DocsPage />);
+    const text = container.querySelector("#cli")?.textContent ?? "";
+    for (const c of cliReference.items) expect(text).toContain(c.usage);
   });
 
-  it("the GitHub Action: the README workflow with the SHA placeholder and the pull_request warning", () => {
-    const { container } = inSite(<DocsPage />);
-    const text = container.querySelector("#github-action")?.textContent ?? "";
-    expect(text).toContain("tony19053000/rook@<full-commit-sha>");
-    expect(text).toMatch(/pull_request,\s*never pull_request_target/);
+  it("the README shows the same workflow as the GitHub Action guide", () => {
     const readme = readFileSync(resolve(process.cwd(), "../README.md"), "utf8");
-    for (const line of githubAction.workflow.split("\n")) expect(readme, line).toContain(line);
+    expect(readme).toContain(actionWorkflow);
   });
 });
 

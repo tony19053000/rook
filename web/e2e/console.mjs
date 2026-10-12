@@ -18,7 +18,8 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const PAGES = ["/", "/app", "/docs", "/security", "/pricing", "/privacy", "/terms", "/runs", "/counterexamples", "/rules", "/repositories", "/login"];
+const DOCS_GUIDES = ["getting-started", "install", "rules", "counterexamples", "github-action", "data"].map((slug) => `/docs/${slug}`);
+const PAGES = ["/", "/app", "/docs", ...DOCS_GUIDES, "/security", "/pricing", "/roadmap", "/about", "/contact", "/privacy", "/terms", "/runs", "/counterexamples", "/rules", "/repositories", "/login"];
 const DEMO = { repo: { kind: "demo", ref: "rook-demo/minishop" }, request: "find and fix a bug", options: { auto: false } };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));

@@ -68,7 +68,7 @@ describe("walkthrough frame contrast (06 §3)", () => {
   });
 
   it("leaves the app's own token values alone", () => {
-    expect(app["--faint"]).toBe("#807e76");
+    expect(app["--faint"]).toBe("#9d9c96"); // raised for the app pages in ROOK-052 (lib/appContrast.test.ts)
     expect(app["--accent"]).toBe("#e0563f");
   });
 });

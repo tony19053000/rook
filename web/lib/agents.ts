@@ -1,5 +1,6 @@
 // Display names, colors, verbs and sprite shapes of the agents (04 §1.3, CONTRACT).
 
+import { MIN_TEXT_CONTRAST, readableColor } from "./contrast";
 import type { AgentId, Worker } from "./events";
 import { clean } from "./safeText";
 import type { Look, Shape } from "./sprite";
@@ -32,6 +33,21 @@ export const AGENTS: Record<AgentId, AgentInfo> = {
 };
 
 export const BRAND_COLOR = "#E0563F";
+
+/** The background agent rows sit on in the app (`--app` in app/globals.css), per theme. */
+export const APP_ROW_BG = { dark: "#262624", light: "#faf9f5" } as const;
+
+/**
+ * An agent's name colour as text in the app, one per theme, each at least 4.5:1 on that theme's `--app`: the
+ * agent's own colour where it already reads, else the nearest lighter (dark theme) or darker (light theme) mix.
+ * The sprite and the dot keep the true colour.
+ */
+export function agentTextColors(color: string): { dark: string; light: string } {
+  return {
+    dark: readableColor(color, APP_ROW_BG.dark),
+    light: readableColor(color, APP_ROW_BG.light, MIN_TEXT_CONTRAST, "#000000"),
+  };
+}
 
 /** The brand mascot: a cloud in the brand color, no name or verb. */
 export const MASCOT: AgentInfo = agent("Rook", "cloud", BRAND_COLOR, "");

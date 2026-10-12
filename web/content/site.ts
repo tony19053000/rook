@@ -3,7 +3,6 @@
 export const REPO_URL = "https://github.com/tony19053000/rook";
 export const INSTALL_COMMAND = `uv tool install git+${REPO_URL}`;
 export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
-export const REPO_DOCS_URL = `${REPO_URL}/tree/main/docs`;
 /** The site's public origin (06 §4 "Site URL"): metadataBase, the sitemap, robots and OG URLs derive from it. */
 export const SITE_URL = "https://rook-weld-six.vercel.app";
 /** Contact, support and privacy requests (06 §4 "Operator and contact"). */
@@ -46,8 +45,7 @@ export interface NavLink {
 export const cta = {
   demo: { label: "Try Rook", href: "/app" },
   signIn: { label: "Sign in", href: "/login" },
-  /** 06 §5 wants /docs/getting-started; until ROOK-055 adds that guide, the getting-started section of /docs. */
-  docs: { label: "Read the docs", href: "/docs#getting-started" },
+  docs: { label: "Read the docs", href: "/docs/getting-started" },
   /** Replaces both for a visitor this browser remembers as signed in (06 §5). */
   workspace: { label: "Open workspace", href: "/app" },
 } as const;
@@ -87,11 +85,12 @@ export const footerColumns: FooterColumn[] = [
   {
     heading: "Docs",
     links: [
-      // The install, rules and data guides join this column with ROOK-055 (06 §8).
+      // 06 §8. The labels and paths are the guides' own (content/docsGuides.ts; a test compares them).
       { label: "Getting started", href: cta.docs.href },
-      { label: "How it works", href: "/docs#how-it-works" },
-      { label: "GitHub Action", href: "/docs#github-action" },
-      { label: "Docs on GitHub", href: REPO_DOCS_URL, external: true },
+      { label: "Install", href: "/docs/install" },
+      { label: "Rules", href: "/docs/rules" },
+      { label: "GitHub Action", href: "/docs/github-action" },
+      { label: "Data and IBM Bob", href: "/docs/data" },
     ],
   },
   {
