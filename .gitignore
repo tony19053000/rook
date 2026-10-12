@@ -12,6 +12,7 @@ recordings/
 !tests/fixtures/recordings/
 rook-report.json
 rook-report.md
+!tests/fixtures/github_action/rook-report.md
 
 # python
 __pycache__/

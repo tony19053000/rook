@@ -1,0 +1,19 @@
+name: Live smoke
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      ROOK_SITE_URL: https://rook-weld-six.vercel.app
+    steps:
+      - uses: actions/checkout@v7
+      - run: bash .github/scripts/live-smoke.sh "$ROOK_SITE_URL"
