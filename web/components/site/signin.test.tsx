@@ -193,7 +193,8 @@ describe("/login (06 §7)", () => {
     const marked = html.match(/<[a-z]+[^>]*\sdata-needs-js=""[^>]*>/g) ?? [];
     expect(marked).toHaveLength(1);
     expect(marked[0]).toMatch(/^<button /);
-    expect(html).toMatch(new RegExp(`<button [^>]*data-needs-js=""[^>]*>${loginCopy.google}</button>`));
+    // Its content is Google's mark (an aria-hidden svg) and the label.
+    expect(html).toMatch(new RegExp(`<button [^>]*data-needs-js=""[^>]*><svg aria-hidden="true"[\\s\\S]*?</svg>${loginCopy.google}</button>`));
     // Nothing else is hidden: the demo link carries no marker.
     expect(html).toContain(loginCopy.demo.label);
   });

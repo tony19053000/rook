@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { buttonClass } from "@/components/site/Button";
 import { Container } from "@/components/site/Container";
 import { NavLinkItem } from "@/components/site/NavLinkItem";
 import { PageHeader } from "@/components/site/PageHeader";
@@ -9,7 +10,7 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata(aboutCopy.title, aboutCopy.description, "/about");
 
-const LIST = "flex list-disc flex-col gap-3 pl-5 text-base leading-relaxed text-site-muted marker:text-site-faint";
+const LIST = "site-list text-base leading-[1.7] text-site-muted";
 
 // /about (06 §5.7): who runs Rook, why it exists, the story and what it is not. A server component.
 export default function AboutPage() {
@@ -34,11 +35,11 @@ export default function AboutPage() {
           </div>
         </Section>
       ))}
-      <Container width="narrow" className="py-16 sm:py-24">
-        <ul className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+      <Container width="narrow" className="pb-20 sm:pb-28">
+        <ul className="flex flex-wrap gap-2.5 border-t border-site-line pt-10">
           {aboutLinks.map((link) => (
             <li key={link.href}>
-              <NavLinkItem link={link} className="text-site-link underline underline-offset-4" />
+              <NavLinkItem link={link} className={buttonClass("secondary", "md")} />
             </li>
           ))}
         </ul>

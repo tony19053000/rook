@@ -36,13 +36,14 @@ Route-move rules:
 ## 2. Stack and constraints
 
 - Next.js App Router, React 19, TypeScript strict, Tailwind v4 (already in `web/`). Add the **`motion`** package (`motion/react`), used only in the home page's client islands, ideally through `LazyMotion` + `m` + `domAnimation`.
-- No 3D/WebGL. No analytics, trackers or third-party runtime scripts. Fonts are self-hosted by `next/font` (reuse the IBM Plex Sans/Mono already in `app/layout.tsx`).
+- No 3D/WebGL. No analytics, trackers or third-party runtime scripts. Fonts are self-hosted by `next/font` (the three families already in `app/fonts.ts`: Newsreader for headings, IBM Plex Sans for text and UI, IBM Plex Mono for labels and data).
 - **CSP stays nonce-based** (03 §8). Next.js inlines its flight data as scripts, and with a nonce CSP they need the per-request nonce, so pages keep rendering per request (`dynamic = "force-dynamic"`). This is the "static where possible" limit: pages do no data fetching and are cheap to render, but they are not prerendered. Never weaken the CSP (no `'unsafe-inline'` scripts) to make a page static: the site shares an origin with the app, whose Supabase session lives in `localStorage`.
 - No secrets in the client bundle: only `NEXT_PUBLIC_SUPABASE_URL` and the public anon key, as today.
 
 ## 3. Design
 
 - Quality bar: Linear / Vercel / Resend. **Dark, technical** look, dark only on the site (the app keeps its own warm theme and light mode).
+- Look (ROOK-058): warm near-black neutrals (so the app screenshots and walkthrough frames sit in the page), hairline borders, serif headings like the app's own, mono labels. Colour carries meaning: the primary button is the page's ink on its background; the coral accent is for the mark, small marks and the "rule broken" state; green is what the engine verified; blue marks IBM Bob's steps. Wide sections are separated by hairlines; long-form pages (security, legal, about, guides) are one readable column with a hairline between sections; guides have the docs navigation in a left rail and the table of contents in a right rail on wide screens.
 - A real design system: colour tokens, a type scale, spacing, a grid and reusable `Section`, `Card`, `Badge`, `Button` and `CodeBlock` components (under `web/components/site/`). Site tokens are scoped so they don't change the app's tokens.
 - An SVG logo mark and wordmark for Rook, and a favicon (`app/icon.svg`, replacing the current one).
 - A sticky translucent header with navigation and a **mobile menu built on native `<details>`** (works without JS); a **skip link** to `#main`; a full footer with **Product, Docs, Company and Legal** columns.
@@ -144,6 +145,7 @@ CTAs: "Try Rook" → `/app` (primary). "Read the docs" → `/docs/getting-starte
 
 ## 7. Sign-in
 
+- Layout (ROOK-058): one centred column that fills the first screen, like a dedicated sign-in page: the mark, the heading and lead, a card whose one main action is **Continue with Google** (with Google's mark), a quiet "Try Rook without signing in" link under it, then the guest note and plain links to Terms and Privacy. Signing in is offered here and from the app sidebar's Sign in button, never inside the app's chat column.
 - Sign in only on a click, never on page load. States: **idle**, **opening** (button disabled, "Opening Google…"), **failed** (the reason and a Retry button), **not configured** (`SIGN_IN_AVAILABLE` false: a plain message and a link to try the demo, no dead button). Returning from Google with `?code=` completes the sign-in the user already started, then goes to `/app`.
 - With JS off: a `<noscript>` note that sign-in needs JavaScript; the rest of the page still renders. The Google button carries `data-needs-js` and a `<noscript><style>` hides it, so there is no dead button.
 - The app keeps its account menu with **Sign out** (`components/Sidebar.tsx`).

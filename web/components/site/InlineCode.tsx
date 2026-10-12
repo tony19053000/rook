@@ -4,7 +4,7 @@ export function InlineCode({ text }: { text: string }) {
     <>
       {text.split("`").map((part, i) =>
         i % 2 === 1 ? (
-          <code key={i} className="rounded bg-site-raised px-1 py-0.5 font-mono text-[0.9em] break-words text-site-ink">
+          <code key={i} className="rounded-md border border-site-line bg-white/[0.04] px-1.5 py-0.5 font-mono text-[0.86em] break-words text-site-ink">
             {part}
           </code>
         ) : (

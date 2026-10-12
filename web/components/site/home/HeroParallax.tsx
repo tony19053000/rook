@@ -30,6 +30,8 @@ export function HeroParallax({ labelledBy, text, figure }: HeroParallaxProps) {
 
   return (
     <section ref={ref} aria-labelledby={labelledBy} data-hero className="relative isolate overflow-hidden">
+      {/* Still decoration (not a parallax layer): a faint light from above the header. */}
+      <div aria-hidden className="site-top-light pointer-events-none absolute inset-x-0 top-0 -z-10 h-[34rem]" />
       <LazyMotion features={domAnimation} strict>
         <m.div
           aria-hidden
@@ -40,14 +42,14 @@ export function HeroParallax({ labelledBy, text, figure }: HeroParallaxProps) {
         <m.div
           aria-hidden
           data-layer="glow"
-          className="site-glow pointer-events-none absolute top-[18rem] left-1/2 -z-10 h-[34rem] w-[min(64rem,140vw)] -translate-x-1/2"
+          className="site-glow pointer-events-none absolute top-[26rem] left-1/2 -z-10 h-[26rem] w-[min(64rem,130vw)] -translate-x-1/2 sm:top-[30rem]"
           style={reduced ? undefined : { y: glowY, scale: glowScale }}
         />
-        <Container className="pt-20 pb-20 sm:pt-28 sm:pb-28">
-          <div data-hero-text className="mx-auto flex max-w-4xl flex-col items-center text-center xl:max-w-6xl">
+        <Container className="pt-16 pb-20 sm:pt-24 sm:pb-28 lg:pt-28">
+          <div data-hero-text className="mx-auto flex max-w-4xl flex-col items-center text-center xl:max-w-[70rem]">
             {text}
           </div>
-          <m.div data-layer="figure" className="mt-16 sm:mt-20" style={reduced ? undefined : { y: figureY }}>
+          <m.div data-layer="figure" className="mt-14 sm:mt-20" style={reduced ? undefined : { y: figureY }}>
             {figure}
           </m.div>
         </Container>

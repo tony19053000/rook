@@ -97,13 +97,13 @@ export function Walkthrough({ steps = flowSteps, frames = walkthroughFrames }: W
   const summaryId = (i: number) => `${uid}-summary-${i}`;
 
   return (
-    <div ref={root} className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10 2xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] 2xl:gap-14">
-      <div className="flex min-w-0 flex-col gap-4">
+    <div ref={root} className="grid gap-8 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-12 2xl:grid-cols-[minmax(0,4fr)_minmax(0,8fr)] 2xl:gap-16">
+      <div className="flex min-w-0 flex-col gap-5">
         <div
           role="tablist"
           aria-label={walkthroughCopy.tablistLabel}
           aria-orientation="vertical"
-          className="flex flex-col gap-1.5"
+          className="flex flex-col gap-1"
         >
           {steps.map((step, i) => {
             const active = i === index;
@@ -124,15 +124,20 @@ export function Walkthrough({ steps = flowSteps, frames = walkthroughFrames }: W
                 onKeyDown={onKeyDown}
                 onFocus={() => setChoice("pause")}
                 data-step={step.id}
-                className={`relative flex w-full gap-4 overflow-hidden rounded-xl border px-4 py-3 text-left transition-colors ${
-                  active ? "border-site-control bg-site-card" : "border-transparent hover:bg-site-raised"
+                className={`relative flex w-full gap-4 overflow-hidden rounded-xl border px-4 py-3.5 text-left transition-colors ${
+                  active ? "site-panel border-site-strong" : "border-transparent hover:bg-white/[0.04]"
                 }`}
               >
-                <span aria-hidden className={`font-mono text-xs leading-6 ${active ? "text-site-accent" : "text-site-faint"}`}>
+                <span
+                  aria-hidden
+                  className={`grid size-7 flex-none place-items-center rounded-md border font-mono text-[0.6875rem] font-medium ${
+                    active ? "border-site-accent/45 bg-site-accent/10 text-site-accent" : "border-site-strong text-site-faint"
+                  }`}
+                >
                   {String(i + 1).padStart(2, "0")}
                 </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className={`font-semibold ${active ? "text-site-ink" : "text-site-muted"}`}>{step.title}</span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className={`font-semibold tracking-[-0.011em] ${active ? "text-site-ink" : "text-site-muted"}`}>{step.title}</span>
                   <span id={summaryId(i)} className="text-sm leading-relaxed text-site-muted">
                     {step.summary}
                   </span>
@@ -149,30 +154,30 @@ export function Walkthrough({ steps = flowSteps, frames = walkthroughFrames }: W
             );
           })}
         </div>
-        <div>
+        <div className="pl-4">
           <button
             type="button"
             onClick={() => setChoice(playing ? "pause" : "play")}
             aria-label={`${playing ? walkthroughCopy.pause : walkthroughCopy.play}${walkthroughCopy.controlSuffix}`}
             data-autoplay={running ? "running" : "stopped"}
-            className="inline-flex h-9 w-24 items-center justify-center gap-2 rounded-full border border-site-control text-sm font-medium text-site-ink transition-colors hover:bg-site-raised"
+            className="inline-flex h-9 w-24 items-center justify-center gap-2 rounded-[0.625rem] border border-site-control bg-white/[0.03] text-sm font-medium text-site-ink transition-colors hover:border-site-ink hover:bg-white/[0.07]"
           >
-            <span aria-hidden className="font-mono text-xs">
-              {playing ? "❚❚" : "▶"}
-            </span>
+            <svg aria-hidden width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+              {playing ? <path d="M1.5 1h2.5v8H1.5zM6 1h2.5v8H6z" /> : <path d="M2 .75v8.5L9.25 5z" />}
+            </svg>
             {playing ? walkthroughCopy.pause : walkthroughCopy.play}
           </button>
         </div>
       </div>
 
       <div
-        className="relative h-[47rem] min-w-0 overflow-hidden sm:h-[40rem]"
+        className="relative h-[47rem] min-w-0 overflow-hidden sm:h-[40rem] lg:h-[38rem]"
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
       >
         <div
           data-track
-          className={`flex h-full ${reduced ? "" : "transition-transform duration-700 ease-out"}`}
+          className={`flex h-full ${reduced ? "" : "transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]"}`}
           style={{ transform: `translateX(-${index * 100}%)` }}
         >
           {steps.map((step, i) => {
@@ -188,9 +193,12 @@ export function Walkthrough({ steps = flowSteps, frames = walkthroughFrames }: W
                 inert={!active}
                 tabIndex={active ? 0 : -1}
                 data-frame={step.id}
-                className="flex h-full w-full flex-none flex-col gap-2.5 rounded-2xl"
+                className="flex h-full w-full flex-none flex-col gap-3 rounded-2xl"
               >
-                <p className="flex-none font-mono text-xs text-site-faint">{WALKTHROUGH_LABEL}</p>
+                <p className="flex flex-none items-center gap-2 font-mono text-xs text-site-faint">
+                  <span aria-hidden className="size-1.5 rounded-full bg-site-control" />
+                  {WALKTHROUGH_LABEL}
+                </p>
                 <div className="min-h-0 flex-1">
                   <WalkthroughFrameView frame={frames.find((f) => f.stepId === step.id)} active={active} reduced={reduced} />
                 </div>

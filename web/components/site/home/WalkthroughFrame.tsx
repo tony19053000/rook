@@ -45,7 +45,7 @@ function FrameItem({ item, animate, reduced }: { item: WalkthroughItem; animate:
 
 export function WalkthroughFrameView({ frame, active, reduced }: { frame: WalkthroughFrame | undefined; active: boolean; reduced: boolean }) {
   return (
-    <div inert style={FRAME_TOKEN_OVERRIDES as CSSProperties} className="wt-frame app-dark relative flex h-full min-w-0 flex-col overflow-hidden rounded-xl border border-line bg-app font-sans text-[14px] leading-normal text-ink">
+    <div inert style={FRAME_TOKEN_OVERRIDES as CSSProperties} className="wt-frame app-dark relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-line bg-app font-sans text-[14px] leading-normal text-ink shadow-[inset_0_1px_0_rgb(255_255_255/0.05)]">
       <div className="flex flex-none items-center gap-2 border-b border-line bg-side px-3.5 py-2.5">
         <span aria-hidden className="flex gap-1.5">
           <span className="size-2.5 rounded-full bg-line" />

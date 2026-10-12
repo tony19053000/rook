@@ -18,4 +18,9 @@ export const loginCopy = {
   demo: { label: `${cta.demo.label} without signing in`, href: cta.demo.href },
   guestNote: "Guests can run the example repos a few times a day. To run Rook on your own repos, install the CLI.",
   cliLink: { label: "Getting started", href: "/docs/getting-started" },
+  /** The small print under the sign-in card: plain links, no claim of agreement. */
+  legal: [
+    { label: "Terms", href: "/terms" },
+    { label: "Privacy", href: "/privacy" },
+  ],
 } as const;

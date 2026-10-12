@@ -19,24 +19,24 @@ export default function OpenGraphImage() {
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "72px 80px",
-          background: "#09090b",
-          backgroundImage: "radial-gradient(circle at 85% 0%, rgba(255,106,77,0.22), rgba(9,9,11,0) 55%)",
-          color: "#f4f4f5",
+          background: "#0b0a09",
+          backgroundImage: "radial-gradient(circle at 85% 0%, rgba(255,106,77,0.22), rgba(11,10,9,0) 55%)",
+          color: "#f5f3ec",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <svg width="88" height="88" viewBox="0 0 32 32">
-            <rect x="0.5" y="0.5" width="31" height="31" rx="8" fill="#131316" stroke="#34343b" />
+            <rect x="0.5" y="0.5" width="31" height="31" rx="8" fill="#151412" stroke="#383531" />
             <path fill="#ff6a4d" d={ROOK_PATH} />
           </svg>
           <div style={{ fontSize: 64, fontWeight: 700, letterSpacing: "-0.03em" }}>{site.name}</div>
-          <div style={{ marginLeft: "auto", fontSize: 24, color: "#a1a1aa", border: "1px solid #34343b", borderRadius: 999, padding: "8px 20px" }}>
+          <div style={{ marginLeft: "auto", fontSize: 24, color: "#aba89f", border: "1px solid #383531", borderRadius: 999, padding: "8px 20px" }}>
             {site.stage.replace(/\.$/, "")}
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
           <div style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.1, letterSpacing: "-0.03em", maxWidth: 1000 }}>{site.tagline}</div>
-          <div style={{ fontSize: 26, lineHeight: 1.45, color: "#a1a1aa", maxWidth: 1000 }}>{`${site.oneLiner} ${site.builtOn}`}</div>
+          <div style={{ fontSize: 26, lineHeight: 1.45, color: "#aba89f", maxWidth: 1000 }}>{`${site.oneLiner} ${site.builtOn}`}</div>
         </div>
       </div>
     ),

@@ -2,18 +2,20 @@ import Link from "next/link";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 rounded-full font-medium whitespace-nowrap transition-colors disabled:cursor-not-allowed disabled:opacity-60";
+  "inline-flex items-center justify-center gap-2 rounded-[0.625rem] font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100";
 
+// Primary is the page's ink on its background (17:1); the accent stays for marks and the "rule broken" state.
 const VARIANTS = {
-  primary: "bg-site-accent text-site-accent-ink hover:bg-site-ink",
-  secondary: "border border-site-control text-site-ink hover:border-site-ink hover:bg-site-raised",
-  ghost: "text-site-muted hover:text-site-ink",
+  primary:
+    "bg-site-ink text-site-bg shadow-[inset_0_-2px_0_rgb(0_0_0/0.12),0_10px_30px_-12px_rgb(245_243_236/0.45)] hover:bg-white",
+  secondary: "border border-site-control bg-white/[0.03] text-site-ink hover:border-site-ink hover:bg-white/[0.07]",
+  ghost: "text-site-muted hover:bg-white/[0.05] hover:text-site-ink",
 } as const;
 
 const SIZES = {
-  sm: "h-9 px-4 text-sm",
-  md: "h-10 px-5 text-sm",
-  lg: "h-12 px-6 text-base",
+  sm: "h-9 px-3.5 text-sm",
+  md: "h-10 px-4 text-sm",
+  lg: "h-12 px-6 text-[0.9375rem]",
 } as const;
 
 export type ButtonVariant = keyof typeof VARIANTS;

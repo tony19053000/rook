@@ -10,7 +10,7 @@ export function SiteFrame({ children }: { children: ReactNode }) {
     <div className="site flex min-h-screen flex-col overflow-x-clip">
       <a
         href="#main"
-        className="sr-only rounded-full bg-site-ink px-4 py-2 text-sm font-medium text-site-bg focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"
+        className="sr-only rounded-[0.625rem] bg-site-ink px-4 py-2 text-sm font-medium text-site-bg focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50"
       >
         {headerCopy.skipLink}
       </a>
