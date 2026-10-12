@@ -1,6 +1,6 @@
 # 06 · Public website: Rook
 
-The public marketing site that sits in front of the existing web app, in the same Next.js project (`web/`). Tickets ROOK-043, ROOK-044 and ROOK-045 (doc 05, milestone M11) build it. This doc is the source of truth for its routes, design rules, copy rules and the **product facts** the copy may state.
+The public marketing site that sits in front of the existing web app, in the same Next.js project (`web/`). Tickets ROOK-043 to ROOK-048 (doc 05, milestone M11) built it; M12 (ROOK-049 to ROOK-057, launch readiness) reworks it for an early-access launch. This doc is the source of truth for its routes, design rules, copy rules and the **product facts** the copy may state.
 
 ---
 
@@ -9,10 +9,20 @@ The public marketing site that sits in front of the existing web app, in the sam
 | Route | What | Notes |
 |---|---|---|
 | `/` | Marketing home | Was the app home; the app moves to `/app` |
-| `/docs` | How Rook works + getting started | The 6-step flow (§4), install, CLI commands, GitHub Action |
+| `/docs` | Docs overview: the 6-step flow and links to the guides | |
+| `/docs/getting-started` | Short guide: install, first run, what you see (M12) | |
+| `/docs/install` | Detailed install: supported environments, dependencies, Bob credentials, limitations (M12) | |
+| `/docs/rules` | The approved-rules workflow and an example `rook/rook.yaml` (M12) | The example is a real file from the repo, not invented |
+| `/docs/counterexamples` | Minimal counterexamples, replay consistency and verified fixes, with the refund-bug example (M12) | |
+| `/docs/github-action` | The GitHub Action and the pull-request workflow (M12) | |
+| `/docs/data` | IBM Bob credentials and exactly when repo data is sent to IBM Bob (M12) | |
 | `/security` | Trust: how data is handled + "What is not yet true" | |
-| `/pricing` | Rendered from `content/pricing.ts` | No plans set → "Pricing will be published at launch" |
-| `/privacy`, `/terms` | Legal drafts | Visible banner "Draft — pending legal review, not yet in effect" |
+| `/pricing` | Early access and open source (M12) | Free ways to use Rook today; hosted plans not priced; never a number |
+| `/roadmap` | Shipped, limited and planned (M12) | From §4 facts only |
+| `/about` | The operator and the project story (M12) | §4 "Operator and contact" |
+| `/contact` | Contact and early-access interest (M12) | `mailto:` links with a prefilled subject + GitHub Issues; no form backend |
+| `/privacy`, `/terms` | Privacy policy and terms, in effect (M12) | Name the operator, the contact email and India; no placeholders, no draft banner |
+| `/sitemap.xml`, `/robots.txt` | `app/sitemap.ts`, `app/robots.ts` (M12) | Site pages only; app routes (`/app`, `/runs`, …) and `/dev/*` disallowed |
 | `/login` | Sign-in page (restyled to the site look) | Keeps the Supabase PKCE return (`/login?code=…`): this URL is in the Supabase redirect allowlist, never move it |
 | any unknown path | Branded 404 (`app/not-found.tsx`) | |
 | `/app` | **The web app home** (was `/`) | Composer, repo picker, guest "Try an example" |
@@ -78,10 +88,18 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 - Hand your secrets to the app or the logs. The sandbox gets none of Rook's environment; a redaction filter scrubs keys and tokens from events and logs.
 - Run arbitrary repos for guests on the hosted site. Guests run only allowlisted demo repos pinned by commit SHA.
 
+**Positioning (M12).** Rook is an **early-access, open-source** developer tool. The site never presents it as a hackathon entry: the hackathon appears only in the About page's project story ("Rook started at the IBM Bob 2.0 Hackathon in September 2026"). IBM Bob is acknowledged ("Built on IBM Bob", in the footer, About, docs and the FAQ), but headlines and leads talk about Rook's own value: finding, proving and fixing business-rule bugs. The primary CTA stays **"Try Rook"** (no visible "demo", ROOK-048); the secondary CTA is **"Read the docs"** (→ `/docs/getting-started`) plus a GitHub link.
+
+**Operator and contact (M12).** Rook is run by **Aayush Kumar**, an individual developer based in **India** (not a company: no incorporation, no employees, no clients, no revenue, no funding; never imply any). Contact, support and privacy requests: **c40534394@gmail.com** (one constant, `CONTACT_EMAIL` in `content/site.ts`). Bugs and feature requests: GitHub Issues on the repo. Legal pages: operator "Aayush Kumar (individual), India"; governing law: the laws of India.
+
+**Site URL.** `SITE_URL` in `content/site.ts` = `https://rook-weld-six.vercel.app` until a custom domain is connected (then change that one constant). `metadataBase`, the sitemap, robots and OG URLs all derive from it.
+
+**Recorded vs live.** A run with recorded Bob answers is always labelled **"Recorded example run"** with a one-line explanation (Bob's answers are replayed from a saved real run; the engine still runs live against the real app). A run with live Bob calls is labelled **"Live run"**. Never blur the two.
+
 **Where Rook is today (honest scope):**
-- A hackathon-stage project (IBM Bob 2.0 Hackathon, Sep 2026). No paid plans, no billing, no team accounts, no SSO.
-- The hosted site's guest demo offers **shop-app** only, with **recorded** Bob answers (labelled "recorded"); billing-service and wallet-api are pinned on the server but not offered (the Mapper can't yet set up their dependent actions). Guests get 3 runs a day.
-- Signed-in users with the GitHub App linked can run their own GitHub repos on the hosted server only when the server enables it (`/me` `can_run_github`), one such run at a time server-wide, 5 per user per day, live Bob with a coin budget. Otherwise the CLI runs your repos on your machine.
+- Early access. No paid plans, no billing, no team accounts, no SSO.
+- The hosted site's guest runs offer **shop-app** only, with **recorded** Bob answers (labelled "Recorded example run"); billing-service and wallet-api are pinned on the server but not offered (the Mapper can't yet set up their dependent actions). Guests get 3 runs a day.
+- **Hosted runs of your own repos are turned off** on the hosted server (ROOK-050: no Docker socket on the server until a separate runner host exists). Signed-in users can link the GitHub App and see their repos; Rook shows the CLI command to run a repo on their own machine.
 - HTTP APIs only: no libraries, pure frontends, mobile apps or ML notebooks.
 - Not on PyPI; install from GitHub. Live runs need Docker and your own IBM Bob key.
 - In the web app, editing a single rule, replaying a counterexample and downloading the test are not built yet.
@@ -94,23 +112,28 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 - Cookies: `rook_guest` (signed, httpOnly, SameSite=Lax; identifies a guest browser for the demo quota) and `rook_login` (signed, 10 minutes, only during CLI sign-in). `localStorage`: `rook-auth`, `rook.sidebar.collapsed`.
 - GitHub (only if you connect it): the installation id, your installation's repo list as GitHub reports it, short-lived installation tokens kept in memory. For a hosted GitHub run, the repo is cloned into a server workspace.
 - IBM Bob: in live runs, repo content and run data go to IBM Bob as prompts. The guest demo uses recorded answers.
-- Hosting: the web on Vercel, the API on AWS EC2 behind Caddy. No automatic deletion of runs is implemented.
+- Hosting: the web on Vercel, the API on AWS EC2 (US West, Oregon) behind Caddy.
+- Deletion and retention (ROOK-051): the owner can delete a run (its events and counterexamples too); a signed-in user can delete all their Rook server data (runs and the GitHub link) from the account menu; runs older than 30 days and guest quota rows older than 2 days are deleted automatically. The Supabase sign-in account itself is deleted on request by email (the Rook server can't delete it).
 - No analytics, ads or tracking scripts on the site or the app.
 
 **Security facts** (for `/security`, from doc 03): Docker sandbox hardening (non-root, `--cap-drop ALL`, `no-new-privileges`, pids/memory/CPU limits, only the workspace copy mounted, ports on 127.0.0.1, internal network at run time); Bob runs read-only except the Mechanic (`.rook-sandbox/`) and the Surgeon (approved paths), no command/browser/MCP tools, repo text marked untrusted, strict JSON schemas; secrets only on the host, never in git, logs, events or the web bundle; GitHub App with minimum permissions (Contents RW, Pull requests RW, Metadata R), webhooks HMAC-verified, per-repo installation tokens; every run route checks the owner and answers 404 to others; rate limits and guest quotas; CSP with a per-request nonce plus the other headers in 03 §8.
 
-**What is not yet true (security, honest):** no third-party audit or penetration test, no certifications; on the hosted server the container that starts sandboxes has the Docker socket, which is root-equivalent on the host if the server itself had a remote-code-execution bug (accepted for the hackathon; the long-term fix is a separate runner host); prompt injection from repo text is bounded by tool permissions and engine checks, not eliminated; offline settings for allowlisted demo test commands are best effort; no automatic data deletion or self-serve account deletion yet.
+**What is not yet true (security, honest):** no third-party audit or penetration test, no certifications; hosted runs of your own repos are off because starting sandboxes from the server needs the Docker socket, which is root-equivalent on the host (the server no longer mounts it, ROOK-050; turning hosted runs back on needs a separate runner host); prompt injection from repo text is bounded by tool permissions and engine checks, not eliminated; offline settings for allowlisted demo test commands are best effort; the Supabase sign-in account is deleted by email request, not self-serve.
 
 ## 5. Pages
 
 1. **Home** (`/`): a cinematic hero with layered, scroll-driven parallax (background grid, glow, product figure; the hero text never moves) → an animated product walkthrough (§6) → Features → "What Rook refuses to do" → "Where Rook is today" → FAQ (native `<details>`) → closing call to action.
 2. **Docs** (`/docs`): the full 6-step flow, then getting started (install, first run, CLI commands, the GitHub Action).
 3. **Security** (`/security`): data handling, sandboxing, AI boundaries, secrets, auth, then "What is not yet true".
-4. **Pricing** (`/pricing`): `content/pricing.ts` exports the plans list (empty today). The page and anything else that mentions pricing derive the status from that one export; with no plans it shows "Pricing will be published at launch". Never a number.
-5. **Privacy** and **Terms**: drafts, with the banner and visible placeholders `[Company legal name]`, `[contact email]`, `[jurisdiction]`. Privacy describes only §4 "Data the app actually processes".
+4. **Pricing** (`/pricing`, M12): "Early access and open source". Three ways to use Rook, each with what it costs **today** in words, never a number: (1) **Try Rook on this site**: free, no account, recorded example runs of shop-app, 3 a day; (2) **The CLI on your machine**: free and open source (MIT), your own Docker and IBM Bob key (any IBM Bob usage cost is between you and IBM); (3) **Hosted runs of your own repos**: not offered yet, planned, no price set. Then a short "Interested in hosted Rook?" → `/contact`. `content/pricing.ts` keeps the `plans` export (empty) so a future price list has one source.
+5. **Privacy** and **Terms** (M12): in effect from their "Last updated" date, operator, email and India named, no placeholders and no draft banner. Privacy describes only §4 "Data the app actually processes": what is collected, where it is stored, who receives it (Supabase, Vercel, AWS, GitHub, IBM Bob), how long it is kept, and how to delete it. Terms: open-source licence for the code, the hosted site as-is during early access, acceptable use (only repos you may test), no warranty, liability limited as far as Indian law allows.
 6. **Sign-in** (`/login`) and a branded **404**.
+7. **About** (`/about`): who runs Rook (§4 "Operator and contact"), why it exists, the project story (started at the IBM Bob 2.0 Hackathon, Sep 2026; now an early-access open-source project), what it is not (no company, team or funding).
+8. **Roadmap** (`/roadmap`): three lists, **Shipped**, **Limited** and **Planned**, from §4 only. Planned items carry no dates.
+9. **Contact** (`/contact`): the email (general, early access, privacy) as `mailto:` links with prefilled subjects, GitHub Issues for bugs, and what to expect (one person reads it; no response-time promise).
+10. **Docs guides** (`/docs/*`, §1): each a long-form page with a table of contents; commands copied from the real CLI (`uv run rook --help`) and files from the repo; known limitations stated plainly.
 
-CTAs: "Try Rook" → `/app`. "Sign in" → `/login`. Signed-in visitors see **"Open workspace"** → `/app` instead (a client-side hint read from `localStorage` `rook-auth` without loading the auth library; the server render shows the signed-out CTAs).
+CTAs: "Try Rook" → `/app` (primary). "Read the docs" → `/docs/getting-started` (secondary). "Sign in" → `/login`. Signed-in visitors see **"Open workspace"** → `/app` instead (a client-side hint read from `localStorage` `rook-auth` without loading the auth library; the server render shows the signed-out CTAs).
 
 ## 6. Walkthrough (home)
 
@@ -127,7 +150,8 @@ CTAs: "Try Rook" → `/app`. "Sign in" → `/login`. Signed-in visitors see **"O
 
 ## 8. Metadata and performance
 
-- Per-page title (template `%s · Rook`), description, Open Graph and Twitter cards (`summary_large_image` with an OG image), theme colour.
+- Per-page title (template `%s · Rook`), description, Open Graph and Twitter cards (`summary_large_image` with an OG image), theme colour. `metadataBase` = `SITE_URL`; the favicon, logo, OG image, page titles and the header wordmark use the same mark and name.
+- Footer (M12): Product (Overview, Try Rook, Pricing, Roadmap, Sign in), Docs (Getting started, Install, Rules, GitHub Action, Data and IBM Bob), Company (About, Contact, GitHub), Legal (Privacy, Terms, Security).
 - `motion` is imported only by the home page's client islands. Header, footer and the inner pages are server components (the header's signed-in hint is the only client island they need).
 
 ## 9. Tests (Vitest + React Testing Library, jsdom per file)

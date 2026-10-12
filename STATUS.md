@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** ROOK-048 (no "demo" in visible text) committed 4530044; pushed, Vercel live
+**Last updated:** 2026-10-12 IST · **By:** M12 launch readiness planned (ROOK-049–057); 049, 050, 053 in progress
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████████████████░]  97%  47 / 48 tickets
+OVERALL   [████████████████████████░░░░░░]  82%  47 / 57 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -24,7 +24,8 @@ M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030�
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
-USER tasks            [░░░░░░░░░░]   0%   0 / 9    U1…U9
+M12 Launch readiness  [░░░░░░░░░░]   0%   0 / 9    ROOK-049…057
+USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
 
@@ -92,6 +93,15 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-046 | Site polish: no-JS sign-in, copy-rule negation | P2 | DONE | reviewer PASS r1 (419 vitest). 45af3ae |
 | ROOK-048 | Remove the word "demo" from user-facing text | P1 | DONE | user request; reviewer PASS r2 (r1 FAIL: session.py log/summary strings). web 427, pytest 1545 (+3 known test_demo_apps failures). Server wording needs a redeploy. 4530044 |
 | ROOK-047 | Site uses the full desktop width | P1 | DONE | user feedback 11 Oct; reviewer PASS r1 (419 vitest; no overflow 360–2560 px). a3a89fb |
+| ROOK-049 | CI green + web checks + scheduled live smoke | P0 | IN PROGRESS | CI fails on the gitignored fixture tests/fixtures/github_action/rook-report.md |
+| ROOK-050 | Hosted GitHub runs off; no Docker socket on the server | P0 | IN PROGRESS | user decision 12 Oct |
+| ROOK-051 | Data deletion and retention (server) | P0 | TODO | deps 050 |
+| ROOK-053 | Site identity, positioning, new pages, SEO | P1 | IN PROGRESS | operator Aayush Kumar (India), email c40534394@gmail.com, CTA stays "Try Rook" |
+| ROOK-054 | Home: problem-first hero, refund-bug story, diagram, screenshot | P1 | TODO | deps 053 |
+| ROOK-055 | Docs guides | P1 | TODO | deps 054 |
+| ROOK-056 | Privacy, Terms, Security copy (in effect) | P1 | TODO | deps 055, 051 |
+| ROOK-052 | Web app: deletion UI, honest run labels, states, a11y | P1 | TODO | deps 056 |
+| ROOK-057 | Final verification | P1 | TODO | deps all M12 |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 
@@ -108,6 +118,13 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 | U7 | Video | TODO |
 | U8 | Deck | TODO |
 | U9 | Submit | TODO |
+| U10 | Redeploy the server after 050 + 051 | TODO |
+| U11 | Approve the push to main | TODO |
+| U12 | Custom domain → Vercel, then SITE_URL | TODO (free domain not redeemed yet) |
+| U13 | Trademark/name check for "Rook" | TODO (conflict risk: CNCF project Rook, rook.io) |
+| U14 | Publish the Google OAuth consent screen | TODO (Testing mode) |
+| U15 | Live GitHub App PR test (CLI, own test repo) | TODO |
+| U16 | Lawyer review of legal pages; launch demo + feedback | TODO |
 
 ## Blockers
 None.

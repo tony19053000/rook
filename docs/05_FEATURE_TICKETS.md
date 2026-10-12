@@ -239,6 +239,72 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 - Unchanged: code identifiers, API values (`kind: "demo"`), data attributes, file names, comments, internal docs, README and the CLI.
 - **AC:** a test fails if "demo" appears in any `content/*.ts` string, any rendered site page, or the app's visible strings; web and Python suites pass; typecheck, lint and build pass.
 
+## M12 · Launch readiness (user request 12 Oct; spec: `docs/06_PUBLIC_SITE.md`, decisions in HANDOFF)
+
+Streams: **CI** 049 · **server** 050 → 051 · **web**, strictly in order (they share `web/` and `next build`): 053 → 054 → 055 → 056 → 052 → 057.
+
+**ROOK-049 · CI green + web checks + scheduled live smoke** · P0 · deps: none
+- CI fails on every push: `.gitignore` line `rook-report.md` hides `tests/fixtures/github_action/rook-report.md`, so 2 tests in `tests/unit/test_github_action.py` fail on the runner. Un-ignore and commit that fixture (keep the root `rook-report.md` ignored).
+- `ci.yml`: add a `web` job (Node 22, `npm ci`, typecheck, lint, test, build in `web/`); move actions to their Node 24 majors.
+- New `.github/workflows/live-smoke.yml` (schedule every 6 h + manual): checks the live site pages (`/`, `/app`, `/docs`, `/pricing`, `/security`, `/privacy`, `/terms`, `/login`) answer 200 and `/api/v1/health` answers `ok: true` through the Vercel proxy. URL from one env value. No secrets. A failed scheduled run emails the repo owner (GitHub's default).
+- **AC:** `uv run pytest -q` passes from a clean clone (`git clone` to a temp dir, then run the 2 tests); the web job's commands pass locally; `actionlint` (or `uvx` yamllint) clean on both workflows.
+
+**ROOK-050 · Hosted GitHub runs off; no Docker socket on the server** · P0 · deps: none
+- User decision (12 Oct): the hosted server runs only recorded guest runs. `deploy/docker-compose.yml` no longer mounts `/var/run/docker.sock` and has no `group_add`; `ROOK_GITHUB_RUNS_MAX` defaults to 0. Turning hosted runs on again is an explicit opt-in override file (`deploy/docker-compose.github-runs.yml`) that `deploy/aws/deploy.sh` uses only when `ROOK_GITHUB_RUNS=1`; without it, `deploy.sh` doesn't need `DOCKER_GID`.
+- With runs off, `/me.can_run_github` is false and `POST /runs` with `repo.kind=github` answers a clear error that says to run the repo with the CLI (check today's behaviour first; keep status codes per 02 §11).
+- Confirm guest recorded runs don't need Docker on the server (ProcessSandbox) and still work with no socket.
+- Docs: 02 §8/§14, 03 §3, `deploy/README.md`.
+- **AC:** tests for the off default and the github-run error; compose renders (`docker compose config`) without the socket and without `DOCKER_GID`, and with the override it has both; a guest recorded run passes in the server tests; Python suite passes.
+
+**ROOK-051 · Data deletion and retention (server)** · P0 · deps: 050
+- Contract (02 §11, doc first): `DELETE /runs/{id}` (owner, user or guest) deletes the run, its events, counterexamples and workspace files; 404 for anyone else; a running run is cancelled first. `DELETE /me/data` (user) deletes every run they own and their `users` row (GitHub link), answers `{ok, runs_deleted}`.
+- Retention sweep at startup and hourly: runs older than `ROOK_RETENTION_DAYS` (default 30) with their events, counterexamples and workspaces; guest quota rows older than 2 days. Never deletes an active run.
+- 03 data section updated (what is deleted, when; the Supabase account is deleted on email request).
+- **AC:** route tests (owner, other user, guest, missing, running run), the sweep with a fake clock, nothing left in the DB or on disk for a deleted run; Python suite passes.
+
+**ROOK-053 · Site identity, positioning, new pages, SEO** · P1 · deps: none (copy facts from 06 §4 M12)
+- 06 §4 "Positioning", "Operator and contact", "Site URL": remove hackathon-stage positioning everywhere on the site (keep it only in the About story); `CONTACT_EMAIL`, `SITE_URL` in `content/site.ts`; Bob acknowledged, not the headline.
+- New pages `/about`, `/contact`, `/roadmap`; `/pricing` becomes "Early access and open source" (06 §5.4). Header nav and footer columns per 06 §8.
+- `app/sitemap.ts`, `app/robots.ts`, `metadataBase`, consistent titles, descriptions, OG/Twitter images, favicon and logo.
+- Tests: the copy guards updated (no "hackathon" outside About, no `[...]` placeholders, no "demo"), every footer and header link resolves to a real route, sitemap lists exactly the site pages, robots disallows app routes.
+- **AC:** 06 §9 tests for the new pages; typecheck, lint, test and build pass; no `metadataBase` warning at `next start`.
+
+**ROOK-054 · Home page: problem-first hero, refund-bug story, 6-step diagram, screenshot** · P1 · deps: 053
+- Hero headline names the customer problem and outcome in plain words; primary "Try Rook", secondary "Read the docs" + GitHub.
+- The refund bug is the central story: a section that shows the real recorded case end to end (the rule, the minimal 3-step sequence with its values, the replay result, the one-line diagnosis, the fix diff, the 4 verification checks), with every value taken from the recorded run or the engine tests (cite the files in the report).
+- The 6 steps as a clean, simple diagram (HTML/SVG, plain language, works at 360 px and with JS off).
+- Features rewritten as developer benefits tied to verifiable facts (06 §4 only).
+- A **real product screenshot** of the web app (a recorded shop-app run, captured from the running app at desktop and mobile widths with the bundled Chromium), served from `web/public/`, with alt text and labelled "Recorded example run".
+- Typography, spacing, hierarchy and mobile pass (360–2560 px, no horizontal scroll).
+- **AC:** home tests updated (landmarks, heading order, one h1, CTAs and targets, the story's values match their source, reduced motion still, JS off complete); typecheck, lint, test and build pass.
+
+**ROOK-055 · Docs guides** · P1 · deps: 054
+- `/docs` overview + the guides in 06 §1 (`getting-started`, `install`, `rules`, `counterexamples`, `github-action`, `data`), each with a table of contents.
+- Supported environments, dependencies and limitations stated from the code (`pyproject.toml`, `action.yml`, sandbox code); the example `rook.yaml` is a real file from the repo; CLI commands match `uv run rook --help` and each subcommand's `--help`; the install command is checked to work (`uv tool install` into a temp `UV_TOOL_DIR`, or `uvx --from git+…` `rook --help`).
+- When repo data goes to IBM Bob (live runs only), what is sent, and that the guest runs send nothing to Bob.
+- README brought in line with the site (same claims, same install command, links to the guides).
+- **AC:** each guide renders with correct landmarks and heading order; a test checks every CLI command quoted in the docs exists in the Typer app; typecheck, lint, test and build pass.
+
+**ROOK-056 · Privacy, Terms, Security copy (in effect)** · P1 · deps: 055, 051, 050
+- `/privacy` and `/terms` per 06 §5.5 (operator, email, India, effective date, no placeholders, no draft banner); privacy lists what is collected, where it is stored, recipients, retention (30 days runs, 2 days guest quota rows) and how to delete (the app buttons from ROOK-052, or email).
+- `/security` updated for ROOK-050 and ROOK-051 (no Docker socket; hosted own-repo runs off; deletion), "What is not yet true" kept honest; no certification or audit claims.
+- **AC:** tests: no placeholders, the operator/email/jurisdiction present, every data fact traceable to 06 §4; the certification guard still passes; typecheck, lint, test and build pass.
+
+**ROOK-052 · Web app: deletion UI, honest run labels, states, a11y** · P1 · deps: 056
+- "Delete run" on the run page (confirm step) and "Delete my data" in the account menu (confirm step, then sign out), using the ROOK-051 routes; both handle failure with a retry.
+- Run labels "Recorded example run" / "Live run" (06 §4); `/app` explains what signing in adds (run history across devices, GitHub link) and that your own repos run with the CLI (hosted runs off).
+- Loading, failure, quota-reached and retry states with plain explanations; no button that does nothing (hide or disable the unbuilt ones: edit one rule, replay, download test).
+- The app's contrast follow-ups (HANDOFF: `--faint`, white on accent, agent name colours) reach 4.5:1 with the smallest visible change; app pages work at 360 px.
+- **AC:** component tests for both deletions (confirm, success, failure + retry), the labels, the states, no dead buttons; contrast test for the app tokens; typecheck, lint, test and build pass.
+
+**ROOK-057 · Final verification** · P1 · deps: all of M12
+- Every route at 360, 768, 1440 and 1920 px in Chromium: no horizontal scroll, no broken images, screenshots in the report.
+- Link check: every internal `href` resolves; every external link answers < 400.
+- axe-core on every site page and the app home: no serious or critical issues.
+- Build output scan: no secrets, no `[...]` placeholders, no "testimonial"/"trusted by", no "demo" in visible text.
+- Security headers and HTTPS on the live URL (after deploy).
+- **AC:** a repeatable script (`web/e2e/audit.mjs`) that does the above against a URL, passing on local `next start`.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)
@@ -254,3 +320,10 @@ The user works in parallel on the **U-tasks** at the bottom (accounts, demo apps
 | U7 | Record the demo video (≤5 min, MP4) | Submission |
 | U8 | Slide deck (PDF) | Submission |
 | U9 | Submit on lablab: URL, video, deck, repo | 27 Sep 20:30 IST |
+| U10 | Redeploy the server after ROOK-050 + 051 (`deploy/aws/deploy.sh`) | M12 |
+| U11 | Approve the push to `main` (Vercel deploys the site) | M12 |
+| U12 | Redeem the free domain and connect it in Vercel; then change `SITE_URL` | M12 |
+| U13 | Trademark/name check for "Rook" (IP India, USPTO; note the CNCF project Rook at rook.io) | M12 |
+| U14 | Publish the Google OAuth consent screen (it is in Testing mode, so only test users can sign in) | M12 |
+| U15 | Live GitHub App PR test on a test repo of your own, with the CLI | M12 |
+| U16 | Lawyer review of Privacy and Terms; launch demo + feedback from first developers | Launch |
