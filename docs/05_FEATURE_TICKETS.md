@@ -295,6 +295,7 @@ Streams: **CI** 049 · **server** 050 → 051 · **web**, strictly in order (the
 - Run labels "Recorded example run" / "Live run" (06 §4); `/app` explains what signing in adds (run history across devices, GitHub link) and that your own repos run with the CLI (hosted runs off).
 - Loading, failure, quota-reached and retry states with plain explanations; no button that does nothing (hide or disable the unbuilt ones: edit one rule, replay, download test).
 - The app's contrast follow-ups (HANDOFF: `--faint`, white on accent, agent name colours) reach 4.5:1 with the smallest visible change; app pages work at 360 px.
+- Terminal colour codes: `lib/safeText.ts` drops the ESC byte but leaves the rest of an ANSI sequence, so the live verify card shows `[2m   Duration [22m 2.77s` (seen in a live shop-app run 12 Oct). Strip whole ANSI CSI/OSC sequences before dropping controls.
 - **AC:** component tests for both deletions (confirm, success, failure + retry), the labels, the states, no dead buttons; contrast test for the app tokens; typecheck, lint, test and build pass.
 
 **ROOK-057 · Final verification** · P1 · deps: all of M12

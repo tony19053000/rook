@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** M12 launch readiness planned (ROOK-049–057); 049, 050, 053 in progress
+**Last updated:** 2026-10-12 IST · **By:** ROOK-053 committed bfbb071; 049 + 050 in review; 054 started
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [████████████████████████░░░░░░]  82%  47 / 57 tickets
+OVERALL   [█████████████████████████░░░░░]  84%  48 / 57 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -24,7 +24,7 @@ M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030�
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
-M12 Launch readiness  [░░░░░░░░░░]   0%   0 / 9    ROOK-049…057
+M12 Launch readiness  [█░░░░░░░░░]  11%   1 / 9    ROOK-049…057
 USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -96,8 +96,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-049 | CI green + web checks + scheduled live smoke | P0 | IN PROGRESS | CI fails on the gitignored fixture tests/fixtures/github_action/rook-report.md |
 | ROOK-050 | Hosted GitHub runs off; no Docker socket on the server | P0 | IN PROGRESS | user decision 12 Oct |
 | ROOK-051 | Data deletion and retention (server) | P0 | TODO | deps 050 |
-| ROOK-053 | Site identity, positioning, new pages, SEO | P1 | IN PROGRESS | operator Aayush Kumar (India), email c40534394@gmail.com, CTA stays "Try Rook" |
-| ROOK-054 | Home: problem-first hero, refund-bug story, diagram, screenshot | P1 | TODO | deps 053 |
+| ROOK-053 | Site identity, positioning, new pages, SEO | P1 | DONE | reviewer PASS r3 (r1+r2 FAIL: middleware matcher skipped CSP on look-alike/encoded paths → only /_next/static/ skipped now). 468 vitest. bfbb071 |
+| ROOK-054 | Home: problem-first hero, refund-bug story, diagram, screenshot | P1 | IN PROGRESS | deps 053 |
 | ROOK-055 | Docs guides | P1 | TODO | deps 054 |
 | ROOK-056 | Privacy, Terms, Security copy (in effect) | P1 | TODO | deps 055, 051 |
 | ROOK-052 | Web app: deletion UI, honest run labels, states, a11y | P1 | TODO | deps 056 |
