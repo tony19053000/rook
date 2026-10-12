@@ -11,6 +11,8 @@
 **User decisions (12 Oct):** operator **Aayush Kumar, individual, India**; public email **c40534394@gmail.com**; CTA stays **"Try Rook"** (no visible "demo"); **hosted GitHub runs OFF**, no Docker socket on the server (ROOK-050). Contact = `mailto:` + GitHub Issues (no form backend, no new service).
 
 **M12 order:** CI 049 · server 050 → 051 · web strictly in order 053 → 054 → 055 → 056 → 052 → 057. **053 DONE** (bfbb071), **049 DONE** (86ca683; CI goes green only after a push), **050 DONE** (9e411b2; live server changes only after `deploy/aws/deploy.sh`). **051 DONE** (ad3e6c4). Server stream done; the live server needs `deploy/aws/deploy.sh` (U10) for 048/050/051. 054 coder started. Started 12 Oct: 049, 050, 053 coders in parallel (separate dirs: `.github`+`.gitignore` / `src`+`deploy`+docs 02/03 / `web`).
+**Live state (12 Oct, after the account switch at the usage limit):** DONE + committed: 053 (bfbb071), 049 (86ca683), 050 (9e411b2), 051 (ad3e6c4). **ROOK-054 is UNCOMMITTED in `web/`** (home rework: `content/story.ts`, `components/site/home/{RefundStory,FlowDiagram,RunScreenshot}.tsx`, `app/fonts.ts`, `e2e/capture-run.mjs`, `public/screenshots/*`, fontsource deps): reviewer FAIL r1 only on `lib/copyRules.ts` (two narrowed guards let fake social proof through); coder is on round 2 (revert both regexes, exempt recorded-run strings by exact identity). Next: re-review 054 → commit → 055 docs guides → 056 legal/security → 052 app → 057 final check. Nothing is pushed since f0326bb+docs; never build into `web/.next` while the user's preview runs on port 3000 (build in a scratch copy).
+
 **Not doable by Claude (user tasks U10–U16 in doc 05/STATUS):** redeploy server, approve push, custom domain, trademark check (CNCF "Rook" at rook.io is a real name conflict), publish Google OAuth (Testing mode), live GitHub App PR test, lawyer review + launch feedback.
 
 **Before M12:**  **Goal done: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
@@ -56,6 +58,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct | 2 | Account switched at the limit; 054 coder resumed on round 2 (copy guards) | (docs) |
 | 12 Oct | – | ROOK-051 deletion + retention PASS r1 + committed (server redeploy needed: U10) | ROOK-051 ad3e6c4 |
 | 12 Oct | – | ROOK-050 hosted GitHub runs off, no Docker socket PASS r1 + committed (server redeploy needed: U10) | ROOK-050 9e411b2 |
 | 12 Oct | – | ROOK-049 CI fix + web job + live smoke PASS r1 + committed; actions SHA-pinned | ROOK-049 86ca683 |
