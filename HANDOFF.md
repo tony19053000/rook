@@ -11,6 +11,8 @@
 **User decisions (12 Oct):** operator **Aayush Kumar, individual, India**; public email **c40534394@gmail.com**; CTA stays **"Try Rook"** (no visible "demo"); **hosted GitHub runs OFF**, no Docker socket on the server (ROOK-050). Contact = `mailto:` + GitHub Issues (no form backend, no new service).
 
 **M12 order:** CI 049 · server 050 → 051 · web strictly in order 053 → 054 → 055 → 056 → 052 → 057. **053 DONE** (bfbb071), **049 DONE** (86ca683; CI goes green only after a push), **050 DONE** (9e411b2; live server changes only after `deploy/aws/deploy.sh`). **051 DONE** (ad3e6c4). Server stream done; the live server needs `deploy/aws/deploy.sh` (U10) for 048/050/051. 054 coder started. Started 12 Oct: 049, 050, 053 coders in parallel (separate dirs: `.github`+`.gitignore` / `src`+`deploy`+docs 02/03 / `web`).
+**NEXT (user request 12 Oct): M13 UI polish, ROOK-058 (public site) then ROOK-059 (web app), tickets in doc 05. NOT started (no code changed). User instruction for M13: do it in the main session with Opus 5.5 at extra-high effort, NO sub-agents (no coder, no reviewer). Judge by screenshots (before/after, 360 + 1440 px); copy/facts unchanged; build in a scratch copy, never into `web/.next` while port 3000 serves it.**
+
 **M12 COMPLETE 12 Oct (9/9), HEAD cf98db6. NOT PUSHED** (origin/main is still 59fd8e1; all M12 commits are local only). Working tree clean except the user's `docs/submission/**`, `docs/demo-apps/**`.
 - Reviewed: 049, 050, 051, 053, 054. **Coder only, not reviewed (user instruction): 052, 055, 056, 057.**
 - Checks at the end: tsc, lint, 718 vitest, `node e2e/audit.mjs http://localhost:3000 --allow-api-down` PASS. localhost:3000 serves the new build (`npm run start` in web/).
