@@ -271,10 +271,10 @@ Streams: **CI** 049 · **server** 050 → 051 · **web**, strictly in order (the
 
 **ROOK-054 · Home page: problem-first hero, refund-bug story, 6-step diagram, screenshot** · P1 · deps: 053
 - Hero headline names the customer problem and outcome in plain words; primary "Try Rook", secondary "Read the docs" + GitHub.
-- The refund bug is the central story: a section that shows the real recorded case end to end (the rule, the minimal 3-step sequence with its values, the replay result, the one-line diagnosis, the fix diff, the 4 verification checks), with every value taken from the recorded run or the engine tests (cite the files in the report).
+- The refund bug is the central story: a section that shows the real recorded case end to end (the rule, the minimal sequence with its values (4 steps in the recorded minishop run), the replay result, the one-line diagnosis, the fix diff, the 4 verification checks), with every value taken from the recorded run or the engine tests (cite the files in the report).
 - The 6 steps as a clean, simple diagram (HTML/SVG, plain language, works at 360 px and with JS off).
 - Features rewritten as developer benefits tied to verifiable facts (06 §4 only).
-- A **real product screenshot** of the web app (a recorded shop-app run, captured from the running app at desktop and mobile widths with the bundled Chromium), served from `web/public/`, with alt text and labelled "Recorded example run".
+- A **real product screenshot** of the web app (a recorded example run — minishop was used — captured from the running app at desktop and mobile widths with headless Chrome), served from `web/public/`, with alt text and labelled "Recorded example run".
 - Typography, spacing, hierarchy and mobile pass (360–2560 px, no horizontal scroll).
 - **AC:** home tests updated (landmarks, heading order, one h1, CTAs and targets, the story's values match their source, reduced motion still, JS off complete); typecheck, lint, test and build pass.
 
@@ -296,6 +296,7 @@ Streams: **CI** 049 · **server** 050 → 051 · **web**, strictly in order (the
 - Loading, failure, quota-reached and retry states with plain explanations; no button that does nothing (hide or disable the unbuilt ones: edit one rule, replay, download test).
 - The app's contrast follow-ups (HANDOFF: `--faint`, white on accent, agent name colours) reach 4.5:1 with the smallest visible change; app pages work at 360 px.
 - Terminal colour codes: `lib/safeText.ts` drops the ESC byte but leaves the rest of an ANSI sequence, so the live verify card shows `[2m   Duration [22m 2.77s` (seen in a live shop-app run 12 Oct). Strip whole ANSI CSI/OSC sequences before dropping controls.
+- Agent rows show raw Markdown from Bob, e.g. the Detective's ``[`app.py`](app.py:214)`` (seen in the recorded minishop run): show it as plain text (`app.py:214`) or render inline code/links safely (no HTML injection, no clickable repo-relative links).
 - **AC:** component tests for both deletions (confirm, success, failure + retry), the labels, the states, no dead buttons; contrast test for the app tokens; typecheck, lint, test and build pass.
 
 **ROOK-057 · Final verification** · P1 · deps: all of M12

@@ -122,7 +122,7 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 
 ## 5. Pages
 
-1. **Home** (`/`): a cinematic hero with layered, scroll-driven parallax (background grid, glow, product figure; the hero text never moves) → an animated product walkthrough (§6) → Features → "What Rook refuses to do" → "Where Rook is today" → FAQ (native `<details>`) → closing call to action.
+1. **Home** (`/`, reworked in ROOK-054): a problem-first hero with layered, scroll-driven parallax (background grid, glow, and a **real screenshot** of a recorded minishop run, labelled "Recorded example run"; the hero text never moves) → the refund-bug story (rule, 4-step minimal sequence, replay, diagnosis, fix, 4 checks; `content/story.ts`, every value checked against the recorded run) → the 6-step diagram (an `<ol>`) → an animated product walkthrough (§6) → Features → "What Rook refuses to do" → "Where Rook is today" → FAQ (native `<details>`) → closing call to action.
 2. **Docs** (`/docs`): the full 6-step flow, then getting started (install, first run, CLI commands, the GitHub Action).
 3. **Security** (`/security`): data handling, sandboxing, AI boundaries, secrets, auth, then "What is not yet true".
 4. **Pricing** (`/pricing`, M12): "Early access and open source". Three ways to use Rook, each with what it costs **today** in words, never a number: (1) **Try Rook on this site**: free, no account, recorded example runs of the example repos, 3 a day; (2) **The CLI on your machine**: free and open source (MIT), your own Docker and IBM Bob key (any IBM Bob usage cost is between you and IBM); (3) **Hosted runs of your own repos**: not offered yet, planned, no price set. Then a short "Interested in hosted Rook?" → `/contact`. `content/pricing.ts` keeps the `plans` export (empty) so a future price list has one source.
@@ -138,7 +138,7 @@ CTAs: "Try Rook" → `/app` (primary). "Read the docs" → `/docs/getting-starte
 ## 6. Walkthrough (home)
 
 - One frame at a time, no scrollbar, autoplays; clicking a step in the list on the left slides to that frame (transform). A small pause/play control. Steps are the 6 from `content/flow.ts`.
-- Frames are built from the app's **real UI components** (`AgentRow`, `EngineRow`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, …) fed with **sample data** in `content/walkthrough.ts`, modelled on the recorded shop-app/minishop run (e.g. buy ₹100 → refund ₹60 → refund ₹50; paid ₹100, refunded ₹110; replayed 10/10).
+- Frames are built from the app's **real UI components** (`AgentRow`, `EngineRow`, `RulesCard`, `SearchCard`, `CounterexampleCard`, `FixCard`, `VerifyCard`, …) fed with **sample data** in `content/walkthrough.ts`, taken from the recorded minishop run (`web/lib/fixtures/minishop-run.json`, the same case as the home's refund story in `content/story.ts`: create_product(price 1) → buy → refund 1 → refund 1; paid 1, refunded 2; replayed 10/10; fresh search 1,500 sequences in that run, the CLI default being 20,000).
 - Frames are inert: the `inert` attribute, no network, no real actions (the default read-only `RunActionsContext`), and each is labelled **"Product illustration — not a live run"**. Only the active frame is exposed; the others are `inert` and `aria-hidden`.
 - Under reduced motion: no autoplay, no slide animation (an instant switch). With JS off: frame 1 shows and every step's text is readable in the list.
 
