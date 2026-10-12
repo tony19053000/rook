@@ -36,7 +36,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | | |
 |---|---|
 | Product | Roook (display name since 12 Oct; CLI command `rook`), IBM Bob-powered invariant breaker |
-| Repo | https://github.com/tony19053000/rook (public) |
+| Repo | https://github.com/tony19053000/rook (public). GitHub now reports it renamed to `tony19053000/roook`; the old URL redirects and the code still uses it |
 | Hosted web | https://www.roook.dev (canonical; `roook.dev` redirects to it) · also https://rook-weld-six.vercel.app |
 | Hosted API | https://44-239-185-88.sslip.io (AWS EC2 t3.small + Caddy, replay mode) |
 | Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 2.01 |
