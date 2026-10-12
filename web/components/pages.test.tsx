@@ -50,7 +50,7 @@ describe("home (04 §3.2 /)", () => {
 
   it("signed out: the same workspace as signed in, with no sign-in block in the chat column", () => {
     expect(out).toContain("data-greeting");
-    expect(out).toContain("What should Rook check next?");
+    expect(out).toContain("What should Roook check next?");
     expect(out).not.toContain("data-signed-out");
     expect(out).not.toContain("Sign in with Google");
     expect(out).not.toContain("Try an example without signing in");
@@ -81,7 +81,7 @@ describe("home (04 §3.2 /)", () => {
   it("signed in: the greeting uses the first name, no sign-in pitch", () => {
     const user = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} />);
     expect(user).toContain("data-greeting");
-    expect(user).toContain("What should Rook check next, Aayush?");
+    expect(user).toContain("What should Roook check next, Aayush?");
     expect(user).not.toContain("Sign in with Google");
     expect(user).not.toContain("Try an example without signing in");
     const hostile = html(<HomeView api={fakeApi} session={{ ...USER, name: "<b>Eve</b>\x1b[2J x" }} runs={noRuns} repos={repos([])} navigate={() => {}} />);
@@ -353,7 +353,7 @@ describe("hosted GitHub runs (ROOK-041)", () => {
     };
     expect((await view(new ApiError(401, "Sign in"))).kind).toBe("auth");
     expect(await view(new ApiError(403, "Not your repository"))).toMatchObject({ kind: "denied", message: "Not your repository", retryable: false });
-    expect(await view(new ApiError(429, "Rook is busy", 120))).toMatchObject({ kind: "busy", message: "Rook is busy. Try again in about 2 minutes.", retryable: true });
+    expect(await view(new ApiError(429, "Roook is busy", 120))).toMatchObject({ kind: "busy", message: "Roook is busy. Try again in about 2 minutes.", retryable: true });
     const na = await view(new ApiError(503, "Hosted GitHub runs are not configured"));
     expect(na).toMatchObject({ kind: "unavailable", retryable: false });
     const out = html(<ErrorCard view={na} onRetry={() => {}} />);
@@ -361,7 +361,7 @@ describe("hosted GitHub runs (ROOK-041)", () => {
     expect(out).not.toContain("Try again");
   });
 
-  it("the composer says a picked GitHub repo runs on Rook's server and costs coins", () => {
+  it("the composer says a picked GitHub repo runs on Roook's server and costs coins", () => {
     const on = html(<HomeView api={fakeApi} session={USER_RUNS} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={GH} />);
     expect(on).toContain("data-hosted-note");
     expect(on).toContain(HOSTED_GITHUB_NOTE.replace("'", "&#x27;"));

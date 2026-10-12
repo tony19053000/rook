@@ -13,7 +13,7 @@ export const DEFAULT_REQUEST = "Find bugs";
 /** 04 §3.6, the guest limit copy; the command is shown as code. */
 export const CLI_INSTALL = "uv tool install git+https://github.com/tony19053000/rook";
 /** 04 §3.3: the composer note under a picked GitHub repo when the server runs it (ROOK-041). */
-export const HOSTED_GITHUB_NOTE = "Runs live on Rook's server with IBM Bob · costs coins";
+export const HOSTED_GITHUB_NOTE = "Runs live on Roook's server with IBM Bob · costs coins";
 /** How often the recents refresh while a run is queued or running. */
 export const RECENTS_POLL_MS = 5000;
 
@@ -185,7 +185,7 @@ export function cliHint(ref: string): string {
 /** Where your own repos run (`/app`, 06 §4: hosted runs of your own repos are off). */
 export const OWN_REPOS_NOTE = "Your own repos run on your machine with the CLI. Hosted runs of your own repos are turned off.";
 /** 06 §4: guests get 3 runs a day. */
-export const GUEST_LIMIT_NOTE = "Guests get 3 example runs a day on the hosted server. Come back tomorrow, or run Rook on your own machine.";
+export const GUEST_LIMIT_NOTE = "Guests get 3 example runs a day on the hosted server. Come back tomorrow, or run Roook on your own machine.";
 
 /**
  * The POST /runs body, or why not. A GitHub repo runs on the server only when GET /me said `can_run_github`
@@ -312,7 +312,7 @@ export function errorView(error: unknown, action: ErrorAction): ErrorView {
         title,
         message: detailOf(
           error,
-          action === "create" ? "Rook can't run this repository for you. Check that it is shared with the Rook GitHub App." : "You aren't allowed to do that.",
+          action === "create" ? "Roook can't run this repository for you. Check that it is shared with the Roook GitHub App." : "You aren't allowed to do that.",
         ),
         retryable: false,
       };

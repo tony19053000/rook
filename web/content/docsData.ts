@@ -13,7 +13,7 @@ export const dataGuide: DocGuide = {
   path: "/docs/data",
   navLabel: "Data and IBM Bob",
   title: "Data and IBM Bob",
-  description: "When Rook sends repo content to IBM Bob, what is sent and what is not, where your IBM Bob key lives, the GitHub App's permissions, and what the hosted site keeps.",
+  description: "When Roook sends repo content to IBM Bob, what is sent and what is not, where your IBM Bob key lives, the GitHub App's permissions, and what the hosted site keeps.",
   heading: "Data and IBM Bob",
   lead: "What leaves your machine, when, and where your IBM Bob key lives. The short answer: the examples on this site send nothing to IBM Bob, and a live run on your machine sends parts of your repo to IBM Bob as prompts.",
   summary: "When repo content goes to IBM Bob, what is sent, where your key lives, and what the hosted site keeps.",
@@ -39,7 +39,7 @@ export const dataGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "Only in a live run, and only when Rook calls a Bob agent: to understand the repo, propose and review rules, design scenarios, diagnose a counterexample, write and review a fix, or answer a question you ask the Guide. Each call starts IBM Bob Shell on your machine with a prompt Rook built.",
+          text: "Only in a live run, and only when Roook calls a Bob agent: to understand the repo, propose and review rules, design scenarios, diagnose a counterexample, write and review a fix, or answer a question you ask the Guide. Each call starts IBM Bob Shell on your machine with a prompt Roook built.",
         },
         {
           kind: "list",
@@ -51,7 +51,7 @@ export const dataGuide: DocGuide = {
         },
         {
           kind: "p",
-          text: "Rook hands the prompt to IBM's software and service. What IBM does with it is governed by your agreement with IBM, not by Rook.",
+          text: "Roook hands the prompt to IBM's software and service. What IBM does with it is governed by your agreement with IBM, not by Roook.",
         },
       ],
     },
@@ -67,7 +67,7 @@ export const dataGuide: DocGuide = {
               text: "The path, size and content hash of up to 400 files, so the Scout knows what exists.",
             },
             {
-              term: "Files Rook picks",
+              term: "Files Roook picks",
               text: "Build and manifest files at the repo root (such as Dockerfile, compose files, requirements.txt, pyproject.toml, package.json, go.mod, .env.example and README.md), the route and model files the Scout named, and up to 4 source files related to a broken rule. Each file is cut at 20,000 characters and one prompt carries at most 120,000 characters of files.",
             },
             {
@@ -87,8 +87,8 @@ export const dataGuide: DocGuide = {
         },
         {
           kind: "note",
-          title: "Rook does not scan your files for secrets",
-          text: "Source files go to Bob as they are. A secret that sits in the repo, or in an untracked file such as .env inside a local folder you run Rook on, is in the workspace copy and can reach IBM Bob. Keep secrets out of the folder, or run Rook on a clean clone.",
+          title: "Roook does not scan your files for secrets",
+          text: "Source files go to Bob as they are. A secret that sits in the repo, or in an untracked file such as .env inside a local folder you run Roook on, is in the workspace copy and can reach IBM Bob. Keep secrets out of the folder, or run Roook on a clean clone.",
         },
       ],
     },
@@ -100,15 +100,15 @@ export const dataGuide: DocGuide = {
           kind: "list",
           items: [
             "Your shell's environment. The Bob process gets only a short allowlist of variables (PATH, HOME, locale and temp-folder settings) plus `BOB_API_KEY`. Nothing else from your environment reaches it.",
-            "Your key inside a prompt. The key is how Bob Shell signs in to IBM; Rook never writes it into a prompt, a command-line argument, an event or a log.",
+            "Your key inside a prompt. The key is how Bob Shell signs in to IBM; Roook never writes it into a prompt, a command-line argument, an event or a log.",
             "Anything outside the workspace copy. Bob runs in the copy, links that point outside it are removed when the copy is made, and the agents have no command, browser or MCP tools.",
-            "Tokens and passing values in your app's output. Before app data and logs go into a prompt, Rook replaces tokens, credentials, timestamps and random ids with labels. Log text also goes through the redaction filter, which removes known secret values, PEM key blocks, bearer tokens, IBM Bob keys, GitHub tokens and JWTs.",
+            "Tokens and passing values in your app's output. Before app data and logs go into a prompt, Roook replaces tokens, credentials, timestamps and random ids with labels. Log text also goes through the redaction filter, which removes known secret values, PEM key blocks, bearer tokens, IBM Bob keys, GitHub tokens and JWTs.",
             "Your app's database or files in the sandbox. Bob sees only what your API returned and what your app logged.",
           ],
         },
         {
           kind: "p",
-          text: "The same redaction filter cleans every event and log line Rook stores or shows, so a key that appears in output is replaced before it is saved.",
+          text: "The same redaction filter cleans every event and log line Roook stores or shows, so a key that appears in output is replaced before it is saved.",
         },
       ],
     },
@@ -119,10 +119,10 @@ export const dataGuide: DocGuide = {
         {
           kind: "list",
           items: [
-            "On your machine, in the `BOB_API_KEY` environment variable of the shell that runs Rook. The install guide suggests a file only you can read.",
-            "In the Bob Shell process Rook starts, through its environment only.",
-            "In GitHub Actions, in a repository secret you create. The action masks it and gives it only to the step that runs Rook, and only in live mode.",
-            "Never on the hosted site. The site's example runs use recorded answers, and no page or form asks for your key. If something claiming to be Rook asks for it in a browser, do not enter it.",
+            "On your machine, in the `BOB_API_KEY` environment variable of the shell that runs Roook. The install guide suggests a file only you can read.",
+            "In the Bob Shell process Roook starts, through its environment only.",
+            "In GitHub Actions, in a repository secret you create. The action masks it and gives it only to the step that runs Roook, and only in live mode.",
+            "Never on the hosted site. The site's example runs use recorded answers, and no page or form asks for your key. If something claiming to be Roook asks for it in a browser, do not enter it.",
           ],
         },
         { kind: "links", items: [{ label: "Setting up the key", href: "/docs/install#ibm-bob" }] },
@@ -135,12 +135,12 @@ export const dataGuide: DocGuide = {
         {
           kind: "terms",
           items: [
-            { term: "~/.rook/workspaces/", text: "The copy of your repo each run worked on, with the model, counterexamples, tests and fix branches. Rook does not delete these; remove them when you no longer need them." },
+            { term: "~/.rook/workspaces/", text: "The copy of your repo each run worked on, with the model, counterexamples, tests and fix branches. Roook does not delete these; remove them when you no longer need them." },
             {
               term: "~/.rook/recordings/",
               text: "Bob's saved answers, only if you turn recording on by setting ROOK_BOB_MODE to record. Recordings can contain parts of your repo, so keep them private.",
             },
-            { term: "~/.rook/credentials.json", text: "Your Rook sign-in, only if you ran `rook login`, readable only by you. `rook logout` revokes the session and deletes the file." },
+            { term: "~/.rook/credentials.json", text: "Your Roook sign-in, only if you ran `rook login`, readable only by you. `rook logout` revokes the session and deletes the file." },
           ],
         },
       ],
@@ -149,7 +149,7 @@ export const dataGuide: DocGuide = {
       id: "github",
       title: "GitHub App permissions",
       blocks: [
-        { kind: "p", text: "Only if you connect GitHub. The Rook GitHub App asks for the least it needs to clone a repo and open a pull request:" },
+        { kind: "p", text: "Only if you connect GitHub. The Roook GitHub App asks for the least it needs to clone a repo and open a pull request:" },
         {
           kind: "list",
           items: ["Contents: read and write.", "Pull requests: read and write.", "Metadata: read."],
@@ -157,10 +157,10 @@ export const dataGuide: DocGuide = {
         {
           kind: "list",
           items: [
-            "The Rook server keeps your installation id. The list of your repos is read from GitHub when needed.",
+            "The Roook server keeps your installation id. The list of your repos is read from GitHub when needed.",
             "Tokens are short-lived installation tokens, made for one repo at a time, kept in memory and never written to disk, logs or events.",
-            "The App's private key is only on the Rook server. Webhooks from GitHub are checked with a signature before they are read.",
-            "Rook never pushes to your default branch: a fix goes to a rook/fix-* branch and a pull request.",
+            "The App's private key is only on the Roook server. Webhooks from GitHub are checked with a signature before they are read.",
+            "Roook never pushes to your default branch: a fix goes to a rook/fix-* branch and a pull request.",
           ],
         },
       ],
@@ -183,11 +183,11 @@ export const dataGuide: DocGuide = {
           items: [
             "Runs older than 30 days are deleted automatically, with their events and counterexamples. Guest run counts older than 2 days are deleted too.",
             "You can delete a run yourself: open it in the web app and use Delete run. Its events and counterexamples go with it.",
-            "Signed in, you can delete all your Rook server data, your runs and your GitHub link, with Delete my data in the account menu. You are then signed out.",
-            "Your sign-in account itself is held by Supabase, the sign-in service. The Rook server cannot delete it, so it is deleted on request by email.",
+            "Signed in, you can delete all your Roook server data, your runs and your GitHub link, with Delete my data in the account menu. You are then signed out.",
+            "Your sign-in account itself is held by Supabase, the sign-in service. The Roook server cannot delete it, so it is deleted on request by email.",
           ],
         },
-        { kind: "email", label: `Email ${CONTACT_EMAIL}`, subject: "Rook: privacy request" },
+        { kind: "email", label: `Email ${CONTACT_EMAIL}`, subject: "Roook: privacy request" },
         {
           kind: "links",
           items: [

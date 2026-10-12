@@ -21,7 +21,7 @@ const OUTCOMES: Record<OutcomeKind, Omit<Outcome, "kind">> = {
     tone: "good",
     mark: "✓",
     title: "Fixed and verified",
-    lead: "Rook found the bug, proved it on the real app, and the engine verified the fix.",
+    lead: "Roook found the bug, proved it on the real app, and the engine verified the fix.",
   },
   unverified: {
     tone: "warn",
@@ -33,7 +33,7 @@ const OUTCOMES: Record<OutcomeKind, Omit<Outcome, "kind">> = {
     tone: "warn",
     mark: "!",
     title: "Rule broken · counterexample saved",
-    lead: "Rook found and replayed the smallest sequence of actions that breaks the rule.",
+    lead: "Roook found and replayed the smallest sequence of actions that breaks the rule.",
   },
   held: {
     tone: "good",

@@ -9,7 +9,7 @@ export function apiBase(value: string | undefined = process.env.NEXT_PUBLIC_API_
 }
 
 /**
- * The rewrite target for `/api/v1/*` (the Rook server origin, e.g. https://203-0-113-7.sslip.io), read at build time from
+ * The rewrite target for `/api/v1/*` (the Roook server origin, e.g. https://203-0-113-7.sslip.io), read at build time from
  * ROOK_API_PROXY_TARGET. Only an http(s) origin with no path, query or credentials is accepted; anything
  * else means "no proxy" (null).
  */

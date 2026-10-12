@@ -22,8 +22,8 @@ export const contactCopy = {
   email: CONTACT_EMAIL,
   emailLabel: "Email",
   /** The subject of the plain address link at the top. */
-  emailSubject: "Rook",
-  channelsTitle: "How to reach Rook",
+  emailSubject: "Roook",
+  channelsTitle: "How to reach Roook",
   expectTitle: "What to expect",
   expect: [
     `One person, ${operator.name}, reads every message. There is no promised response time.`,
@@ -37,19 +37,19 @@ export const contactChannels: ContactChannel[] = [
     id: "general",
     title: "General questions",
     body: `Questions about ${site.name}, how it works, or whether it fits your backend.`,
-    link: { kind: "email", label: "Email a question", subject: "Rook: question" },
+    link: { kind: "email", label: "Email a question", subject: "Roook: question" },
   },
   {
     id: "early-access",
     title: "Early access",
-    body: "Interest in hosted runs of your own repos, or feedback from trying Rook.",
-    link: { kind: "email", label: "Email about early access", subject: "Rook: early access" },
+    body: "Interest in hosted runs of your own repos, or feedback from trying Roook.",
+    link: { kind: "email", label: "Email about early access", subject: "Roook: early access" },
   },
   {
     id: "privacy",
     title: "Privacy requests",
-    body: "Questions about the data Rook holds about you, or a request to delete it.",
-    link: { kind: "email", label: "Email a privacy request", subject: "Rook: privacy request" },
+    body: "Questions about the data Roook holds about you, or a request to delete it.",
+    link: { kind: "email", label: "Email a privacy request", subject: "Roook: privacy request" },
   },
   {
     id: "issues",

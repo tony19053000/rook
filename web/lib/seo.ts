@@ -32,7 +32,7 @@ export function absoluteUrl(path: string): string {
 }
 
 /**
- * A site page's metadata (06 §8): its title (through the "%s · Rook" template), description, canonical URL, and the
+ * A site page's metadata (06 §8): its title (through the "%s · Roook" template), description, canonical URL, and the
  * same pair on the Open Graph and Twitter cards, with the card image from app/opengraph-image.tsx.
  */
 export function pageMetadata(title: string, description: string, path: string): Metadata {

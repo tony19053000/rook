@@ -113,10 +113,10 @@ describe.each(PAGES)("site page %s (06 §9)", (path, renderPage) => {
     expect(NO_HACKATHON.pattern.test(text), path).toBe(HACKATHON_PAGES.has(path));
   });
 
-  it("header: Sign in, Try Rook, the <details> menu; footer: the four columns", () => {
+  it("header: Sign in, Try Roook, the <details> menu; footer: the four columns", () => {
     renderPage();
     const header = screen.getByRole("banner");
-    expect(within(header).getByRole("link", { name: "Try Rook" }).getAttribute("href")).toBe("/app");
+    expect(within(header).getByRole("link", { name: "Try Roook" }).getAttribute("href")).toBe("/app");
     expect(header.querySelector('a[href="/login"]')).not.toBeNull();
     expect(header.querySelector("details > summary")).not.toBeNull();
     const footer = screen.getByRole("contentinfo");

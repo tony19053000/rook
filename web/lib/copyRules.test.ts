@@ -20,7 +20,7 @@ describe("copy rules (06 §4, §9)", () => {
       "Our customers say",
       "Read the testimonials",
       "Join thousands of teams",
-      "Teams use Rook every day",
+      "Teams use Roook every day",
       "1,000+ bugs found",
       "10k+ runs",
       "Find bugs 10x faster",
@@ -37,7 +37,7 @@ describe("copy rules (06 §4, §9)", () => {
 
   it("catch certification and audit claims unless they are negated", () => {
     for (const bad of [
-      "Rook is SOC 2 certified.",
+      "Roook is SOC 2 certified.",
       "SOC2 Type II",
       "ISO 27001 compliant hosting",
       "HIPAA-ready by design",
@@ -49,8 +49,8 @@ describe("copy rules (06 §4, §9)", () => {
       expect(copyViolations(bad), bad).toContain("certification / audit claim");
     }
     for (const ok of [
-      "There has been no third-party audit or penetration test, and Rook holds no certifications.",
-      "Rook is not SOC 2 certified.",
+      "There has been no third-party audit or penetration test, and Roook holds no certifications.",
+      "Roook is not SOC 2 certified.",
       "It has never been penetration tested.",
     ]) {
       expect(copyViolations(ok), ok).toEqual([]);
@@ -70,7 +70,7 @@ describe("copy rules (06 §4, §9)", () => {
       expect(copyViolations(bad), bad).toContain("certification / audit claim");
     }
     for (const ok of [
-      "Rook has no third-party audit or penetration test, and no certifications",
+      "Roook has no third-party audit or penetration test, and no certifications",
       "not audited",
       "never penetration tested",
     ]) {
@@ -106,7 +106,7 @@ describe("copy rules (06 §4, §9)", () => {
     for (const bad of ["Try the demo", "DEMO repos", "Two demos", "the demo's rule"]) {
       expect(copyViolations(bad), bad).toContain("the word demo");
     }
-    for (const ok of ["Try Rook", "It demonstrates the bug", "a democratic process"]) {
+    for (const ok of ["Try Roook", "It demonstrates the bug", "a democratic process"]) {
       expect(copyViolations(ok), ok).toEqual([]);
     }
   });

@@ -7,7 +7,7 @@ import { PageHeader } from "./PageHeader";
 import { type } from "./tokens";
 import { pricingCopy, pricingStatus, useWays, type Plan } from "@/content/pricing";
 
-// Pricing (06 §5.4): the status comes only from the plans list. With none it shows the ways to use Rook today,
+// Pricing (06 §5.4): the status comes only from the plans list. With none it shows the ways to use Roook today,
 // the notice and the hosted-interest link; with plans, the plans replace them.
 export function PricingView({ plans }: { plans: readonly Plan[] }) {
   const status = pricingStatus(plans);

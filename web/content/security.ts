@@ -12,10 +12,10 @@ export interface SecuritySection {
 
 export const securityCopy = {
   title: "Security",
-  description: "How Rook handles your data and code: sandboxing, AI boundaries, secrets and sign-in, and what is not yet true.",
+  description: "How Roook handles your data and code: sandboxing, AI boundaries, secrets and sign-in, and what is not yet true.",
   eyebrow: "Security",
-  heading: "Security at Rook",
-  lead: "Rook runs your app and reads your code, so this page says exactly how that is contained today, and what is not yet true.",
+  heading: "Security at Roook",
+  lead: "Roook runs your app and reads your code, so this page says exactly how that is contained today, and what is not yet true.",
   tocLabel: "On this page",
 } as const;
 
@@ -25,22 +25,22 @@ export const securitySections: SecuritySection[] = [
     title: "How data is handled",
     items: [
       "Sign-in is Google through Supabase Auth. Supabase holds the account; the browser keeps the session in localStorage.",
-      "The Rook server stores runs, each run's redacted event log (including what you type into the composer and chat) and counterexamples. Guest run quotas are counted per guest cookie and per client IP address, per day.",
-      "If you connect GitHub, Rook stores your installation id and keeps short-lived installation tokens in memory only.",
+      "The Roook server stores runs, each run's redacted event log (including what you type into the composer and chat) and counterexamples. Guest run quotas are counted per guest cookie and per client IP address, per day.",
+      "If you connect GitHub, Roook stores your installation id and keeps short-lived installation tokens in memory only.",
       "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs use recorded Bob answers.",
       "No analytics, ads or tracking scripts on the site or the app.",
-      "You can delete a run, or all your data on the Rook server, from the web app. Runs older than 30 days and guest quota rows older than 2 days are deleted automatically.",
+      "You can delete a run, or all your data on the Roook server, from the web app. Runs older than 30 days and guest quota rows older than 2 days are deleted automatically.",
     ],
     link: { label: "Read the privacy policy", href: "/privacy" },
   },
   {
     id: "sandboxing",
     title: "Sandboxing",
-    intro: "Rook starts the app it tests in a sandbox and talks to it only over HTTP.",
+    intro: "Roook starts the app it tests in a sandbox and talks to it only over HTTP.",
     items: [
       "The CLI runs your app in Docker as a non-root user with --cap-drop ALL, no-new-privileges and pids, memory and CPU limits.",
       "Only the workspace copy of your repo is mounted, never your home folder or the original. Ports are published on 127.0.0.1 only, and at run time the app gets an internal network wherever the app allows it.",
-      "The sandbox gets none of Rook's environment, so Rook's keys never reach your app.",
+      "The sandbox gets none of Roook's environment, so Roook's keys never reach your app.",
       "The engine sends requests only to the sandbox's host and port, follows no redirects elsewhere, and uses a 10 s timeout and a 1 MB response cap.",
       "On the hosted site, guests run only allowlisted example repos pinned by commit SHA, with recorded Bob answers, in a process sandbox as a separate unprivileged user. The hosted server mounts no Docker socket, and hosted runs of your own repos are turned off. Run your own repo with the CLI on your machine.",
     ],
@@ -48,7 +48,7 @@ export const securitySections: SecuritySection[] = [
   {
     id: "ai-boundaries",
     title: "AI boundaries",
-    intro: "IBM Bob is the only AI in Rook. It proposes and explains; the deterministic engine decides.",
+    intro: "IBM Bob is the only AI in Roook. It proposes and explains; the deterministic engine decides.",
     items: [
       "Every Bob agent is read-only except two: the Mechanic, which may write only under .rook-sandbox/, and the Surgeon, which may edit only the files in the reviewed diagnosis. A Surgeon change outside those paths is reverted and rejected.",
       "No agent gets command, browser or MCP tools. The engine runs commands, not Bob.",
@@ -74,8 +74,8 @@ export const securitySections: SecuritySection[] = [
       "Google sign-in uses Supabase Auth with PKCE. Sign-out is local to the browser.",
       "The server verifies the Supabase token on every call. Guests get a signed, httpOnly guest cookie.",
       "Every run route checks the owner and answers 404 to anyone else, so run ids don't leak.",
-      "The Rook GitHub App asks for the minimum: Contents read & write, Pull requests read & write, Metadata read. Webhooks are verified with HMAC, and installation tokens are scoped to one repo.",
-      "Rook never pushes to your default branch: fixes land on a rook/fix-* branch, as a pull request for a GitHub repo.",
+      "The Roook GitHub App asks for the minimum: Contents read & write, Pull requests read & write, Metadata read. Webhooks are verified with HMAC, and installation tokens are scoped to one repo.",
+      "Roook never pushes to your default branch: fixes land on a rook/fix-* branch, as a pull request for a GitHub repo.",
     ],
   },
   {
@@ -93,9 +93,9 @@ export const securitySections: SecuritySection[] = [
 export const notYetTrue = {
   id: "not-yet-true",
   title: "What is not yet true",
-  intro: "Rook is in early access. These are the gaps we know about today.",
+  intro: "Roook is in early access. These are the gaps we know about today.",
   items: [
-    "There has been no third-party audit or penetration test, and Rook holds no certifications.",
+    "There has been no third-party audit or penetration test, and Roook holds no certifications.",
     "Hosted runs of your own repos are off. Starting sandboxes from the server needs the Docker socket, which is root-equivalent on the host, so the hosted server no longer mounts it. Turning hosted runs back on needs a separate runner host.",
     "Prompt injection from repo text is bounded by Bob's tool permissions and the engine's checks, not eliminated.",
     "The offline settings for the allowlisted example apps' test commands are best effort.",

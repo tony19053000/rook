@@ -1,4 +1,4 @@
-// ROOK-036 E2E smoke test: the web app's happy path against a real local Rook server in Bob *replay* mode.
+// ROOK-036 E2E smoke test: the web app's happy path against a real local Roook server in Bob *replay* mode.
 //
 //   cd web && npm run test:e2e
 //

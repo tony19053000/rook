@@ -10,9 +10,9 @@ export const gettingStartedGuide: DocGuide = {
   path: "/docs/getting-started",
   navLabel: "Getting started",
   title: "Getting started",
-  description: "Try Rook in the browser with nothing to install, then install the CLI and run it on your own repo.",
+  description: "Try Roook in the browser with nothing to install, then install the CLI and run it on your own repo.",
   heading: "Getting started",
-  lead: "Try Rook in the browser with nothing to install, then run the CLI on your own repo. This is the short version; each part links to the guide with the details.",
+  lead: "Try Roook in the browser with nothing to install, then run the CLI on your own repo. This is the short version; each part links to the guide with the details.",
   summary: "Try the example on the site, install the CLI, run it on your repo, and find the results.",
   sections: [
     {
@@ -20,13 +20,13 @@ export const gettingStartedGuide: DocGuide = {
       title: "What you need",
       blocks: [
         { kind: "p", text: "To try the example on this site: a browser. Nothing to install and no account." },
-        { kind: "p", text: "To run Rook on your own repo, on your machine:" },
+        { kind: "p", text: "To run Roook on your own repo, on your machine:" },
         {
           kind: "list",
           items: [
-            "Python 3.12 or newer, and uv to install Rook.",
-            "Docker, running. Rook starts your app in a Docker sandbox.",
-            "git. Rook works on a copy of your repo and commits the fix to a branch.",
+            "Python 3.12 or newer, and uv to install Roook.",
+            "Docker, running. Roook starts your app in a Docker sandbox.",
+            "git. Roook works on a copy of your repo and commits the fix to a branch.",
             "IBM Bob Shell with your own `BOB_API_KEY`, for live runs.",
           ],
         },
@@ -41,9 +41,9 @@ export const gettingStartedGuide: DocGuide = {
           kind: "list",
           ordered: true,
           items: [
-            "Open Try Rook and pick one of the two example repos: shop-app (Node.js) or minishop (Python, Rook's own small test shop).",
+            "Open Try Roook and pick one of the two example repos: shop-app (Node.js) or minishop (Python, Roook's own small test shop).",
             "Watch the run. It is labelled Recorded example run: Bob's answers are replayed from a saved real run, and the engine still runs live against the real app.",
-            "Answer when Rook asks: which rules to approve, and whether to apply the fix.",
+            "Answer when Roook asks: which rules to approve, and whether to apply the fix.",
           ],
         },
         {
@@ -58,11 +58,11 @@ export const gettingStartedGuide: DocGuide = {
       title: "Install the CLI",
       blocks: [
         { kind: "code", code: INSTALL_COMMAND, prompt: true },
-        { kind: "p", text: "Rook is not on PyPI yet, so it installs from GitHub. Check that it is there:" },
+        { kind: "p", text: "Roook is not on PyPI yet, so it installs from GitHub. Check that it is there:" },
         { kind: "code", code: "rook --version", prompt: true },
         {
           kind: "p",
-          text: "For live runs, put your IBM Bob key in the `BOB_API_KEY` environment variable of the shell that runs Rook. The install guide shows how to keep it out of your shell history.",
+          text: "For live runs, put your IBM Bob key in the `BOB_API_KEY` environment variable of the shell that runs Roook. The install guide shows how to keep it out of your shell history.",
         },
         { kind: "links", items: [{ label: "Install, upgrade, uninstall and IBM Bob setup", href: "/docs/install" }] },
       ],
@@ -78,7 +78,7 @@ export const gettingStartedGuide: DocGuide = {
         { kind: "code", code: lines("rook", "rook run ./my-app", "rook run owner/name") },
         {
           kind: "p",
-          text: "A local folder is copied into a workspace under ~/.rook/workspaces/ and the original is never changed. A GitHub owner/name needs `rook login` and the Rook GitHub App on that repo first; the GitHub Action guide has the steps.",
+          text: "A local folder is copied into a workspace under ~/.rook/workspaces/ and the original is never changed. A GitHub owner/name needs `rook login` and the Roook GitHub App on that repo first; the GitHub Action guide has the steps.",
         },
         {
           kind: "p",
@@ -87,7 +87,7 @@ export const gettingStartedGuide: DocGuide = {
         { kind: "code", code: "rook run ./my-app --setup ADMIN_PASSWORD", prompt: true },
         {
           kind: "p",
-          text: "Rook asks before the steps that matter: approving the rules, applying a fix and opening a pull request. For a run with no questions, `rook run ./my-app --ci --auto` prints plain output, writes rook-report.json and rook-report.md, and exits 0 when every approved rule held, 1 when a rule is broken and 2 when the run did not finish.",
+          text: "Roook asks before the steps that matter: approving the rules, applying a fix and opening a pull request. For a run with no questions, `rook run ./my-app --ci --auto` prints plain output, writes rook-report.json and rook-report.md, and exits 0 when every approved rule held, 1 when a rule is broken and 2 when the run did not finish.",
         },
       ],
     },
@@ -100,7 +100,7 @@ export const gettingStartedGuide: DocGuide = {
           items: [
             {
               term: "1 · Understand",
-              text: "The Scout, the Mechanic and the Mapper appear as characters while they read the repo, start the app in a Docker sandbox and map its HTTP API. If the app needs a setup value Rook was not given, it asks.",
+              text: "The Scout, the Mechanic and the Mapper appear as characters while they read the repo, start the app in a Docker sandbox and map its HTTP API. If the app needs a setup value Roook was not given, it asks.",
             },
             {
               term: "2 · Rules",
@@ -116,7 +116,7 @@ export const gettingStartedGuide: DocGuide = {
             },
             {
               term: "5 · Diagnose and fix",
-              text: "The Detective's file and line with its explanation. Rook asks before the Surgeon writes a fix, then shows the diff.",
+              text: "The Detective's file and line with its explanation. Roook asks before the Surgeon writes a fix, then shows the diff.",
             },
             {
               term: "6 · Verify and ship",
@@ -144,7 +144,7 @@ export const gettingStartedGuide: DocGuide = {
             { term: "rook/counterexamples/cx_001.json", text: "Each counterexample, with everything needed to replay it exactly." },
             {
               term: "A regression test",
-              text: "A test in your project's own test framework, next to your existing tests, that fails on the bug and passes after the fix. If Rook cannot validate a native test, it falls back to a generated pytest file that replays the JSON.",
+              text: "A test in your project's own test framework, next to your existing tests, that fails on the bug and passes after the fix. If Roook cannot validate a native test, it falls back to a generated pytest file that replays the JSON.",
             },
             {
               term: "A rook/fix-* branch",
@@ -155,7 +155,7 @@ export const gettingStartedGuide: DocGuide = {
         {
           kind: "note",
           title: "For a local folder, look in the workspace",
-          text: "Rook never writes to the folder you pointed it at. For a local folder, these files and the rook/fix-* branch are in the run's workspace, ~/.rook/workspaces/<run-id>/, which is a git repository of its own; nothing is pushed anywhere. For a GitHub repo they reach you as a pull request.",
+          text: "Roook never writes to the folder you pointed it at. For a local folder, these files and the rook/fix-* branch are in the run's workspace, ~/.rook/workspaces/<run-id>/, which is a git repository of its own; nothing is pushed anywhere. For a GitHub repo they reach you as a pull request.",
         },
         {
           kind: "links",

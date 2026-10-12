@@ -37,7 +37,7 @@ export function CounterexamplesView({ session, runs, now }: { session: Session; 
   const withResult = runs.runs.filter((r) => r.result !== null);
   return (
     <AppShell {...shellProps(session, runs)} active="counterexamples">
-      <Title sub="Runs where Rook broke a rule. Open one for the steps, the fix and the verification.">Counterexamples</Title>
+      <Title sub="Runs where Roook broke a rule. Open one for the steps, the fix and the verification.">Counterexamples</Title>
       <RunsList
         runs={withResult}
         loading={runs.loading}
@@ -107,7 +107,7 @@ export function RepositoriesView({ session, runs, repos, loading, error, onRetry
         {groups.github !== null && (
           <section className="flex flex-col gap-2">
             <h2 className="text-[13px] font-semibold text-muted">Your GitHub repositories</h2>
-            {groups.github.length === 0 ? <p className="text-muted">No repositories shared with Rook yet.</p> : <RepoList repos={groups.github} />}
+            {groups.github.length === 0 ? <p className="text-muted">No repositories shared with Roook yet.</p> : <RepoList repos={groups.github} />}
           </section>
         )}
         {groups.connectGithub && (
@@ -132,13 +132,13 @@ export function RepositoriesView({ session, runs, repos, loading, error, onRetry
             <Link href="/login" className="text-link underline-offset-2 hover:underline">
               Sign in
             </Link>{" "}
-            to connect GitHub, or run Rook on any repo with the CLI.
+            to connect GitHub, or run Roook on any repo with the CLI.
           </p>
         )}
         <section className="flex flex-col gap-1 border-t border-line pt-4 text-[13px] text-muted" data-add-to-ci>
           <h2 className="text-[13px] font-semibold text-muted">Add to CI</h2>
           <p>
-            Run Rook on every pull request with <code className="font-mono">rook run --ci</code>.
+            Run Roook on every pull request with <code className="font-mono">rook run --ci</code>.
           </p>
         </section>
       </div>

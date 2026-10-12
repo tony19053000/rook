@@ -50,7 +50,7 @@ export function agentTextColors(color: string): { dark: string; light: string } 
 }
 
 /** The brand mascot: a cloud in the brand color, no name or verb. */
-export const MASCOT: AgentInfo = agent("Rook", "cloud", BRAND_COLOR, "");
+export const MASCOT: AgentInfo = agent("Roook", "cloud", BRAND_COLOR, "");
 
 function titleCase(id: string): string {
   return id.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());

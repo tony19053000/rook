@@ -43,7 +43,7 @@ export function GithubSetupClient() {
   useEffect(() => {
     const params = setupParams(window.location.search);
     if (params === null) {
-      setStatus({ kind: "error", message: "This GitHub link is incomplete. Connect GitHub again from Rook." });
+      setStatus({ kind: "error", message: "This GitHub link is incomplete. Connect GitHub again from Roook." });
       return;
     }
     let cancelled = false;

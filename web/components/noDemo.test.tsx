@@ -58,7 +58,7 @@ function featuredRules() {
 describe('no "demo" in the web app (ROOK-048)', () => {
   it("the check itself catches the word in visible text but not in attributes", () => {
     expect(() => expectNoDemo(visibleText(<button>Try the demo</button>))).toThrow();
-    expectNoDemo(visibleText(<button data-try-demo="">Try Rook</button>));
+    expectNoDemo(visibleText(<button data-try-demo="">Try Roook</button>));
   });
 
   it("home, for a guest, a user without GitHub and a user with GitHub", () => {

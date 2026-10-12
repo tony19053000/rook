@@ -4,8 +4,8 @@ import { cta } from "./site";
 
 export const loginCopy = {
   title: "Sign in",
-  description: "Sign in to Rook with Google to keep your runs and connect GitHub.",
-  heading: "Sign in to Rook",
+  description: "Sign in to Roook with Google to keep your runs and connect GitHub.",
+  heading: "Sign in to Roook",
   lead: "Sign in with Google to keep your runs across devices and connect GitHub.",
   google: "Continue with Google",
   opening: "Opening Google…",
@@ -13,10 +13,10 @@ export const loginCopy = {
   retry: "Retry",
   /** Shown for `?error=` on the return from Google (the provider's text is not echoed). */
   cancelled: "Sign-in was cancelled or did not complete.",
-  unavailable: "Google sign-in is not set up on this site. You can still try Rook without an account.",
+  unavailable: "Google sign-in is not set up on this site. You can still try Roook without an account.",
   noscript: "Sign-in with Google needs JavaScript. Turn it on in your browser to sign in.",
   demo: { label: `${cta.demo.label} without signing in`, href: cta.demo.href },
-  guestNote: "Guests can run the example repos a few times a day. To run Rook on your own repos, install the CLI.",
+  guestNote: "Guests can run the example repos a few times a day. To run Roook on your own repos, install the CLI.",
   cliLink: { label: "Getting started", href: "/docs/getting-started" },
   /** The small print under the sign-in card: plain links, no claim of agreement. */
   legal: [

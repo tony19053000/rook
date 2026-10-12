@@ -150,9 +150,9 @@ function SidebarPanel({
   return (
     <aside className="flex min-h-0 w-full flex-col border-r border-line bg-side" aria-label="Sidebar">
       <div className="flex items-center justify-between gap-2 px-3 pb-2 pt-3">
-        <Link href="/app" className="flex items-center gap-2 rounded-lg px-1.5 py-1" aria-label="Rook home">
+        <Link href="/app" className="flex items-center gap-2 rounded-lg px-1.5 py-1" aria-label="Roook home">
           <RookMark />
-          <span className="font-serif text-[22px] leading-none tracking-tight">Rook</span>
+          <span className="font-serif text-[22px] leading-none tracking-tight">Roook</span>
         </Link>
         {onToggle && (
           <button type="button" onClick={onToggle} aria-label="Close sidebar" title="Close sidebar" className={ICON_BUTTON}>
@@ -324,7 +324,7 @@ function AccountRow({ name, email, coins, githubConnected, onSignOut, onConnectG
             icon={<Icon name="trash" className="text-muted" />}
             explain={
               <>
-                This deletes all your runs (their events, counterexamples and workspace files) and your GitHub link from Rook&apos;s server, then signs
+                This deletes all your runs (their events, counterexamples and workspace files) and your GitHub link from Roook&apos;s server, then signs
                 you out. It can&apos;t be undone. Your sign-in account itself is removed on request: email {CONTACT_EMAIL}.
               </>
             }

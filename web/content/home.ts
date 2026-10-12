@@ -9,7 +9,7 @@ export const homeHero = {
   eyebrow: "Early access · Open source",
   heading: "Find the sequence of API calls that breaks your business rules",
   lead:
-    "Each call is valid on its own. Together they refund more than was paid, sell stock you don't have, or let a normal user into an admin page. Rook finds the smallest sequence that does it, proves it on your running app, and verifies the fix.",
+    "Each call is valid on its own. Together they refund more than was paid, sell stock you don't have, or let a normal user into an admin page. Roook finds the smallest sequence that does it, proves it on your running app, and verifies the fix.",
   github: { label: "View on GitHub", href: REPO_URL },
 } as const;
 
@@ -32,7 +32,7 @@ export const runScreenshot = {
     src: "/screenshots/run-desktop.webp",
     width: 2160,
     height: 1500,
-    alt: "Rook's run page for the minishop example: counterexample #001 breaks the rule \"Total refunds on an order never exceed the amount paid\" in 4 steps (create a product at price 1, buy 1, refund 1, refund 1), observed paid 1 and refunded total 2, reproduced 10/10, with the root cause at app.py line 214 reviewed by the Diagnosis Reviewer.",
+    alt: "Roook's run page for the minishop example: counterexample #001 breaks the rule \"Total refunds on an order never exceed the amount paid\" in 4 steps (create a product at price 1, buy 1, refund 1, refund 1), observed paid 1 and refunded total 2, reproduced 10/10, with the root cause at app.py line 214 reviewed by the Diagnosis Reviewer.",
   },
   mobile: {
     src: "/screenshots/run-mobile.webp",
@@ -48,7 +48,7 @@ export const flowDiagram = {
   eyebrow: "How it works",
   title: "Six steps, from your repo to a verified fix",
   intro: "Bob agents read, propose and write. The deterministic engine searches, replays and verifies. You approve the rules and the fix.",
-  listLabel: "The six steps of a Rook run",
+  listLabel: "The six steps of a Roook run",
   actors: {
     understand: ["Bob"],
     rules: ["Bob", "You approve"],
@@ -109,7 +109,7 @@ export const features: HomeItem[] = [
 export const refusalsSection = {
   id: "guarantees",
   eyebrow: "Guarantees",
-  title: "What Rook refuses to do",
+  title: "What Roook refuses to do",
   intro: "Each of these is enforced in code, not left to a prompt.",
 } as const;
 
@@ -133,7 +133,7 @@ export const refusals: HomeItem[] = [
   },
   {
     title: "Hand your secrets to the app or the logs",
-    body: "The sandbox gets none of Rook's environment, and a redaction filter scrubs keys and tokens from events and logs.",
+    body: "The sandbox gets none of Roook's environment, and a redaction filter scrubs keys and tokens from events and logs.",
   },
   {
     title: "Run arbitrary repos for guests",
@@ -144,8 +144,8 @@ export const refusals: HomeItem[] = [
 export const scopeSection = {
   id: "today",
   eyebrow: "Honest scope",
-  title: "Where Rook is today",
-  intro: "Rook is in early access. Here is exactly what works today, and what doesn't yet.",
+  title: "Where Roook is today",
+  intro: "Roook is in early access. Here is exactly what works today, and what doesn't yet.",
 } as const;
 
 export const scope: string[] = [
@@ -191,21 +191,21 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
     {
       question: "Do I need an account?",
       answer:
-        "Not for trying Rook on the hosted site, or for running the CLI on a folder on your machine. Signing in with Google is needed to work with your GitHub repos, from the web app or the CLI.",
+        "Not for trying Roook on the hosted site, or for running the CLI on a folder on your machine. Signing in with Google is needed to work with your GitHub repos, from the web app or the CLI.",
     },
     {
-      question: "Will Rook change my code?",
+      question: "Will Roook change my code?",
       answer:
         "Only after you approve. The Surgeon edits a workspace copy, only in the approved files. The fix goes to a rook/fix-* branch (a pull request for a GitHub repo), never to your default branch.",
     },
     {
       question: "Is my code sent to an AI?",
       answer:
-        "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs on the hosted site use recorded Bob answers. Bob is the only AI in Rook.",
+        "In live runs, repo content and run data go to IBM Bob as prompts. Guest runs on the hosted site use recorded Bob answers. Bob is the only AI in Roook.",
     },
     {
-      question: "Who makes Rook?",
-      answer: `${operator.name}, an individual developer in ${operator.location}. Rook is an early-access, open-source project under the ${site.licence}, built on IBM Bob.`,
+      question: "Who makes Roook?",
+      answer: `${operator.name}, an individual developer in ${operator.location}. Roook is an early-access, open-source project under the ${site.licence}, built on IBM Bob.`,
     },
     { question: "What does it cost?", answer: costAnswer(status) },
   ];
@@ -214,7 +214,7 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
 export const closingCta = {
   id: "get-started",
   title: "See it break, then see it fixed",
-  body: "Try Rook on the hosted site in your browser, or install the CLI and point it at your own backend.",
+  body: "Try Roook on the hosted site in your browser, or install the CLI and point it at your own backend.",
   installLabel: "Install the CLI (Python 3.12+, Docker, IBM Bob Shell)",
   installCommand: INSTALL_COMMAND,
   docsLink: { label: "Read how it works", href: "/docs" },

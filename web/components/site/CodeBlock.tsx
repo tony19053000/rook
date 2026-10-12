@@ -6,7 +6,7 @@ interface CodeBlockProps {
   code: string;
   label?: string;
   prompt?: boolean;
-  /** The code is a whole file of the Rook repo, unchanged (lib/verbatim.ts: the tests compare it with the file). */
+  /** The code is a whole file of the Roook repo, unchanged (lib/verbatim.ts: the tests compare it with the file). */
   repoFile?: boolean;
 }
 

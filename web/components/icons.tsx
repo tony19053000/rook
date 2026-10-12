@@ -83,7 +83,7 @@ export function Icon({ name, size = 16, className = "" }: { name: IconName; size
   );
 }
 
-/** Rook's mark (the chess rook from app/icon.svg), in the brand accent. */
+/** Roook's mark (the chess rook from app/icon.svg), in the brand accent. */
 export function RookMark({ size = 18 }: { size?: number }) {
   return (
     <svg aria-hidden width={size} height={size} viewBox="7 5 18 22" className="flex-none text-accent">

@@ -26,7 +26,7 @@ const operatorLine = `${operator.name}, an individual developer based in ${opera
 
 export const privacyPolicy: LegalDoc = {
   title: "Privacy policy",
-  description: "What data the Rook site and web app process, where it is kept, who receives it, how long it is kept and how to delete it.",
+  description: "What data the Roook site and web app process, where it is kept, who receives it, how long it is kept and how to delete it.",
   heading: "Privacy policy",
   lastUpdated: LEGAL_LAST_UPDATED,
   intro: [
@@ -61,7 +61,7 @@ export const privacyPolicy: LegalDoc = {
       heading: "Where it is stored",
       items: [
         "Supabase holds your sign-in account.",
-        "The Rook server keeps runs, event logs, counterexamples, user records and guest quota rows in a SQLite database on AWS EC2 in US West (Oregon).",
+        "The Roook server keeps runs, event logs, counterexamples, user records and guest quota rows in a SQLite database on AWS EC2 in US West (Oregon).",
         "The website is hosted on Vercel.",
         "If you connect GitHub, short-lived installation tokens are kept in memory only.",
       ],
@@ -72,10 +72,10 @@ export const privacyPolicy: LegalDoc = {
       items: [
         "Supabase, for sign-in.",
         "Vercel and AWS, which host the website and the server.",
-        "GitHub, only if you connect it: Rook reads your installation's repository list from GitHub.",
+        "GitHub, only if you connect it: Roook reads your installation's repository list from GitHub.",
         "IBM Bob, for live runs only: repository content and run data are sent to IBM Bob as prompts. Recorded example runs send nothing to IBM Bob.",
       ],
-      paragraphs: ["Rook does not sell your data."],
+      paragraphs: ["Roook does not sell your data."],
     },
     {
       id: "retention",
@@ -91,8 +91,8 @@ export const privacyPolicy: LegalDoc = {
       heading: "How to delete your data",
       items: [
         "Delete a single run, with its events and counterexamples, from the web app.",
-        "Delete all your data on the Rook server (your runs and the GitHub link) from the account menu in the web app.",
-        `To delete your Supabase sign-in account, email ${CONTACT_EMAIL}. The Rook server cannot delete it, and there is no self-serve option yet.`,
+        "Delete all your data on the Roook server (your runs and the GitHub link) from the account menu in the web app.",
+        `To delete your Supabase sign-in account, email ${CONTACT_EMAIL}. The Roook server cannot delete it, and there is no self-serve option yet.`,
       ],
     },
     {
@@ -115,7 +115,7 @@ export const privacyPolicy: LegalDoc = {
 
 export const termsOfService: LegalDoc = {
   title: "Terms of service",
-  description: "The terms for using the hosted Rook website and web app.",
+  description: "The terms for using the hosted Roook website and web app.",
   heading: "Terms of service",
   lastUpdated: LEGAL_LAST_UPDATED,
   intro: [
@@ -145,7 +145,7 @@ export const termsOfService: LegalDoc = {
         "Only test repositories you are allowed to test, and only connect repositories you are allowed to share.",
         "Don't abuse the guest quota, and don't try to get around the quotas, rate limits or sandboxing.",
         "Don't try to disrupt the service for others.",
-        "You are responsible for reviewing any fix Rook proposes before you merge it.",
+        "You are responsible for reviewing any fix Roook proposes before you merge it.",
       ],
     },
     {

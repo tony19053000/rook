@@ -71,7 +71,7 @@ describe("the setup return", () => {
       },
     });
     expect(await finishGithubConnect(failing(403), { installation_id: "7", state: `${STATE}-403` })).toMatch(/could not verify/);
-    expect(await finishGithubConnect(failing(401), { installation_id: "7", state: `${STATE}-401` })).toMatch(/Sign in to Rook first/);
+    expect(await finishGithubConnect(failing(401), { installation_id: "7", state: `${STATE}-401` })).toMatch(/Sign in to Roook first/);
     expect(await finishGithubConnect(failing(429), { installation_id: "7", state: `${STATE}-429` })).toMatch(/Too many/);
   });
 });

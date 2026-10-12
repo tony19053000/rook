@@ -20,8 +20,8 @@ export const installGuide: DocGuide = {
   navLabel: "Install",
   title: "Install",
   description: "Supported environments, dependencies, IBM Bob Shell and key setup, install, upgrade and uninstall commands, known limitations and troubleshooting.",
-  heading: "Install Rook",
-  lead: "What Rook needs, how to install, upgrade and remove it, how to set up IBM Bob, and what it cannot do yet.",
+  heading: "Install Roook",
+  lead: "What Roook needs, how to install, upgrade and remove it, how to set up IBM Bob, and what it cannot do yet.",
   summary: "Supported environments, dependencies, IBM Bob setup, upgrade and uninstall, limitations and troubleshooting.",
   sections: [
     {
@@ -33,7 +33,7 @@ export const installGuide: DocGuide = {
           items: [
             {
               term: "Operating system",
-              text: "Linux. Rook is developed on Linux and its automated tests run on Ubuntu. macOS and Windows (WSL 2 included) have not been tested. Rook uses POSIX process groups and file flags, so native Windows is not expected to work.",
+              text: "Linux. Roook is developed on Linux and its automated tests run on Ubuntu. macOS and Windows (WSL 2 included) have not been tested. Roook uses POSIX process groups and file flags, so native Windows is not expected to work.",
             },
             {
               term: "Python",
@@ -41,12 +41,12 @@ export const installGuide: DocGuide = {
             },
             {
               term: "Docker",
-              text: "A running Docker daemon with the Compose plugin (`docker compose`). The CLI builds and starts your app in a container. Rook is developed against Docker 29; it does not check for a minimum version.",
+              text: "A running Docker daemon with the Compose plugin (`docker compose`). The CLI builds and starts your app in a container. Roook is developed against Docker 29; it does not check for a minimum version.",
             },
-            { term: "git", text: "Rook copies or clones your repo into a workspace, keeps a baseline commit there and commits the fix to a branch." },
+            { term: "git", text: "Roook copies or clones your repo into a workspace, keeps a baseline commit there and commits the fix to a branch." },
             {
               term: "IBM Bob Shell and Node.js",
-              text: "Live runs call IBM Bob through Bob Shell, the `bob` command, which is a Node.js program. Rook is developed with Bob Shell 2.0.5 on Node 24. Rook itself needs no Node.js.",
+              text: "Live runs call IBM Bob through Bob Shell, the `bob` command, which is a Node.js program. Roook is developed with Bob Shell 2.0.5 on Node 24. Roook itself needs no Node.js.",
             },
             { term: "Your app", text: "A backend with an HTTP API, in any language, that can be built and started in Docker." },
           ],
@@ -60,16 +60,16 @@ export const installGuide: DocGuide = {
         { kind: "code", code: INSTALL_COMMAND, prompt: true },
         {
           kind: "p",
-          text: "This installs two commands: `rook`, and rook-pr-comment, which the GitHub Action uses to post its comment. Python packages Rook depends on are installed with it into an environment of its own.",
+          text: "This installs two commands: `rook`, and rook-pr-comment, which the GitHub Action uses to post its comment. Python packages Roook depends on are installed with it into an environment of its own.",
         },
         {
           kind: "note",
           title: "Not on PyPI",
-          text: `Rook is not on PyPI yet, so it installs from GitHub. A package named ${PACKAGE_NAME} exists on PyPI and is a different project: do not install Rook with pip from PyPI.`,
+          text: `Roook is not on PyPI yet, so it installs from GitHub. A package named ${PACKAGE_NAME} exists on PyPI and is a different project: do not install Roook with pip from PyPI.`,
         },
         { kind: "p", text: "There are no release tags yet. To stay on one version, install a commit by its full SHA:" },
         { kind: "code", code: `${INSTALL_COMMAND}@<full-commit-sha>`, prompt: true },
-        { kind: "p", text: "To run Rook once without installing it:" },
+        { kind: "p", text: "To run Roook once without installing it:" },
         { kind: "code", code: `uvx --from git+${REPO_URL} rook --help`, prompt: true },
       ],
     },
@@ -80,7 +80,7 @@ export const installGuide: DocGuide = {
         { kind: "code", code: lines("rook --version", "rook --help", "docker info", "bob --version") },
         {
           kind: "p",
-          text: "The first two show that Rook is installed and on your PATH. `docker info` fails when the Docker daemon is not running, and bob --version shows that Bob Shell is installed. None of them calls IBM Bob.",
+          text: "The first two show that Roook is installed and on your PATH. `docker info` fails when the Docker daemon is not running, and bob --version shows that Bob Shell is installed. None of them calls IBM Bob.",
         },
       ],
     },
@@ -90,12 +90,12 @@ export const installGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "Bob is the only AI in Rook, and live runs use your own IBM Bob key. Install Bob Shell and get a key from IBM; Rook does not ship either.",
+          text: "Bob is the only AI in Roook, and live runs use your own IBM Bob key. Install Bob Shell and get a key from IBM; Roook does not ship either.",
         },
         { kind: "links", items: [{ label: "IBM Bob Shell documentation", href: BOB_SHELL_DOCS_URL, external: true }] },
         {
           kind: "p",
-          text: "Rook reads the key from the `BOB_API_KEY` environment variable of the shell that runs it. One way to set it without typing it into your shell history is a small file only you can read:",
+          text: "Roook reads the key from the `BOB_API_KEY` environment variable of the shell that runs it. One way to set it without typing it into your shell history is a small file only you can read:",
         },
         {
           kind: "code",
@@ -106,9 +106,9 @@ export const installGuide: DocGuide = {
         {
           kind: "list",
           items: [
-            "Rook passes the key to Bob Shell only through the child process environment, never as a command-line argument, and scrubs it from its events and logs.",
-            "Rook looks for Bob Shell at the path in `ROOK_BOB_BIN` if you set it, then at ~/.nvm/versions/node/v24.21.0/bin/bob, then as bob on your PATH.",
-            "Each run has a Bob coin budget: `rook run --budget 1.5` is the default. Once it is spent, Rook refuses further live Bob calls in that run. What your IBM Bob usage costs is between you and IBM.",
+            "Roook passes the key to Bob Shell only through the child process environment, never as a command-line argument, and scrubs it from its events and logs.",
+            "Roook looks for Bob Shell at the path in `ROOK_BOB_BIN` if you set it, then at ~/.nvm/versions/node/v24.21.0/bin/bob, then as bob on your PATH.",
+            "Each run has a Bob coin budget: `rook run --budget 1.5` is the default. Once it is spent, Roook refuses further live Bob calls in that run. What your IBM Bob usage costs is between you and IBM.",
             "Never commit the key. In GitHub Actions, store it as a repository secret.",
           ],
         },
@@ -127,7 +127,7 @@ export const installGuide: DocGuide = {
         },
         {
           kind: "p",
-          text: "Uninstalling does not remove Rook's own folder, ~/.rook/: the workspaces of your runs, Bob recordings if you made any, and credentials.json if you signed in. Run `rook logout` first if you signed in, then delete ~/.rook/ yourself.",
+          text: "Uninstalling does not remove Roook's own folder, ~/.rook/: the workspaces of your runs, Bob recordings if you made any, and credentials.json if you signed in. Run `rook logout` first if you signed in, then delete ~/.rook/ yourself.",
         },
       ],
     },
@@ -144,7 +144,7 @@ export const installGuide: DocGuide = {
             "Live runs need Docker and your own IBM Bob key.",
             "Tested on Linux only.",
             "The hosted site does not run your own repos: hosted runs of your own repos are turned off. Run them with the CLI on your machine.",
-            "The Mapper cannot model every API yet. On two of Rook's own example apps, billing-service and wallet-api, it cannot yet set up actions that depend on other actions, so those two are not offered on the site.",
+            "The Mapper cannot model every API yet. On two of Roook's own example apps, billing-service and wallet-api, it cannot yet set up actions that depend on other actions, so those two are not offered on the site.",
             "The GitHub Action has not yet been run on a GitHub-hosted runner. See the GitHub Action guide.",
           ],
         },
@@ -170,15 +170,15 @@ export const installGuide: DocGuide = {
             },
             {
               term: "The app won't start",
-              text: "The Mechanic tries up to 3 times, reading the app's logs each time. Then Rook asks for a setup value or shows the error. If your app needs a secret or a password to start, pass it with `rook run --setup NAME`, where NAME is an environment variable that holds it.",
+              text: "The Mechanic tries up to 3 times, reading the app's logs each time. Then Roook asks for a setup value or shows the error. If your app needs a secret or a password to start, pass it with `rook run --setup NAME`, where NAME is an environment variable that holds it.",
             },
             {
-              term: "Bob returns an answer Rook can't use",
-              text: "Each agent must answer in a fixed JSON shape. Rook asks again with the error, up to 3 attempts, then tells you.",
+              term: "Bob returns an answer Roook can't use",
+              text: "Each agent must answer in a fixed JSON shape. Roook asks again with the error, up to 3 attempts, then tells you.",
             },
             {
               term: "An action fails its dry run",
-              text: "Rook sends the HTTP response back to the Mapper, up to 3 times. An action that still fails is disabled for the run, and the search goes on without it.",
+              text: "Roook sends the HTTP response back to the Mapper, up to 3 times. An action that still fails is disabled for the run, and the search goes on without it.",
             },
             {
               term: "A proposed rule disappears",
@@ -186,7 +186,7 @@ export const installGuide: DocGuide = {
             },
             {
               term: "No counterexample found",
-              text: "Rook reports that no counterexample was found within the budget. That is not proof the rules hold. Give the search more room with `rook run --sequences 50000 --seconds 300`.",
+              text: "Roook reports that no counterexample was found within the budget. That is not proof the rules hold. Give the search more room with `rook run --sequences 50000 --seconds 300`.",
             },
             {
               term: "A flaky counterexample",
@@ -194,7 +194,7 @@ export const installGuide: DocGuide = {
             },
             {
               term: "The fix is not verified",
-              text: "When a check fails, Rook goes back to the diagnosis with the new evidence, up to 3 times, then reports honestly that the fix is not verified. An unverified fix is not shipped.",
+              text: "When a check fails, Roook goes back to the diagnosis with the new evidence, up to 3 times, then reports honestly that the fix is not verified. An unverified fix is not shipped.",
             },
             {
               term: "Live Bob calls are refused",
@@ -210,7 +210,7 @@ export const installGuide: DocGuide = {
             },
             {
               term: "GitHub repos need a sign-in",
-              text: "`rook run owner/name` needs `rook login` and the Rook GitHub App on that repo. To skip both, clone the repo yourself and run Rook on the folder.",
+              text: "`rook run owner/name` needs `rook login` and the Roook GitHub App on that repo. To skip both, clone the repo yourself and run Roook on the folder.",
             },
           ],
         },

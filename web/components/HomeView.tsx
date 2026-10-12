@@ -138,7 +138,7 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, d
       <div className="flex items-center justify-center gap-2.5 pt-[10vh] text-center" data-greeting>
         <AgentSprite look={MASCOT} px={2} animate={false} />
         <h1 className="font-serif text-[22px] font-normal leading-tight tracking-tight">
-          {name ? `What should Rook check next, ${name}?` : "What should Rook check next?"}
+          {name ? `What should Roook check next, ${name}?` : "What should Roook check next?"}
         </h1>
       </div>
       {!guest && !hostedGithub && (

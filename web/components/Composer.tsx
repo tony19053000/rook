@@ -7,7 +7,7 @@
 import { useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 
 /** The tooltip that explains the "Auto" switch. */
-export const AUTO_TOOLTIP = "Auto: Rook answers its own questions (approves the rules and the fix) instead of waiting for you.";
+export const AUTO_TOOLTIP = "Auto: Roook answers its own questions (approves the rules and the fix) instead of waiting for you.";
 
 export interface ComposerProps {
   onSend?: (text: string) => void | boolean;

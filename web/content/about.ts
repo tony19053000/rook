@@ -1,4 +1,4 @@
-// The /about page copy (06 §5.7): who runs Rook, why it exists, the project story and what it is not. The only
+// The /about page copy (06 §5.7): who runs Roook, why it exists, the project story and what it is not. The only
 // place on the site that mentions the hackathon (06 §4 "Positioning").
 
 import { cta, operator, REPO_URL, site, type NavLink } from "./site";

@@ -17,7 +17,7 @@ These rules are **compulsory** for every Claude Code session on this repo, on ei
 
 ## 1. Context
 
-- Product: **Rook**, CLI command `rook`. It was called "Counterexample" earlier; the mockups in `docs/mockups/` still use that name.
+- Product: **Roook** (three o's; the display name since 12 Oct 2026, it was "Rook" before), CLI command `rook`. Only the name people read changed, in the web site, the web app and the README: the CLI command, the Python package, the repo, file paths (`rook/rook.yaml`), branches (`rook/fix-*`), cookies, storage keys and `ROOK_*` variables keep `rook`, and the CLI and server still print "Rook" (their text is tied to the recorded Bob answers). It was called "Counterexample" earlier; the mockups in `docs/mockups/` still use that name.
 - Hackathon: IBM Bob 2.0 Hackathon (lablab.ai). **Deadline: 27 Sep 2026, 15:00 UTC (20:30 IST).**
 - Submission: a working URL, an MP4 video of 5 minutes or less, a PDF deck, and a public GitHub repo. Bob IDE use is mandatory.
 - There is one human (the user) with two Claude Code accounts, used **one after the other**. When one hits its limit, the other continues from `HANDOFF.md`.

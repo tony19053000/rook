@@ -290,7 +290,7 @@ describe("/docs/github-action: from action.yml", () => {
     const { container } = inSite(pageAt("/docs/github-action"));
     const limits = container.querySelector("#limitations")?.textContent ?? "";
     expect(limits).toMatch(/has not yet been run on a GitHub-hosted runner/);
-    expect(limits).toMatch(/Rook does not host or redistribute Bob Shell/);
+    expect(limits).toMatch(/Roook does not host or redistribute Bob Shell/);
     expect(limits).toMatch(/Replay mode only fits code that has not changed/);
     const prs = container.querySelector("#fix-pull-requests")?.textContent ?? "";
     expect(prs).toMatch(/has not yet been run from start to finish against GitHub/);
@@ -314,7 +314,7 @@ describe("/docs/install and /docs/getting-started: from pyproject.toml", () => {
     expect(text).toContain("rook-pr-comment");
   });
 
-  it("both show the one install command, and say Rook is not on PyPI", () => {
+  it("both show the one install command, and say Roook is not on PyPI", () => {
     expect(INSTALL_COMMAND).toBe("uv tool install git+https://github.com/tony19053000/rook");
     for (const path of ["/docs/install", "/docs/getting-started"]) {
       const text = mainText(path);
@@ -348,7 +348,7 @@ describe("/docs/install and /docs/getting-started: from pyproject.toml", () => {
   it("getting started covers the site example, the CLI, the six steps and where results land", () => {
     const { container } = inSite(pageAt("/docs/getting-started"));
     for (const id of ["what-you-need", "try-on-the-site", "install", "first-run", "what-you-see", "where-results-land"]) expect(container.querySelector(`#${id}`), id).not.toBeNull();
-    expect(container.querySelector('#try-on-the-site a[href="/app"]')?.textContent).toBe("Try Rook");
+    expect(container.querySelector('#try-on-the-site a[href="/app"]')?.textContent).toBe("Try Roook");
     expect(container.querySelectorAll("#what-you-see dt")).toHaveLength(6);
     const results = container.querySelector("#where-results-land")?.textContent ?? "";
     for (const item of ["rook/rook.yaml", "rook/counterexamples/cx_001.json", "regression test", "rook/fix-", "~/.rook/workspaces/"]) expect(results).toContain(item);
@@ -362,7 +362,7 @@ describe("/docs/data: what goes to IBM Bob", () => {
     expect(text).toMatch(/A Recorded example run on this site sends nothing to IBM Bob/);
     expect(text).toMatch(/A Live run, with the CLI on your machine and your own key, sends repo content and run data to IBM Bob as prompts/);
     expect(text).toMatch(/Your IBM Bob key stays on your machine\. The hosted site never asks for it/);
-    expect(text).toMatch(/Rook does not scan your files for secrets/);
+    expect(text).toMatch(/Roook does not scan your files for secrets/);
   });
 
   it("states the limits the code has for what a prompt carries, and what the copy leaves out", () => {
@@ -388,10 +388,10 @@ describe("/docs/data: what goes to IBM Bob", () => {
     expect(hosted.textContent).toMatch(/use Delete run\. Its events and counterexamples go with it/);
     expect(hosted.textContent).toMatch(/with Delete my data in the account menu/);
     expect(hosted.textContent).not.toMatch(/not in the web app yet/);
-    expect(hosted.textContent).toMatch(/The Rook server cannot delete it, so it is deleted on request by email/);
+    expect(hosted.textContent).toMatch(/The Roook server cannot delete it, so it is deleted on request by email/);
     const mail = new URL(hosted.querySelector('a[href^="mailto:"]')!.getAttribute("href")!);
     expect(mail.pathname).toBe(CONTACT_EMAIL);
-    expect(mail.searchParams.get("subject")).toBe("Rook: privacy request");
+    expect(mail.searchParams.get("subject")).toBe("Roook: privacy request");
     expect(container.querySelector('#key a[href="/docs/install#ibm-bob"]')).not.toBeNull();
   });
 });
@@ -399,11 +399,11 @@ describe("/docs/data: what goes to IBM Bob", () => {
 describe("README.md is in line with the site (ROOK-055)", () => {
   const readme = repoFile("README.md");
 
-  it("opens with the site's one-liner and positions Rook as early access, open source, built on IBM Bob", () => {
+  it("opens with the site's one-liner and positions Roook as early access, open source, built on IBM Bob", () => {
     expect(readme).toContain(`**${site.oneLiner}**`);
     expect(readme).toMatch(/Early access, open source \(MIT\)\. Built on IBM Bob\./);
     expect(readme.match(/hackathon/gi) ?? []).toHaveLength(1);
-    expect(readme).toContain("Rook started at the IBM Bob 2.0 Hackathon in September 2026.");
+    expect(readme).toContain("Roook started at the IBM Bob 2.0 Hackathon in September 2026.");
   });
 
   it("has the same install command and workflow, and links every guide on the site", () => {

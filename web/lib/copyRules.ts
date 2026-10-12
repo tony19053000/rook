@@ -7,13 +7,13 @@ export interface CopyRule {
 }
 
 /**
- * ROOK-048: people never see the word "demo" (it is "Try Rook" and "example repos"). The site and the web app's
+ * ROOK-048: people never see the word "demo" (it is "Try Roook" and "example repos"). The site and the web app's
  * visible strings are both checked against it; API values like `kind: "demo"` are not user-facing.
  */
 export const NO_DEMO_WORD: CopyRule = { name: "the word demo", pattern: /\bdemos?\b/i };
 
 /**
- * ROOK-053: the site presents Rook as early access, not a hackathon entry. Only the About story may say it
+ * ROOK-053: the site presents Roook as early access, not a hackathon entry. Only the About story may say it
  * (06 §4 "Positioning"); the tests scope this rule to everything else.
  */
 export const NO_HACKATHON: CopyRule = { name: "the word hackathon", pattern: /\bhackathons?\b/i };
@@ -47,7 +47,7 @@ export const BANNED_COPY: CopyRule[] = [
   { name: "per month / year", pattern: /\bper (month|year|seat|user\/month)\b|\/\s?(mo|month|yr|year)\b|\bmonthly\b|\bannually\b/i },
   { name: "star rating", pattern: /[★☆⭐]|\b\d(\.\d)?\s*\/\s*5\b|\b\d(\.\d)?\s*stars?\b|\brated\b/i },
   { name: "award / as seen in", pattern: /\baward[- ]winning\b|\bas seen (in|on)\b|\bfeatured in\b/i },
-  // Rook holds no certifications and has had no audit (06 §4). A claim like "SOC 2 certified" or "independently
+  // Roook holds no certifications and has had no audit (06 §4). A claim like "SOC 2 certified" or "independently
   // audited" is banned; a negated one ("no third-party audit", "not SOC 2 certified") is the honest line.
   { name: "certification / audit claim", pattern: certificationClaim() },
   NO_DEMO_WORD,

@@ -86,7 +86,7 @@ export function RunPageView({ runId, api, session, runs, navigate, state, status
           name="run"
           label="Delete run"
           confirmLabel="Yes, delete this run"
-          explain="This removes the run, its events, its counterexamples and its workspace files from Rook's server. A run that is still going is stopped first. It can't be undone."
+          explain="This removes the run, its events, its counterexamples and its workspace files from Roook's server. A run that is still going is stopped first. It can't be undone."
           run={() => runDelete(() => api.deleteRun(runId), "run")}
           onDeleted={() => go(afterDeleteHref(session))}
           onRefresh={() => window.location.reload()}

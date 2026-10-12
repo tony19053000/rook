@@ -2,7 +2,7 @@
 
 // The /login sign-in control (06 §7), driven by the state machine in lib/signIn.ts. Google sign-in starts only on
 // a click. Back from Google, `?code=` finishes the sign-in the user started (then /app) and `?error=` shows the
-// failure; either way the one-time query leaves the address bar. Nothing here calls the Rook API. With JS off the
+// failure; either way the one-time query leaves the address bar. Nothing here calls the Roook API. With JS off the
 // Google button is hidden by a <noscript> style, so only the note shows (no dead button).
 
 import { useRouter } from "next/navigation";
@@ -96,7 +96,7 @@ export function SignInPanel({ available = SIGN_IN_AVAILABLE }: { available?: boo
         </>
       )}
 
-      {/* Signing in is the page's one action; trying Rook as a guest is a quiet link under it. */}
+      {/* Signing in is the page's one action; trying Roook as a guest is a quiet link under it. */}
       <div className={configured ? "mt-1 border-t border-site-line pt-3" : ""}>
         <ButtonLink href={loginCopy.demo.href} variant={configured ? "ghost" : "secondary"} size={configured ? "md" : "lg"} className="w-full">
           {loginCopy.demo.label}

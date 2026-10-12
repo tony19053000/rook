@@ -3,7 +3,7 @@
 //   node e2e/audit.mjs [base url, default $AUDIT_URL or http://localhost:3100] [--out DIR] [--skip-external] [--headers] [--allow-api-down]
 //
 // Checks, per route at 360/768/1440/1920 px: status, no horizontal scroll, no broken images, no console errors,
-// a screenshot (--allow-api-down: ignore failed /api/v1 calls when no Rook server sits behind the web app); then link check, axe-core (serious/critical), a visible-text scan, and with --headers the security
+// a screenshot (--allow-api-down: ignore failed /api/v1 calls when no Roook server sits behind the web app); then link check, axe-core (serious/critical), a visible-text scan, and with --headers the security
 // headers plus /robots.txt and /sitemap.xml. Exits 1 on any failure. Env: CHROME (default google-chrome).
 
 import { spawn } from "node:child_process";
@@ -192,7 +192,7 @@ async function checkLink(url, external) {
 async function main() {
   const opts = parseArgs(process.argv.slice(2));
   mkdirSync(opts.out, { recursive: true });
-  console.log(`Rook audit of ${opts.base}  (screenshots: ${opts.out})`);
+  console.log(`Roook audit of ${opts.base}  (screenshots: ${opts.out})`);
   const chrome = await launchChrome();
   const pageData = new Map(); // path -> { hrefs, ids }
   let axeSeen = new Set();

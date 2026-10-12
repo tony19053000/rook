@@ -5,10 +5,10 @@
 
 export const docsCopy = {
   title: "Docs",
-  description: "How Rook works in six steps, and guides to installing it, approving rules, reading counterexamples, the GitHub Action and what is sent to IBM Bob.",
+  description: "How Roook works in six steps, and guides to installing it, approving rules, reading counterexamples, the GitHub Action and what is sent to IBM Bob.",
   eyebrow: "Docs",
-  heading: "Rook documentation",
-  lead: "How Rook gets from your repo to a verified fix in six steps, then a guide for each part: installing, rules, counterexamples, the GitHub Action, and what is sent to IBM Bob.",
+  heading: "Roook documentation",
+  lead: "How Roook gets from your repo to a verified fix in six steps, then a guide for each part: installing, rules, counterexamples, the GitHub Action, and what is sent to IBM Bob.",
   /** In-page navigation. */
   tocLabel: "On this page",
   stepLabel: "Step",
@@ -25,7 +25,7 @@ export const howItWorks = {
 export const guidesIndex = {
   id: "guides",
   title: "Guides",
-  intro: "Start with Getting started. Each guide states what Rook does today, including what is limited or not built yet.",
+  intro: "Start with Getting started. Each guide states what Roook does today, including what is limited or not built yet.",
 } as const;
 
 export interface DocCommand {
@@ -42,13 +42,13 @@ export const cliReference = {
     {
       usage: "rook run [repo]",
       purpose:
-        "Search a repo for broken business rules. Add `--ci` for plain output, report files and exit codes (0 every approved rule held, 1 a rule is broken, 2 the run did not finish), and `--auto` to let Rook answer its own questions.",
+        "Search a repo for broken business rules. Add `--ci` for plain output, report files and exit codes (0 every approved rule held, 1 a rule is broken, 2 the run did not finish), and `--auto` to let Roook answer its own questions.",
     },
     { usage: "rook replay <cx> --base-url <url>", purpose: "Replay a counterexample against your running app (exit 1 while the rule is still broken)." },
     { usage: "rook verify <cx> --base-url <url>", purpose: "Check a fix on your running app: the exact replay plus a fresh search (exit 0 when both pass)." },
     { usage: "rook explain <cx>", purpose: "Explain a counterexample in plain words: the rule, the minimal steps and what was observed." },
     { usage: "rook init", purpose: "Set up a repo: the rook/ folder and a starter GitHub workflow that runs `rook run . --ci --auto`. It never overwrites a file that exists unless you pass `rook init --force`." },
-    { usage: "rook serve", purpose: "Start the Rook API server (the web app's backend)." },
+    { usage: "rook serve", purpose: "Start the Roook API server (the web app's backend)." },
     { usage: "rook login", purpose: "Sign in with Google (saved to ~/.rook/credentials.json, readable only by you)." },
     { usage: "rook logout", purpose: "Sign out: revoke the session on the server and delete the saved credentials on this machine." },
   ] satisfies DocCommand[],

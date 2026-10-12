@@ -24,7 +24,7 @@ export const guidesCopy = {
   previous: "Previous",
   next: "Next",
   /** Above the verbatim rook.yaml on /docs/rules. */
-  repoFileNote: "Unchanged from the Rook repo",
+  repoFileNote: "Unchanged from the Roook repo",
 } as const;
 
 /** The docs navigation: the overview, then every guide. */

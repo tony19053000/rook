@@ -1,6 +1,6 @@
-# Rook
+# Roook
 
-**Rook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.** Early access, open source (MIT). Built on IBM Bob.
+**Roook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.** Early access, open source (MIT). Built on IBM Bob.
 
 | | |
 |---|---|
@@ -20,11 +20,11 @@
   Reproduced 10/10 on the real app
 ```
 
-This is a recorded run on minishop, Rook's own small test shop. The site walks through it end to end, including the one-line fix and the four checks that verified it.
+This is a recorded run on minishop, Roook's own small test shop. The site walks through it end to end, including the one-line fix and the four checks that verified it.
 
 ## The problem
 
-Unit tests cover the scenarios you thought of. Costly bugs like double refunds, negative stock and permission bypasses come from **unexpected sequences of valid actions**. An AI reviewer that says "this might have a bug" is only guessing. Rook runs the failing sequence on your app and shows you the result.
+Unit tests cover the scenarios you thought of. Costly bugs like double refunds, negative stock and permission bypasses come from **unexpected sequences of valid actions**. An AI reviewer that says "this might have a bug" is only guessing. Roook runs the failing sequence on your app and shows you the result.
 
 ## How it works
 
@@ -61,7 +61,7 @@ rook verify cx_001 --base-url http://127.0.0.1:8000   # exact replay + fresh sea
 rook init                               # add rook/ and a starter GitHub workflow
 ```
 
-Rook never writes to the folder you point it at. For a local folder, `rook/rook.yaml`, `rook/counterexamples/cx_001.json`, the regression test and the `rook/fix-*` branch are in the run's workspace under `~/.rook/workspaces/`. For a GitHub repo (`rook login`, then `rook run owner/name`) the fix is pushed as a `rook/fix-*` branch and opened as a pull request, never pushed to your default branch.
+Roook never writes to the folder you point it at. For a local folder, `rook/rook.yaml`, `rook/counterexamples/cx_001.json`, the regression test and the `rook/fix-*` branch are in the run's workspace under `~/.rook/workspaces/`. For a GitHub repo (`rook login`, then `rook run owner/name`) the fix is pushed as a `rook/fix-*` branch and opened as a pull request, never pushed to your default branch.
 
 Guides:
 
@@ -99,21 +99,21 @@ jobs:
 
 Use `pull_request` and **never** `pull_request_target`: with `pull_request_target`, a fork's code would run with your secrets.
 
-Limitations, plainly: the action has not yet been run on a GitHub-hosted runner; live mode needs a Bob Shell package you provide (`bob-package`; Rook does not host one); replay mode only fits code that has not changed since it was recorded. Details and all inputs: the [GitHub Action guide](https://rook-weld-six.vercel.app/docs/github-action).
+Limitations, plainly: the action has not yet been run on a GitHub-hosted runner; live mode needs a Bob Shell package you provide (`bob-package`; Roook does not host one); replay mode only fits code that has not changed since it was recorded. Details and all inputs: the [GitHub Action guide](https://rook-weld-six.vercel.app/docs/github-action).
 
 ## How IBM Bob is used
 
 - **13 Bob agents, each a Bob Shell custom mode:** a Coordinator and 12 specialists (Scout, Mechanic, Mapper, Lawmaker, Rule Critic, Test Designer, Strategist, Detective, Diagnosis Reviewer, Surgeon, Fix Reviewer, Guide). Every agent is read-only except the Mechanic (its own sandbox folder) and the Surgeon (only the approved files).
-- Bob is the only AI in Rook. In a live run, repo content goes to IBM Bob as prompts; a recorded run sends nothing. See [Data and IBM Bob](https://rook-weld-six.vercel.app/docs/data).
+- Bob is the only AI in Roook. In a live run, repo content goes to IBM Bob as prompts; a recorded run sends nothing. See [Data and IBM Bob](https://rook-weld-six.vercel.app/docs/data).
 
-## Where Rook is today
+## Where Roook is today
 
 - Early access. No paid plans, no team accounts.
 - HTTP APIs only: no libraries, pure frontends, mobile apps or ML notebooks.
 - The hosted site offers recorded example runs of two example repos; it does not run your own repos.
 - No third-party security audit. See [Security](https://rook-weld-six.vercel.app/security) for how code and data are handled and what is not yet true.
 
-Rook started at the IBM Bob 2.0 Hackathon in September 2026.
+Roook started at the IBM Bob 2.0 Hackathon in September 2026.
 
 ## Security
 

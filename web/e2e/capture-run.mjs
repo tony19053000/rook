@@ -5,7 +5,7 @@
 //
 //   node e2e/capture-run.mjs http://localhost:3100 [out dir, default public/screenshots]
 //
-// The origin must serve the web app with /api/v1 proxied to a Rook server in Bob *replay* mode, so the run's
+// The origin must serve the web app with /api/v1 proxied to a Roook server in Bob *replay* mode, so the run's
 // Bob answers are the committed recordings (0 Bobcoins) and the engine runs live against the minishop app:
 // e.g. `ROOK_E2E_KEEP=1 npm run test:e2e` keeps such a pair up, or `rook serve` with ROOK_BOB_MODE=replay
 // plus `ROOK_API_PROXY_TARGET=<server> next build && next start -p 3100`. Never point it at a live-mode server.

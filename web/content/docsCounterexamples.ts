@@ -31,9 +31,9 @@ export const counterexamplesGuide: DocGuide = {
   path: "/docs/counterexamples",
   navLabel: "Counterexamples",
   title: "Counterexamples and verified fixes",
-  description: "How Rook shrinks a failing sequence to a minimal counterexample, replays it, and verifies a fix with four engine checks, shown on one recorded case.",
+  description: "How Roook shrinks a failing sequence to a minimal counterexample, replays it, and verifies a fix with four engine checks, shown on one recorded case.",
   heading: "Counterexamples and verified fixes",
-  lead: "A counterexample is the smallest sequence of valid actions that breaks one approved rule, replayed on the real app. This guide explains how Rook gets there and what counts as a verified fix, using one recorded case.",
+  lead: "A counterexample is the smallest sequence of valid actions that breaks one approved rule, replayed on the real app. This guide explains how Roook gets there and what counts as a verified fix, using one recorded case.",
   summary: "Minimal counterexamples, replay consistency and the four checks of a verified fix, on the recorded refund case.",
   sections: [
     {
@@ -108,7 +108,7 @@ export const counterexamplesGuide: DocGuide = {
         },
         {
           kind: "p",
-          text: "When a check fails, Rook goes back to the diagnosis with the new evidence, up to 3 times, and then reports honestly that the fix is not verified. Only a verified fix is committed to a rook/fix-* branch.",
+          text: "When a check fails, Roook goes back to the diagnosis with the new evidence, up to 3 times, and then reports honestly that the fix is not verified. Only a verified fix is committed to a rook/fix-* branch.",
         },
       ],
     },
@@ -118,7 +118,7 @@ export const counterexamplesGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "Every counterexample is saved as rook/counterexamples/cx_NNN.json, numbered from cx_001. It holds everything needed to replay the sequence exactly, and Rook never overwrites one that exists.",
+          text: "Every counterexample is saved as rook/counterexamples/cx_NNN.json, numbered from cx_001. It holds everything needed to replay the sequence exactly, and Roook never overwrites one that exists.",
         },
         { kind: "terms", items: [...cxFields] },
       ],

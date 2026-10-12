@@ -131,15 +131,15 @@ describe("every header, footer and CTA link resolves (ROOK-053)", () => {
     expect(headerNav.map((l) => l.label)).toEqual(["Docs", "Security", "Pricing", "Roadmap", "GitHub"]);
     const columns = Object.fromEntries(footerColumns.map((c) => [c.heading, c.links.map((l) => l.label)]));
     expect(columns).toEqual({
-      Product: ["Overview", "Try Rook", "Pricing", "Roadmap", "Sign in"],
+      Product: ["Overview", "Try Roook", "Pricing", "Roadmap", "Sign in"],
       Docs: ["Getting started", "Install", "Rules", "GitHub Action", "Data and IBM Bob"],
       Company: ["About", "Contact", "GitHub"],
       Legal: ["Privacy", "Terms", "Security"],
     });
   });
 
-  it('the CTAs: "Try Rook" → /app and "Read the docs" → the getting-started docs', () => {
-    expect(cta.demo).toEqual({ label: "Try Rook", href: "/app" });
+  it('the CTAs: "Try Roook" → /app and "Read the docs" → the getting-started docs', () => {
+    expect(cta.demo).toEqual({ label: "Try Roook", href: "/app" });
     expect(cta.docs).toEqual({ label: "Read the docs", href: "/docs/getting-started" });
     inSite(<HomePage />);
     const hero = document.querySelector("[data-hero]") as HTMLElement;
@@ -184,7 +184,7 @@ describe("sitemap, robots and metadataBase (06 §1, §8)", () => {
       expect(typeof title === "string" && title.length > 0, path).toBe(true);
       expect(String(description).length, path).toBeGreaterThan(20);
       expect(alternates?.canonical, path).toBe(path);
-      expect(openGraph?.title, path).toBe(`${String(title)} · Rook`);
+      expect(openGraph?.title, path).toBe(`${String(title)} · Roook`);
       expect(openGraph?.description, path).toBe(description);
       expect((twitter as { card?: string } | undefined)?.card, path).toBe("summary_large_image");
       expect(JSON.stringify(openGraph?.images), path).toContain('"url":"/opengraph-image"');
@@ -213,7 +213,7 @@ describe("/contact (06 §5.9)", () => {
       expect(url.pathname, id).toBe(CONTACT_EMAIL);
       subjects[id] = url.searchParams.get("subject") ?? "";
     }
-    expect(subjects).toEqual({ general: "Rook: question", "early-access": "Rook: early access", privacy: "Rook: privacy request" });
+    expect(subjects).toEqual({ general: "Roook: question", "early-access": "Roook: early access", privacy: "Roook: privacy request" });
     expect(main.querySelector('a[data-channel="issues"]')?.getAttribute("href")).toBe(`${REPO_URL}/issues`);
     expect(ISSUES_URL).toBe(`${REPO_URL}/issues`);
     expect(container.querySelector("form")).toBeNull();
@@ -223,14 +223,14 @@ describe("/contact (06 §5.9)", () => {
 });
 
 describe("/about (06 §5.7)", () => {
-  it("names the operator, India, the hackathon story and what Rook is not", () => {
+  it("names the operator, India, the hackathon story and what Roook is not", () => {
     inSite(<AboutPage />);
     const main = screen.getByRole("main");
     const text = main.textContent ?? "";
     expect(operator).toEqual({ name: "Aayush Kumar", location: "India" });
     expect(text).toContain("Aayush Kumar");
     expect(text).toContain("India");
-    expect(text).toContain("Rook started at the IBM Bob 2.0 Hackathon in September 2026.");
+    expect(text).toContain("Roook started at the IBM Bob 2.0 Hackathon in September 2026.");
     expect(text).toMatch(/early-access, open-source/);
     expect(text).toMatch(/Not a company: there is no incorporation, no employees and no outside funding\./);
     expect(screen.getByRole("heading", { level: 1, name: aboutCopy.heading })).toBeTruthy();
@@ -261,7 +261,7 @@ describe("/pricing: early access and open source (06 §5.4)", () => {
   it("shows the three ways in words, the notice and the hosted-interest link to /contact", () => {
     inSite(<PricingPage />);
     expect(screen.getByRole("heading", { level: 1, name: "Early access and open source" })).toBeTruthy();
-    expect(useWays.map((w) => w.name)).toEqual(["Try Rook on this site", "The CLI on your machine", "Hosted runs of your own repos"]);
+    expect(useWays.map((w) => w.name)).toEqual(["Try Roook on this site", "The CLI on your machine", "Hosted runs of your own repos"]);
     for (const way of useWays) {
       const card = screen.getByRole("heading", { level: 3, name: way.name }).closest("article") as HTMLElement;
       expect(within(card).getByText(way.cost)).toBeTruthy();

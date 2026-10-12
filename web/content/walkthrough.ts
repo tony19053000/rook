@@ -13,7 +13,7 @@ export const walkthroughCopy = {
   eyebrow: "Inside a run",
   title: "Watch the six steps in the product",
   intro: "The refund case again, drawn with the web app's own components: Bob agents read, propose and write; the engine searches, replays and verifies.",
-  tablistLabel: "Steps of a Rook run",
+  tablistLabel: "Steps of a Roook run",
   pause: "Pause",
   play: "Play",
   /** Appended to the control's visible text in its accessible name. */

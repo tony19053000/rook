@@ -32,7 +32,7 @@ export const actionWorkflow = lines(
 
 /** action.yml `inputs`, in file order, with their defaults. */
 export const actionInputs = [
-  { term: "repo-path", text: "The folder to check. Rook copies it and never changes it. Default: the repo root." },
+  { term: "repo-path", text: "The folder to check. Roook copies it and never changes it. Default: the repo root." },
   { term: "request", text: "What to look for. Default: find bugs in my app." },
   {
     term: "bob-mode",
@@ -41,18 +41,18 @@ export const actionInputs = [
   { term: "bob-api-key", text: "Your IBM Bob key. Pass the repository secret, never the key itself." },
   { term: "bob-package", text: "Live mode: the Bob Shell package for npm to install, as a URL or a path." },
   { term: "recordings", text: "Replay mode: a folder of Bob recordings, copied to ~/.rook/recordings on the runner." },
-  { term: "auto", text: "true (the default) adds `--auto`, so Rook answers its own questions. false runs `rook run --ci` alone." },
+  { term: "auto", text: "true (the default) adds `--auto`, so Roook answers its own questions. false runs `rook run --ci` alone." },
   { term: "budget", text: "The Bob coin budget for the run. Default: 1.5." },
   { term: "seconds", text: "The search budget in seconds. Default: 120." },
-  { term: "setup", text: "Names of environment variables your app needs, separated by spaces. Each is passed to Rook as a setup value." },
+  { term: "setup", text: "Names of environment variables your app needs, separated by spaces. Each is passed to Roook as a setup value." },
   { term: "report-dir", text: "Where rook-report.json and rook-report.md are written. Default: rook-report." },
-  { term: "comment", text: "true (the default) posts or updates one Rook comment on the pull request." },
+  { term: "comment", text: "true (the default) posts or updates one Roook comment on the pull request." },
   { term: "github-token", text: "The token used for the comment. Default: the workflow's own token, which needs pull-requests: write." },
 ] as const;
 
 /** action.yml `outputs`. */
 export const actionOutputs = [
-  { term: "exit-code", text: "Rook's exit code: 0, 1 or 2, as below." },
+  { term: "exit-code", text: "Roook's exit code: 0, 1 or 2, as below." },
   { term: "report", text: "The path of rook-report.md." },
   { term: "bob-mode", text: "The Bob mode actually used: live or replay." },
 ] as const;
@@ -61,7 +61,7 @@ export const githubActionGuide: DocGuide = {
   path: "/docs/github-action",
   navLabel: "GitHub Action",
   title: "GitHub Action and pull requests",
-  description: "What Rook's GitHub Action runs on a pull request, its inputs, exit codes and limitations, and how a verified fix reaches you as a pull request.",
+  description: "What Roook's GitHub Action runs on a pull request, its inputs, exit codes and limitations, and how a verified fix reaches you as a pull request.",
   heading: "GitHub Action and pull requests",
   lead: "Two separate things live here. The action checks a pull request and comments what it found. The pull-request workflow is how a verified fix from the CLI reaches your repo for review.",
   summary: "What the action runs, its inputs, exit codes and limitations, and how a fix becomes a pull request.",
@@ -70,15 +70,15 @@ export const githubActionGuide: DocGuide = {
       id: "what-it-does",
       title: "What the action does",
       blocks: [
-        { kind: "p", text: "The action is the file action.yml at the root of the Rook repo. On each run it:" },
+        { kind: "p", text: "The action is the file action.yml at the root of the Roook repo. On each run it:" },
         {
           kind: "list",
           ordered: true,
           items: [
             "Chooses the Bob mode. It is replay unless you ask for live, and live turns into replay when no key is present.",
-            "Installs uv, then Rook itself from the action's own checkout, with Python 3.12.",
+            "Installs uv, then Roook itself from the action's own checkout, with Python 3.12.",
             "In live mode, sets up Node 24 and installs Bob Shell from the package you named. In replay mode, copies your recordings into place.",
-            "Runs `rook run --ci --auto` on your checkout, with your request and budgets. Rook starts your app in Docker on the runner.",
+            "Runs `rook run --ci --auto` on your checkout, with your request and budgets. Roook starts your app in Docker on the runner.",
             "Adds rook-report.md to the job summary, and posts it as one comment on the pull request.",
             "Fails the job when an approved rule is broken or the run did not finish.",
           ],
@@ -97,15 +97,15 @@ export const githubActionGuide: DocGuide = {
         {
           kind: "list",
           items: [
-            "Replace <full-commit-sha> with the full SHA of the Rook commit you want, so the action cannot change under you. Rook has no release tags yet, so there is no version tag to use instead.",
-            "Replace the bob-package value with a Bob Shell package you are entitled to use, as a URL or a path npm can install. Rook does not host one. Without it, live mode stops with an error.",
+            "Replace <full-commit-sha> with the full SHA of the Roook commit you want, so the action cannot change under you. Roook has no release tags yet, so there is no version tag to use instead.",
+            "Replace the bob-package value with a Bob Shell package you are entitled to use, as a URL or a path npm can install. Roook does not host one. Without it, live mode stops with an error.",
             "Store your IBM Bob key as the repository secret BOB_API_KEY.",
           ],
         },
         {
           kind: "note",
           title: "Use pull_request, never pull_request_target",
-          text: "With pull_request_target, a fork's code would run with your secrets. Pull requests from forks get no secrets, so the action falls back to recorded Bob answers. The key is masked in the logs and is given only to the step that runs Rook, and only in live mode.",
+          text: "With pull_request_target, a fork's code would run with your secrets. Pull requests from forks get no secrets, so the action falls back to recorded Bob answers. The key is masked in the logs and is given only to the step that runs Roook, and only in live mode.",
         },
       ],
     },
@@ -139,14 +139,14 @@ export const githubActionGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "Rook keeps one comment on the pull request and updates it on every run, instead of adding a new one each time. It holds rook-report.md: each approved rule and its result, and for a broken rule the minimal steps, the replay count, the observed values and the expected check.",
+          text: "Roook keeps one comment on the pull request and updates it on every run, instead of adding a new one each time. It holds rook-report.md: each approved rule and its result, and for a broken rule the minimal steps, the replay count, the observed values and the expected check.",
         },
         {
           kind: "list",
           items: [
             "The workflow needs the pull-requests: write permission for the comment. Set comment to false to skip it; the report is still in the job summary.",
             "Text that comes from your app or from Bob is put in code spans in the report, so it cannot mention people or inject formatting.",
-            "Only a comment written by a bot is updated, so nobody can redirect the update by copying Rook's marker into their own comment.",
+            "Only a comment written by a bot is updated, so nobody can redirect the update by copying Roook's marker into their own comment.",
           ],
         },
       ],
@@ -159,10 +159,10 @@ export const githubActionGuide: DocGuide = {
           kind: "list",
           items: [
             "The action has not yet been run on a GitHub-hosted runner from start to finish. Its parts are covered by automated tests and a dry run of the comment step. Treat it as untested until you have seen it pass in your repo.",
-            "Live mode needs a Bob Shell package you provide. Rook does not host or redistribute Bob Shell.",
+            "Live mode needs a Bob Shell package you provide. Roook does not host or redistribute Bob Shell.",
             "Replay mode only fits code that has not changed. A recording is matched by the exact prompt, and the prompts include a digest of your files. A pull request that changes the code misses its recordings, and the run does not finish (exit code 2). For real pull requests, use live mode.",
             "The runner must have Docker. GitHub's ubuntu-latest runners do.",
-            "`rook init` writes a different, simpler starter workflow that installs Rook with uv and runs `rook run . --ci --auto`. It does not install Bob Shell and does not use this action, so on a GitHub-hosted runner it needs a Bob Shell install step added before it can make live runs.",
+            "`rook init` writes a different, simpler starter workflow that installs Roook with uv and runs `rook run . --ci --auto`. It does not install Bob Shell and does not use this action, so on a GitHub-hosted runner it needs a Bob Shell install step added before it can make live runs.",
           ],
         },
       ],
@@ -176,15 +176,15 @@ export const githubActionGuide: DocGuide = {
           kind: "list",
           ordered: true,
           items: [
-            "In the Rook web app, sign in and connect GitHub. This installs the Rook GitHub App on the repos you choose. It asks for Contents (read and write), Pull requests (read and write) and Metadata (read).",
+            "In the Roook web app, sign in and connect GitHub. This installs the Roook GitHub App on the repos you choose. It asks for Contents (read and write), Pull requests (read and write) and Metadata (read).",
             "On your machine, sign in with `rook login`.",
-            "Run `rook run owner/name`. The CLI asks the Rook server for a short-lived token for that one repo, clones the repo into a workspace, and does everything else locally: your Docker, your IBM Bob key.",
-            "When a fix is verified and you say yes, Rook pushes a rook/fix-* branch and opens a pull request.",
+            "Run `rook run owner/name`. The CLI asks the Roook server for a short-lived token for that one repo, clones the repo into a workspace, and does everything else locally: your Docker, your IBM Bob key.",
+            "When a fix is verified and you say yes, Roook pushes a rook/fix-* branch and opens a pull request.",
           ],
         },
         {
           kind: "p",
-          text: "The pull request's commit holds the fix, the regression test, rook/rook.yaml and the counterexample file. Its description names the rule, the size of the counterexample and its replay count, the regression test and the verification result, and gives the command to replay it. Rook never pushes to your default branch and never force-pushes.",
+          text: "The pull request's commit holds the fix, the regression test, rook/rook.yaml and the counterexample file. Its description names the rule, the size of the counterexample and its replay count, the regression test and the verification result, and gives the command to replay it. Roook never pushes to your default branch and never force-pushes.",
         },
         {
           kind: "note",

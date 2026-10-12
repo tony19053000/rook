@@ -133,7 +133,7 @@ describe("home: hero (06 §5.1)", () => {
     expect(homeHero.lead).toMatch(/verifies the fix/);
   });
 
-  it("has the CTAs: Try Rook (/app), Read the docs and the GitHub repo", () => {
+  it("has the CTAs: Try Roook (/app), Read the docs and the GitHub repo", () => {
     const { container } = inSite(<HomePage />);
     const hero = container.querySelector("[data-hero]") as HTMLElement;
     const links = within(hero).getAllByRole("link");
@@ -142,7 +142,7 @@ describe("home: hero (06 §5.1)", () => {
       [cta.docs.label, cta.docs.href],
       [`${homeHero.github.label}↗`, REPO_URL],
     ]);
-    expect(cta.demo.label).toBe("Try Rook");
+    expect(cta.demo.label).toBe("Try Roook");
     expect(cta.docs.label).toBe("Read the docs");
     expect(links[2]!.getAttribute("rel")).toBe("noopener noreferrer");
   });

@@ -195,7 +195,7 @@ describe("run data on the page is exempt from the copy rules by identity only (l
     ]) {
       const { container, unmount } = render(
         <p>
-          Rook: <span {...{ [RUN_DATA_ATTR]: "" }}>{prose}</span>
+          Roook: <span {...{ [RUN_DATA_ATTR]: "" }}>{prose}</span>
         </p>,
       );
       expect(isRecordedData(container.querySelector("span")!), prose).toBe(false);

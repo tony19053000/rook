@@ -1,4 +1,4 @@
-// ROOK-055: the one file of the Rook repo a site page shows whole (tests/fixtures/minishop/rook.yaml, on
+// ROOK-055: the one file of the Roook repo a site page shows whole (tests/fixtures/minishop/rook.yaml, on
 // /docs/rules). Like the recorded run's lines (lib/recordedData.ts), it is exempt from the copy rules by identity
 // only: an element marked with REPO_FILE_ATTR is skipped by the copy scan only when its whole text is exactly that
 // file, so the mark cannot hide prose. The file names an actor "customer" and a seeded login at a ".local" test

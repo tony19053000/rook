@@ -16,7 +16,7 @@ describe("sidebar: signed in", () => {
   const out = html(<Sidebar recents={RECENTS} coins={0.5} userName="Aayush" email="a@example.com" signedIn currentRunId="r_9" onToggle={() => {}} />);
 
   it("has the wordmark, the collapse button and the nav with New run", () => {
-    expect(out).toContain(">Rook<");
+    expect(out).toContain(">Roook<");
     expect(out).toContain('aria-label="Close sidebar"');
     for (const href of ["/app", "/counterexamples", "/rules", "/repositories"]) expect(out).toContain(`href="${href}"`);
     expect(out).toContain("New run");

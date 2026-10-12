@@ -15,7 +15,7 @@ export const rulesGuide: DocGuide = {
   path: "/docs/rules",
   navLabel: "Rules",
   title: "Rules",
-  description: "How a business rule gets proposed, checked and approved in Rook, and what rook/rook.yaml holds, with a real example file.",
+  description: "How a business rule gets proposed, checked and approved in Roook, and what rook/rook.yaml holds, with a real example file.",
   heading: "Rules",
   lead: "A rule is a business invariant that must hold after every step, such as: total refunds never exceed the amount paid. Bob proposes rules, you approve them, and the engine searches only for the ones you approved.",
   summary: "How rules are proposed, checked and approved, with a real rook/rook.yaml and its format.",
@@ -47,7 +47,7 @@ export const rulesGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "A state rule that is false on a fresh app is rejected: it is a wrong rule. A response rule is different, because it is judged on a single request. If the app breaks it on the very first request, Rook cannot tell a one-step bug from a wrong rule, so it keeps the rule and flags it `already_broken`.",
+          text: "A state rule that is false on a fresh app is rejected: it is a wrong rule. A response rule is different, because it is judged on a single request. If the app breaks it on the very first request, Roook cannot tell a one-step bug from a wrong rule, so it keeps the rule and flags it `already_broken`.",
         },
         {
           kind: "p",
@@ -61,7 +61,7 @@ export const rulesGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "With `rook run --auto`, Rook answers its own questions inside limits that are enforced in code:",
+          text: "With `rook run --auto`, Roook answers its own questions inside limits that are enforced in code:",
         },
         {
           kind: "list",
@@ -84,7 +84,7 @@ export const rulesGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "This is tests/fixtures/minishop/rook.yaml from the Rook repo, unchanged: the hand-written model of minishop, Rook's own small test shop, which Rook's engine tests run against. It has four approved rules, one for each bug planted in that shop.",
+          text: "This is tests/fixtures/minishop/rook.yaml from the Roook repo, unchanged: the hand-written model of minishop, Roook's own small test shop, which Roook's engine tests run against. It has four approved rules, one for each bug planted in that shop.",
         },
         { kind: "slot", name: "rook-yaml" },
         {
@@ -110,8 +110,8 @@ export const rulesGuide: DocGuide = {
             {
               kind: "terms",
               items: [
-                { term: "base_url", text: "Always {{sandbox.base_url}}. Rook fills it in at run time with the sandbox's address; any other value is rejected." },
-                { term: "health", text: "The request Rook polls until the app is up: a method, a path and the expected status." },
+                { term: "base_url", text: "Always {{sandbox.base_url}}. Roook fills it in at run time with the sandbox's address; any other value is rejected." },
+                { term: "health", text: "The request Roook polls until the app is up: a method, a path and the expected status." },
                 { term: "isolation", text: "fresh_entities (the default): every sequence creates its own actors and entities, so nothing is reset between sequences. restart: the sandbox is restarted instead." },
               ],
             },
@@ -150,7 +150,7 @@ export const rulesGuide: DocGuide = {
           blocks: [
             {
               kind: "p",
-              text: "State readers are how Rook sees your app's state: plain HTTP reads. A reader has a name, `each` (the captured variable it is read for, such as every order_id the sequence created), the request, and `fields` picked out of the response with JSONPaths. Rules refer to these fields, as in order.refunded.",
+              text: "State readers are how Roook sees your app's state: plain HTTP reads. A reader has a name, `each` (the captured variable it is read for, such as every order_id the sequence created), the request, and `fields` picked out of the response with JSONPaths. Rules refer to these fields, as in order.refunded.",
             },
           ],
         },
@@ -195,7 +195,7 @@ export const rulesGuide: DocGuide = {
       blocks: [
         {
           kind: "p",
-          text: "A check is one expression over the values Rook read from your app. A state rule sees its state reader by name, as in `order.refunded <= order.paid`. A response rule sees `response`, as in `response.status in (401, 403)`.",
+          text: "A check is one expression over the values Roook read from your app. A state rule sees its state reader by name, as in `order.refunded <= order.paid`. A response rule sees `response`, as in `response.status in (401, 403)`.",
         },
         {
           kind: "list",
@@ -207,7 +207,7 @@ export const rulesGuide: DocGuide = {
         },
         {
           kind: "p",
-          text: "Rules come from Bob, so Rook treats them as untrusted. A check is parsed into a syntax tree, every node is compared with an allowlist, and a small interpreter inside Rook walks the tree with limits on depth and work. Python's own eval and exec are never used, on checks or on anything else Bob writes.",
+          text: "Rules come from Bob, so Roook treats them as untrusted. A check is parsed into a syntax tree, every node is compared with an allowlist, and a small interpreter inside Roook walks the tree with limits on depth and work. Python's own eval and exec are never used, on checks or on anything else Bob writes.",
         },
       ],
     },
@@ -219,7 +219,7 @@ export const rulesGuide: DocGuide = {
           kind: "list",
           items: [
             "In the web app, editing a single rule is not built yet: you approve or reject the rules as proposed.",
-            "Rook does not yet read rules you wrote by hand before a run: the Lawmaker proposes them in each run, and you choose.",
+            "Roook does not yet read rules you wrote by hand before a run: the Lawmaker proposes them in each run, and you choose.",
           ],
         },
       ],

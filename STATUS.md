@@ -2,7 +2,7 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** ROOK-058 done (public site redesign, desktop); 059 part done (signed-out home); NOT pushed; localhost:3000 still serves the OLD build
+**Last updated:** 2026-10-12 IST · **By:** ROOK-058 done, 059 part done, display name changed to Roook; PUSHED to main (user approved); localhost:3000 still serves the OLD build
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
@@ -34,7 +34,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 
 | | |
 |---|---|
-| Product | Rook (`rook`), IBM Bob-powered invariant breaker |
+| Product | Roook (display name since 12 Oct; CLI command `rook`), IBM Bob-powered invariant breaker |
 | Repo | https://github.com/tony19053000/rook (public) |
 | Hosted web | https://rook-weld-six.vercel.app |
 | Hosted API | https://44-239-185-88.sslip.io (AWS EC2 t3.small + Caddy, replay mode) |
@@ -133,6 +133,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 None.
 
 ## Key decisions (log)
+- 12 Oct: the user renamed the product to **Roook** (display name on the web site, web app and README). Technical names keep `rook`; the CLI and server text still say Rook (follow-up, needs care: agent prompts are keys of the recorded Bob answers).
 - 26 Sep: name **Rook** (warned about the rook.io / Rookout name clash; the user kept it). The CLI is the hero; the full web app is required at the URL.
 - 26 Sep: 13 Bob agents as custom modes (Coordinator + 12 specialists) plus 6 deterministic engine workers; only the engine judges.
 - 26 Sep: agents appear inline as blob characters while working (no roster panel).

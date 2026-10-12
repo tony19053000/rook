@@ -87,9 +87,9 @@ export function finishGithubConnect(api: Pick<ApiClient, "githubCallback">, para
     () => null,
     (e: unknown) => {
       const status = typeof e === "object" && e !== null && "status" in e ? (e as { status: unknown }).status : null;
-      if (status === 401) return "Sign in to Rook first, then connect GitHub again.";
+      if (status === 401) return "Sign in to Roook first, then connect GitHub again.";
       if (status === 501) return "GitHub is not set up on this server.";
-      if (status === 400 || status === 403) return "Rook could not verify this GitHub installation. Connect GitHub again from Rook.";
+      if (status === 400 || status === 403) return "Roook could not verify this GitHub installation. Connect GitHub again from Roook.";
       if (status === 429) return "Too many GitHub connection attempts. Try again later.";
       return "Could not finish connecting GitHub. Try again.";
     },

@@ -12,7 +12,7 @@ export const metadata: Metadata = pageMetadata(aboutCopy.title, aboutCopy.descri
 
 const LIST = "site-list text-base leading-[1.7] text-site-muted";
 
-// /about (06 §5.7): who runs Rook, why it exists, the story and what it is not. A server component.
+// /about (06 §5.7): who runs Roook, why it exists, the story and what it is not. A server component.
 export default function AboutPage() {
   return (
     <>

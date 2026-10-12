@@ -1,4 +1,4 @@
-// How Rook works, the 6 steps (06 §4). One list, used by the home walkthrough (ROOK-044) and /docs (ROOK-045).
+// How Roook works, the 6 steps (06 §4). One list, used by the home walkthrough (ROOK-044) and /docs (ROOK-045).
 
 export interface FlowStep {
   id: string;

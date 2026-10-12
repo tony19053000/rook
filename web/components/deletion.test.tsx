@@ -264,7 +264,7 @@ describe("/app: what signing in adds, and where your own repos run", () => {
     expect(document.querySelector("[data-own-repos-note]")).toBeNull();
     expect(loginCopy.lead).toContain("keep your runs");
     expect(loginCopy.lead).toContain("connect GitHub");
-    expect(loginCopy.guestNote).toContain("To run Rook on your own repos, install the CLI.");
+    expect(loginCopy.guestNote).toContain("To run Roook on your own repos, install the CLI.");
     expect(OWN_REPOS_NOTE).toContain("on your machine with the CLI");
   });
 

@@ -192,7 +192,7 @@ export function RepoPicker({ groups, selected, onSelect, onConnectGithub, loadin
                 {shown.github !== null &&
                   group(
                     "Your repositories",
-                    shown.github.length > 0 ? shown.github.map(item) : note(query.trim() ? "No matches." : "No repositories shared with Rook yet."),
+                    shown.github.length > 0 ? shown.github.map(item) : note(query.trim() ? "No matches." : "No repositories shared with Roook yet."),
                   )}
                 {shown.demo.length > 0 && group("Examples", shown.demo.map(item))}
                 {options.length === 0 && shown.github === null && note(query.trim() ? "No matches." : "No repositories on this server yet.")}

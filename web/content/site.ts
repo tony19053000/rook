@@ -9,7 +9,7 @@ export const SITE_URL = "https://rook-weld-six.vercel.app";
 export const CONTACT_EMAIL = "c40534394@gmail.com";
 export const ISSUES_URL = `${REPO_URL}/issues`;
 
-/** Who runs Rook (06 §4): one individual developer, not a company. */
+/** Who runs Roook (06 §4): one individual developer, not a company. */
 export const operator = { name: "Aayush Kumar", location: "India" } as const;
 
 /** A mailto: link to CONTACT_EMAIL with a prefilled subject (the contact page has no form backend). */
@@ -18,10 +18,10 @@ export function mailtoHref(subject: string): string {
 }
 
 export const site = {
-  name: "Rook",
+  name: "Roook",
   cliCommand: "rook",
   oneLiner:
-    "Rook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.",
+    "Roook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.",
   tagline: "Find the smallest sequence that breaks your software, before your users do.",
   builtOn: "Built on IBM Bob.",
   stage: "Early access, open source.",
@@ -29,10 +29,10 @@ export const site = {
 } as const;
 
 export const metadataCopy = {
-  defaultTitle: "Rook · find the smallest sequence that breaks your software",
-  titleTemplate: "%s · Rook",
+  defaultTitle: "Roook · find the smallest sequence that breaks your software",
+  titleTemplate: "%s · Roook",
   description: `${site.oneLiner} ${site.stage} ${site.builtOn}`,
-  ogAlt: "Rook: find the smallest sequence that breaks your software",
+  ogAlt: "Roook: find the smallest sequence that breaks your software",
 } as const;
 
 export interface NavLink {
@@ -43,7 +43,7 @@ export interface NavLink {
 }
 
 export const cta = {
-  demo: { label: "Try Rook", href: "/app" },
+  demo: { label: "Try Roook", href: "/app" },
   signIn: { label: "Sign in", href: "/login" },
   docs: { label: "Read the docs", href: "/docs/getting-started" },
   /** Replaces both for a visitor this browser remembers as signed in (06 §5). */
@@ -60,7 +60,7 @@ export const headerNav: NavLink[] = [
 
 export const headerCopy = {
   skipLink: "Skip to content",
-  homeLabel: "Rook home",
+  homeLabel: "Roook home",
   menu: "Menu",
   navLabel: "Main",
   mobileNavLabel: "Main (menu)",
@@ -124,5 +124,5 @@ export const notFoundCopy = {
   heading: "This page doesn't exist",
   body: "The link may be broken, or the page may have moved.",
   home: { label: "Back to the home page", href: "/" },
-  docs: { label: "Read how Rook works", href: "/docs" },
+  docs: { label: "Read how Roook works", href: "/docs" },
 } as const;

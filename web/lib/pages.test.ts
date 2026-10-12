@@ -177,7 +177,7 @@ describe("hosted GitHub runs (ROOK-041)", () => {
       message: "This repository is not linked to your account",
       retryable: false,
     });
-    expect(errorView(new ApiError(403, "HTTP 403"), "create").message).toContain("shared with the Rook GitHub App");
+    expect(errorView(new ApiError(403, "HTTP 403"), "create").message).toContain("shared with the Roook GitHub App");
   });
 
   it("429 busy or daily limit: the server's message plus the Retry-After wait", () => {

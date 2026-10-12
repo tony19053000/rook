@@ -60,7 +60,7 @@ Route-move rules:
 
 Copy lives only in `web/content/*.ts`. Every claim must be true of the current code, written exactly as strong as the code. No invented metrics, customers, logos, testimonials, quotes, ratings or prices. If a fact you want isn't below, verify it in the code (cite the file in your report) or leave it out.
 
-**Name and one-liner.** Rook (CLI command `rook`). *Rook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.* Built on IBM Bob. Tagline options from the PRD: "Find the smallest sequence that breaks your software, before your users do." / "Bob finds the rules. The engine tries to break them. Proof decides."
+**Name and one-liner.** Roook (the display name since 12 Oct 2026; older parts of this doc still say Rook; CLI command `rook`). *Roook finds the smallest sequence of actions that breaks a business rule in your backend, proves it on the real running app, and verifies the fix.* Built on IBM Bob. Tagline options from the PRD: "Find the smallest sequence that breaks your software, before your users do." / "Bob finds the rules. The engine tries to break them. Proof decides."
 
 **Who it's for.** Backend developers and teams whose HTTP APIs hold money, stock, permissions or state machines (e-commerce, billing, wallets, SaaS). Also teams reviewing AI-written code. This is a target audience, never "used by".
 

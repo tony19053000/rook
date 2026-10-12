@@ -1,6 +1,6 @@
 "use client";
 
-// /github/setup (ROOK-031): where GitHub sends the browser after the Rook App is installed. It shows the
+// /github/setup (ROOK-031): where GitHub sends the browser after the Roook App is installed. It shows the
 // connection being checked by the server, then "GitHub connected" or what went wrong with a way to retry.
 
 import Link from "next/link";
@@ -42,7 +42,7 @@ export function GithubSetupView({ session, runs, status, connectGithub }: Github
               <code className="font-mono">rook run owner/name</code>
             </p>
             <Link href="/app" className="w-full rounded-lg border border-accent bg-accent px-3.5 py-2 font-medium text-accent-ink">
-              Go to Rook
+              Go to Roook
             </Link>
           </>
         )}
@@ -66,7 +66,7 @@ export function GithubSetupView({ session, runs, status, connectGithub }: Github
             )}
             {retryError !== null && <p className="text-[12.5px] text-bad">{clean(retryError)}</p>}
             <Link href="/app" className="text-link underline-offset-2 hover:underline">
-              Back to Rook
+              Back to Roook
             </Link>
           </>
         )}

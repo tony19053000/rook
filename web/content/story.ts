@@ -1,7 +1,7 @@
 // The refund bug, end to end (ROOK-054): one real case, the home page's central story. Every value below is
 // copied from the recorded minishop run in lib/fixtures/minishop-run.json (the ROOK-023 run on
-// tests/fixtures/minishop, Rook's own small test shop, with recorded Bob answers and the engine running live),
-// and components/site/home/story.test.tsx fails if any of them drifts from that file. A guest "Try Rook" run of
+// tests/fixtures/minishop, Roook's own small test shop, with recorded Bob answers and the engine running live),
+// and components/site/home/story.test.tsx fails if any of them drifts from that file. A guest "Try Roook" run of
 // minishop on the hosted site finds the same counterexample (the screenshot on the home page is one).
 // The walkthrough's sample data (./walkthrough.ts) reuses these values.
 
@@ -103,7 +103,7 @@ export const storyCopy = {
   eyebrow: "One real case",
   title: "The refund bug, end to end",
   intro:
-    "Every value here comes from a recorded Rook run on minishop, Rook's own small test shop: one of the two example repos you can run with Try Rook.",
+    "Every value here comes from a recorded Roook run on minishop, Roook's own small test shop: one of the two example repos you can run with Try Roook.",
   /** Shown after the "Recorded example run" label (06 §4). */
   source: "Bob's answers were replayed from a saved real run; the engine ran live against the real app.",
   stages: {
