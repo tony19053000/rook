@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** user paused (moving to Windows); 052 + 056 done, 055 partial, all in 56d4494; 057 not started; nothing pushed
+**Last updated:** 2026-10-12 IST · **By:** M12 complete (cf98db6); NOT pushed; localhost:3000 serves the new build
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [████████████████████████████░░]  94%  54 / 57 tickets
+OVERALL   [█████████████████████████████░]  98%  56 / 57 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -24,7 +24,7 @@ M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030�
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
-M12 Launch readiness  [███████░░░]  77%   7 / 9    ROOK-049…057
+M12 Launch readiness  [██████████] 100%   9 / 9    ROOK-049…057
 USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -98,10 +98,10 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-051 | Data deletion and retention (server) | P0 | DONE | reviewer PASS r1; 20 deletion tests; cross-site DELETE 403. Follow-ups: in-memory tombstone set grows per process; 30 s stop wait inside the request (Vercel rewrite timeout unverified); GitHubLink repo cache not cleared on /me/data. ad3e6c4 |
 | ROOK-053 | Site identity, positioning, new pages, SEO | P1 | DONE | reviewer PASS r3 (r1+r2 FAIL: middleware matcher skipped CSP on look-alike/encoded paths → only /_next/static/ skipped now). 468 vitest. bfbb071 |
 | ROOK-054 | Home: problem-first hero, refund-bug story, diagram, screenshot | P1 | DONE | reviewer PASS r2 (r1 FAIL: narrowed copy guards → reverted; recorded-run strings exempt by exact identity, lib/recordedData.ts). 498 vitest. Real screenshot from a replay-mode run (e2e/capture-run.mjs); fonts self-hosted. b91e274 |
-| ROOK-055 | Docs guides | P1 | IN PROGRESS | PARTIAL in 56d4494: coder stopped mid-ticket (user paused). Pages + content + CLI-commands pytest exist; unfinished/unverified: its own tests, footer/sitemap wiring, README check, install check, scratch build |
+| ROOK-055 | Docs guides | P1 | DONE | coder only, NOT reviewed (user instruction). 6 guides; CLI commands pytest (77); install check ok against origin/main. 56d4494 + f861201 |
 | ROOK-056 | Privacy, Terms, Security copy (in effect) | P1 | DONE | coder only (Sonnet), NOT reviewed (user instruction). 56d4494 |
 | ROOK-052 | Web app: deletion UI, honest run labels, states, a11y | P1 | DONE | coder only (Opus), NOT reviewed (user instruction). Visible colour changes for contrast; user to look. Delete routes need the server redeploy (U10). 56d4494 |
-| ROOK-057 | Final verification | P1 | TODO | deps all M12 |
+| ROOK-057 | Final verification | P1 | DONE | coder only (Sonnet), NOT reviewed. e2e/audit.mjs passes on local next start (18 routes x 4 widths, links, axe, text). Live headers check to re-run after deploy. cf98db6 |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 
