@@ -12,7 +12,8 @@ import { CounterexamplesView, RepositoriesView, RulesView, RunsPageView } from "
 import { CONTACT_EMAIL } from "@/content/site";
 import { ApiError, TIMEOUT_STATUS, type RepoOption } from "@/lib/api";
 import { minishopRun } from "@/lib/fixtures/minishop";
-import { errorView, OWN_REPOS_NOTE, RUN_MODE_TEXT, runMode, SIGN_IN_ADDS, startRun, STILL_DELETING } from "@/lib/pages";
+import { errorView, OWN_REPOS_NOTE, RUN_MODE_TEXT, runMode, startRun, STILL_DELETING } from "@/lib/pages";
+import { loginCopy } from "@/content/login";
 import { initialRunState, reduceEvents, type AgentItem, type RunState } from "@/lib/runStore";
 import { GUEST, type Session } from "@/lib/session";
 
@@ -257,13 +258,13 @@ describe("run labels (06 §4: recorded vs live, never blurred)", () => {
 });
 
 describe("/app: what signing in adds, and where your own repos run", () => {
-  it("tells a guest what signing in adds and that own repos run with the CLI", () => {
+  it("a guest's home carries no sign-in pitch; /login says what signing in adds and where own repos run", () => {
     render(<HomeView api={{ createRun: async () => ({ run_id: "r" }) }} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} />);
-    const note = document.querySelector("[data-sign-in-adds]")?.textContent ?? "";
-    expect(note).toContain(SIGN_IN_ADDS);
-    expect(note).toContain("run history");
-    expect(note).toContain("link GitHub to see your repos");
-    expect(note).toContain(OWN_REPOS_NOTE);
+    expect(document.querySelector("[data-sign-in-adds]")).toBeNull();
+    expect(document.querySelector("[data-own-repos-note]")).toBeNull();
+    expect(loginCopy.lead).toContain("keep your runs");
+    expect(loginCopy.lead).toContain("connect GitHub");
+    expect(loginCopy.guestNote).toContain("To run Rook on your own repos, install the CLI.");
     expect(OWN_REPOS_NOTE).toContain("on your machine with the CLI");
   });
 

@@ -1,12 +1,12 @@
 "use client";
 
-// Home (04 §3.2 `/`). Signed in: a short greeting near the top, the rest of the main column empty, and the
-// composer at the bottom with the IBM Bob chip and the repo picker. Signed out: what Rook does, "Sign in with
-// Google", and a small "Try an example without signing in" link that starts the first example (judges without
-// an account need it). Sending creates a run (POST /runs) and opens `/runs/[id]`; a GitHub repo runs on the
-// server only when GET /me said `can_run_github` (ROOK-041), otherwise it gets the `rook run` CLI hint.
+// Home (04 §3.2 `/app`). A short greeting near the top, the rest of the main column empty, and the composer at
+// the bottom with the IBM Bob chip and the repo picker. Signed out it is the same workspace: the first example
+// repo is already picked, so a guest only has to press Send, and signing in lives on its own page (`/login`,
+// reached from the sidebar's Sign in button), never inside the chat column. Sending creates a run (POST /runs)
+// and opens `/runs/[id]`; a GitHub repo runs on the server only when GET /me said `can_run_github` (ROOK-041),
+// otherwise it gets the `rook run` CLI hint.
 
-import Link from "next/link";
 import { useCallback, useState } from "react";
 import { AgentSprite } from "./AgentSprite";
 import { AppShell } from "./AppShell";
@@ -25,19 +25,12 @@ import {
   OWN_REPOS_NOTE,
   pickerGroups,
   shellProps,
-  SIGN_IN_ADDS,
   startRun,
   type ErrorView,
 } from "@/lib/pages";
 import { clean } from "@/lib/safeText";
 import { canRunGithub, type Session } from "@/lib/session";
 import type { ReposView } from "@/lib/useShell";
-
-/** What Rook is, in one line (also the page description in app/layout.tsx). */
-export const TAGLINE =
-  "Rook finds the smallest sequence of actions that breaks a business rule, proves it on the real app, and verifies the fix.";
-
-export const SIGNED_OUT_TITLE = "Find the bug. Prove it. Verify the fix.";
 
 export interface HomeViewProps {
   api: Pick<ApiClient, "createRun">;
@@ -47,28 +40,26 @@ export interface HomeViewProps {
   navigate: (href: string) => void;
   /** "Connect GitHub" (ROOK-031): goes to GitHub's install page; resolves to an error message, or null. */
   connectGithub?: () => Promise<string | null>;
-  /** "Sign in with Google": starts the OAuth redirect; resolves to an error message, or null. Else a /login link. */
-  signIn?: () => Promise<string | null>;
-  /** The repo picked on first render (tests; nothing by default). */
+  /** The repo picked on first render (tests; by default nothing, or the first example for a guest). */
   defaultSelected?: RepoOption | null;
   /** The server's Bob mode from GET /health, or null while unknown: example repos are recorded only on `replay`. */
   bobMode?: string | null;
 }
 
-export function HomeView({ api, session, runs, repos, navigate, connectGithub, signIn, defaultSelected = null, bobMode = null }: HomeViewProps) {
-  const [selected, setSelected] = useState<RepoOption | null>(defaultSelected);
+export function HomeView({ api, session, runs, repos, navigate, connectGithub, defaultSelected = null, bobMode = null }: HomeViewProps) {
+  const [picked, setPicked] = useState<RepoOption | null>(defaultSelected);
   const [auto, setAuto] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<ErrorView | null>(null);
   const [hint, setHint] = useState<string | null>(null);
   const [lastRequest, setLastRequest] = useState(DEFAULT_REQUEST);
-  const [signingIn, setSigningIn] = useState(false);
 
   const reposError = repos.error === null || repos.error === undefined ? null : errorView(repos.error, "repos");
   const groups = pickerGroups(repos.repos, session);
   const guest = session.kind === "guest";
   const hostedGithub = canRunGithub(session);
-  const example = groups.demo[0] ?? null;
+  // A guest starts with the first example picked, so the composer is ready to send.
+  const selected = picked ?? (guest ? (groups.demo[0] ?? null) : null);
 
   const start = useCallback(
     async (repo: RepoOption, text: string): Promise<void> => {
@@ -88,24 +79,6 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, s
     },
     [api, auto, navigate, hostedGithub],
   );
-
-  const tryExample = () => {
-    if (example === null || creating) return;
-    setSelected(example);
-    void start(example, DEFAULT_REQUEST);
-  };
-
-  const onSignIn = () => {
-    if (signIn === undefined) return;
-    setSigningIn(true);
-    setHint(null);
-    void signIn().then((message) => {
-      if (message !== null) {
-        setHint(message);
-        setSigningIn(false);
-      }
-    });
-  };
 
   // AppShell pads the composer by 20px; -mx-1 makes the 16px mobile gutter of 04 §3.2.
   const composer = (
@@ -137,7 +110,7 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, s
             groups={groups}
             selected={selected}
             onSelect={(repo) => {
-              setSelected(repo);
+              setPicked(repo);
               setHint(null);
             }}
             onConnectGithub={
@@ -162,50 +135,12 @@ export function HomeView({ api, session, runs, repos, navigate, connectGithub, s
 
   return (
     <AppShell {...shellProps(session, runs)} active="home" composer={composer}>
-      {guest ? (
-        <div className="flex flex-col items-center gap-3 pt-[10vh] text-center" data-signed-out>
-          <AgentSprite look={MASCOT} px={3} animate={false} />
-          <h1 className="font-serif text-[26px] font-normal leading-tight tracking-tight min-[480px]:text-[30px]">{SIGNED_OUT_TITLE}</h1>
-          <p className="max-w-[520px] text-[15px] text-muted" data-tagline>
-            {TAGLINE}
-          </p>
-          <div className="mt-2 flex flex-col items-center gap-2.5">
-            {signIn !== undefined ? (
-              <button
-                type="button"
-                onClick={onSignIn}
-                disabled={signingIn}
-                className="rounded-lg bg-accent px-5 py-2 text-[14.5px] font-medium text-accent-ink shadow-sm hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {signingIn ? "Opening Google…" : "Sign in with Google"}
-              </button>
-            ) : (
-              <Link href="/login" className="rounded-lg bg-accent px-5 py-2 text-[14.5px] font-medium text-accent-ink shadow-sm hover:opacity-90">
-                Sign in with Google
-              </Link>
-            )}
-            <button
-              type="button"
-              onClick={tryExample}
-              disabled={creating || example === null}
-              data-try-example
-              className="text-[13px] text-muted underline decoration-line underline-offset-4 hover:text-ink disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {creating ? "Starting the example…" : "Try an example without signing in"}
-            </button>
-          </div>
-          <p className="mt-2 max-w-[520px] text-[13px] text-muted" data-sign-in-adds>
-            {SIGN_IN_ADDS} {OWN_REPOS_NOTE}
-          </p>
-        </div>
-      ) : (
-        <div className="flex items-center justify-center gap-2.5 pt-[10vh] text-center" data-greeting>
-          <AgentSprite look={MASCOT} px={2} animate={false} />
-          <h1 className="font-serif text-[22px] font-normal leading-tight tracking-tight">
-            {name ? `What should Rook check next, ${name}?` : "What should Rook check next?"}
-          </h1>
-        </div>
-      )}
+      <div className="flex items-center justify-center gap-2.5 pt-[10vh] text-center" data-greeting>
+        <AgentSprite look={MASCOT} px={2} animate={false} />
+        <h1 className="font-serif text-[22px] font-normal leading-tight tracking-tight">
+          {name ? `What should Rook check next, ${name}?` : "What should Rook check next?"}
+        </h1>
+      </div>
       {!guest && !hostedGithub && (
         <p className="mx-auto max-w-[520px] text-center text-[13px] text-muted" data-own-repos-note>
           {OWN_REPOS_NOTE} Pick one of your repos below to get its <code className="font-mono">rook run</code> command, or pick an example repo to

@@ -6,12 +6,14 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 12 Oct 2026. **Goal: M12 launch readiness** (user pasted an 8-part launch checklist and said "fix all of this"). Plan + tickets: doc 05 "M12" (ROOK-049–057), facts in doc 06 §4 (M12 blocks). Planning commit 8d92788.
+**Updated:** 12 Oct 2026 (later). **M13 UI polish: ROOK-058 DONE** (public site redesign), **ROOK-059 part done** (signed-out `/app`). Both committed locally, **NOT pushed**. Done in the main session, no sub-agents, not reviewed (user instruction).
 
-**User decisions (12 Oct):** operator **Aayush Kumar, individual, India**; public email **c40534394@gmail.com**; CTA stays **"Try Rook"** (no visible "demo"); **hosted GitHub runs OFF**, no Docker socket on the server (ROOK-050). Contact = `mailto:` + GitHub Issues (no form backend, no new service).
-
-**M12 order:** CI 049 · server 050 → 051 · web strictly in order 053 → 054 → 055 → 056 → 052 → 057. **053 DONE** (bfbb071), **049 DONE** (86ca683; CI goes green only after a push), **050 DONE** (9e411b2; live server changes only after `deploy/aws/deploy.sh`). **051 DONE** (ad3e6c4). Server stream done; the live server needs `deploy/aws/deploy.sh` (U10) for 048/050/051. 054 coder started. Started 12 Oct: 049, 050, 053 coders in parallel (separate dirs: `.github`+`.gitignore` / `src`+`deploy`+docs 02/03 / `web`).
-**NEXT (user request 12 Oct): M13 UI polish, ROOK-058 (public site) then ROOK-059 (web app), tickets in doc 05. NOT started (no code changed). User instruction for M13: do it in the main session with Opus 5.5 at extra-high effort, NO sub-agents (no coder, no reviewer). Judge by screenshots (before/after, 360 + 1440 px); copy/facts unchanged; build in a scratch copy, never into `web/.next` while port 3000 serves it.**
+- **What changed (058):** site tokens (warm near-black, `app/globals.css` `.site`), `components/site/tokens.ts` (serif headings), Button/Card/Badge/CodeBlock/Section/PageHeader, header, footer, the whole home (`app/(site)/page.tsx`, `components/site/home/*`), docs overview + guides (left nav rail, right table of contents), security, pricing, roadmap (3-column board), about, contact, legal, 404, and a Claude-style `/login` (one centred column, "Continue with Google"). Copy and facts unchanged, except `/login` gained Terms/Privacy links (user asked for a proper sign-in page).
+- **What changed (059 part):** `components/HomeView.tsx`: the signed-out `/app` no longer shows a sign-in block in the chat; a guest sees the greeting and the composer with the first example picked. `e2e/capture-run.mjs` now clicks Send instead of the removed "Try an example" link.
+- **Checks:** tsc, lint, 719 vitest, `node e2e/audit.mjs http://localhost:3200 --allow-api-down` PASS on a scratch production build. (One audit run failed on a stuck `/_next/image` request in that server process; a server restart fixed it. Not a code problem.)
+- **User scope decisions (12 Oct):** desktop only for now, "mobile is a different topic" (mobile works, not polished). The rest of ROOK-059 (the app's full visual pass: sidebar, cards, light theme) is NOT started; ask the user before doing it.
+- **localhost:3000 still serves the OLD build.** To see the new design there: stop it, `npm run build` in `web/`, start it again. Locally `/login` shows "Google sign-in is not set up" and `/app` shows "Couldn't load the repositories" because the local build has no `NEXT_PUBLIC_SUPABASE_*` values and no API server behind it; the live site has both.
+- **Waiting on the user:** look at the new site, approve the push (Vercel deploys), U10 server redeploy, then the live `audit.mjs --headers` run.
 
 **M12 COMPLETE 12 Oct (9/9), HEAD cf98db6. NOT PUSHED** (origin/main is still 59fd8e1; all M12 commits are local only). Working tree clean except the user's `docs/submission/**`, `docs/demo-apps/**`.
 - Reviewed: 049, 050, 051, 053, 054. **Coder only, not reviewed (user instruction): 052, 055, 056, 057.**
@@ -66,6 +68,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct | – | ROOK-058 public site redesign (desktop) + Claude-style /login; ROOK-059 part: signed-out /app without the sign-in block. Main session, no sub-agents; audit PASS on a scratch build; not pushed | ROOK-058, ROOK-059 (part) |
 | 12 Oct | 2 | ROOK-055 finished, ROOK-057 audit script; M12 complete; audit passes locally; not pushed | cf98db6 |
 | 12 Oct | 2 | User paused. 052 + 056 (coder only) + 055 partial committed together; 057 not started; not pushed | 56d4494 |
 | 12 Oct | 2 | ROOK-054 home rework PASS r2 + committed | ROOK-054 b91e274 |

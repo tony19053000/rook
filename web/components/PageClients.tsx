@@ -8,7 +8,6 @@ import { GithubSetupView, type GithubSetupStatus } from "./GithubSetupView";
 import { HomeView } from "./HomeView";
 import { RunPage } from "./RunPage";
 import { CounterexamplesView, RepositoriesView, RulesView, RunsPageView } from "./SimpleViews";
-import { SIGN_IN_AVAILABLE, signInWithGoogle } from "@/lib/session";
 import { useApi, useBobMode, useRepos, useRuns, useSession } from "@/lib/useShell";
 import { finishGithubConnect, SETUP_PATH, setupParams, startGithubConnect } from "@/lib/github";
 
@@ -21,7 +20,6 @@ export function HomeClient() {
   const router = useRouter();
 
   const connectGithub = useCallback(() => startGithubConnect(api, (url) => window.location.assign(url)), [api]);
-  const signIn = useCallback(() => signInWithGoogle(window.location.origin), []);
   return (
     <HomeView
       api={api}
@@ -31,7 +29,6 @@ export function HomeClient() {
       bobMode={bobMode}
       navigate={(href) => router.push(href)}
       connectGithub={connectGithub}
-      signIn={SIGN_IN_AVAILABLE ? signIn : undefined}
     />
   );
 }

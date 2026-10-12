@@ -182,8 +182,7 @@ export function cliHint(ref: string): string {
   return `The hosted server runs only the example repositories. Run this one with the CLI: rook run ${ref}`;
 }
 
-/** What signing in adds, and where your own repos run (`/app`, 06 §4: hosted runs of your own repos are off). */
-export const SIGN_IN_ADDS = "Signing in keeps your run history with your account and lets you link GitHub to see your repos.";
+/** Where your own repos run (`/app`, 06 §4: hosted runs of your own repos are off). */
 export const OWN_REPOS_NOTE = "Your own repos run on your machine with the CLI. Hosted runs of your own repos are turned off.";
 /** 06 §4: guests get 3 runs a day. */
 export const GUEST_LIMIT_NOTE = "Guests get 3 example runs a day on the hosted server. Come back tomorrow, or run Rook on your own machine.";

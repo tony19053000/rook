@@ -118,10 +118,10 @@ async function main() {
       features: [{ name: "prefers-color-scheme", value: "dark" }, { name: "prefers-reduced-motion", value: "reduce" }],
     });
     await page.send("Page.navigate", { url: `${base}/app` });
-    await until(page, `document.readyState === "complete" && !!document.querySelector("[data-try-example]:not([disabled])")`, 60, "the app home");
+    await until(page, `document.readyState === "complete" && !!document.querySelector('button[aria-label="Send"]:not([disabled])')`, 60, "the app home");
     const status = await evaluate(page, `fetch("/api/v1/health").then((r) => r.json())`);
     if (status?.bob_mode !== "replay") throw new Error(`the server must be in replay mode, not ${status?.bob_mode}`);
-    await evaluate(page, `document.querySelector("[data-try-example]").click()`);
+    await evaluate(page, `document.querySelector('button[aria-label="Send"]').click()`);
     const url = await until(page, `location.pathname.startsWith("/runs/") && location.href`, 60, "the run page");
     console.log(`run started: ${url}`);
     // Guest confirms answer themselves after their countdown; the run ends done, with the fix verified.

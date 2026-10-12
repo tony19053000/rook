@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { AUTO_TOOLTIP, Composer } from "./Composer";
 import { ErrorCard } from "./ErrorCard";
 import { GithubSetupView } from "./GithubSetupView";
-import { HomeView, SIGNED_OUT_TITLE } from "./HomeView";
+import { HomeView } from "./HomeView";
 import { RepoPicker } from "./RepoPicker";
 import { RunPageView } from "./RunPage";
 import { RunsList } from "./RunsList";
@@ -48,14 +48,19 @@ describe("home (04 §3.2 /)", () => {
   const out = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} />);
   const sendButton = (markup: string) => markup.match(/<button[^>]*aria-label="Send"[^>]*>/)?.[0] ?? "";
 
-  it("signed out: the title, what Rook is, Sign in with Google and the example link", () => {
-    expect(out).toContain("data-signed-out");
-    expect(out).toContain(SIGNED_OUT_TITLE);
-    expect(out).toContain("smallest sequence of actions that breaks a business rule");
-    expect(out).toMatch(/<a[^>]*href="\/login"[^>]*>Sign in with Google<\/a>/);
-    expect(out).toMatch(/<button[^>]*data-try-example(?![^>]*disabled="")[^>]*>Try an example without signing in<\/button>/);
-    const wired = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} signIn={async () => null} />);
-    expect(wired).toMatch(/<button[^>]*>Sign in with Google<\/button>/);
+  it("signed out: the same workspace as signed in, with no sign-in block in the chat column", () => {
+    expect(out).toContain("data-greeting");
+    expect(out).toContain("What should Rook check next?");
+    expect(out).not.toContain("data-signed-out");
+    expect(out).not.toContain("Sign in with Google");
+    expect(out).not.toContain("Try an example without signing in");
+    expect(out).not.toContain("Signing in keeps your run history");
+  });
+
+  it("signed out: signing in is the sidebar's link to /login, not a control in the chat", () => {
+    expect(out).toMatch(/<a[^>]*href="\/login"[^>]*data-sign-in|<a[^>]*data-sign-in[^>]*href="\/login"/);
+    const main = out.slice(out.indexOf("data-greeting"));
+    expect(main).not.toMatch(/href="\/login"/);
   });
 
   it("signed out: no old demo hero (steps, big demo button, chips)", () => {
@@ -65,9 +70,12 @@ describe("home (04 §3.2 /)", () => {
     expect(out).not.toContain("What should we try to break today?");
   });
 
-  it("the example link is disabled with no example repos", () => {
+  it("a guest starts with the first example picked, so Send works at once; with no examples it stays off", () => {
+    expect(out).not.toContain("Select repository…");
+    expect(sendButton(out)).not.toContain('disabled=""');
     const empty = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([])} navigate={() => {}} />);
-    expect(empty).toMatch(/<button[^>]*disabled=""[^>]*>Try an example without signing in<\/button>/);
+    expect(empty).toContain("Select repository…");
+    expect(sendButton(empty)).toContain('disabled=""');
   });
 
   it("signed in: the greeting uses the first name, no sign-in pitch", () => {
@@ -82,17 +90,21 @@ describe("home (04 §3.2 /)", () => {
   });
 
   it("the composer: IBM Bob chip, the repo chip, the Auto switch and the placeholder", () => {
-    expect(out).toContain("data-env");
-    expect(out).toContain("IBM Bob");
-    expect(out).toContain("Select repository…");
-    expect(out).toContain('aria-haspopup="listbox"');
-    expect(out).toMatch(/role="switch" aria-checked="false"/);
-    expect(out).toContain("Describe what to check, or ask a question");
+    const user = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} />);
+    for (const markup of [out, user]) {
+      expect(markup).toContain("data-env");
+      expect(markup).toContain("IBM Bob");
+      expect(markup).toContain('aria-haspopup="listbox"');
+      expect(markup).toMatch(/role="switch" aria-checked="false"/);
+      expect(markup).toContain("Describe what to check, or ask a question");
+    }
+    expect(user).toContain("Select repository…");
   });
 
-  it("send stays disabled until a repository is chosen", () => {
-    expect(sendButton(out)).toContain('disabled=""');
-    const picked = html(<HomeView api={fakeApi} session={GUEST} runs={noRuns} repos={repos([DEMO])} navigate={() => {}} defaultSelected={DEMO} />);
+  it("signed in: send stays disabled until a repository is chosen", () => {
+    const user = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} />);
+    expect(sendButton(user)).toContain('disabled=""');
+    const picked = html(<HomeView api={fakeApi} session={USER} runs={noRuns} repos={repos([GH, DEMO])} navigate={() => {}} defaultSelected={DEMO} />);
     expect(sendButton(picked)).not.toContain('disabled=""');
   });
 

@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** M12 complete (cf98db6); NOT pushed; localhost:3000 serves the new build
+**Last updated:** 2026-10-12 IST · **By:** ROOK-058 done (public site redesign, desktop); 059 part done (signed-out home); NOT pushed; localhost:3000 still serves the OLD build
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [████████████████████████████░░]  94%  56 / 59 tickets
+OVERALL   [████████████████████████████░░]  96%  57 / 59 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -25,7 +25,7 @@ M9  Web               [██████████] 100%   4 / 4    ROOK-033�
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
 M12 Launch readiness  [██████████] 100%   9 / 9    ROOK-049…057
-M13 UI polish         [░░░░░░░░░░]   0%   0 / 2    ROOK-058…059
+M13 UI polish         [█████░░░░░]  50%   1 / 2    ROOK-058…059
 USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -103,8 +103,8 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-056 | Privacy, Terms, Security copy (in effect) | P1 | DONE | coder only (Sonnet), NOT reviewed (user instruction). 56d4494 |
 | ROOK-052 | Web app: deletion UI, honest run labels, states, a11y | P1 | DONE | coder only (Opus), NOT reviewed (user instruction). Visible colour changes for contrast; user to look. Delete routes need the server redeploy (U10). 56d4494 |
 | ROOK-057 | Final verification | P1 | DONE | coder only (Sonnet), NOT reviewed. e2e/audit.mjs passes on local next start (18 routes x 4 widths, links, axe, text). Live headers check to re-run after deploy. cf98db6 |
-| ROOK-058 | Public site visual redesign | P1 | IN PROGRESS | user request 12 Oct; coder Opus 5.5 xhigh, coder only |
-| ROOK-059 | Web app visual redesign | P1 | IN PROGRESS | user request 12 Oct; coder Opus 5.5 xhigh, coder only |
+| ROOK-058 | Public site visual redesign | P1 | DONE | main session, no sub-agents, NOT reviewed (user instruction). Warm dark palette, serif headings, new header/footer/cards/code, home, docs + guides (rails), all inner pages, Claude-style `/login`. 719 vitest, tsc, lint, `e2e/audit.mjs` PASS on a scratch build. Judged on desktop (1440/1920); mobile works (no sideways scroll) but was not polished: user said mobile is a separate topic |
+| ROOK-059 | Web app visual redesign | P1 | IN PROGRESS | Part done (user request): the signed-out `/app` has no sign-in block in the chat column; a guest gets the greeting and a ready composer (first example picked). The full visual pass of the app (sidebar, cards, light theme) is NOT started: the user narrowed M13 to the public web page for now |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 
