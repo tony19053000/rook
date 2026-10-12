@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** ROOK-053 committed bfbb071; 049 + 050 in review; 054 started
+**Last updated:** 2026-10-12 IST · **By:** ROOK-049 committed 86ca683 (+ SHA pins); 050 in review; 054 coding
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████████████░░░░░]  84%  48 / 57 tickets
+OVERALL   [█████████████████████████░░░░░]  85%  49 / 57 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -24,7 +24,7 @@ M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030�
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
-M12 Launch readiness  [█░░░░░░░░░]  11%   1 / 9    ROOK-049…057
+M12 Launch readiness  [██░░░░░░░░]  22%   2 / 9    ROOK-049…057
 USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -93,7 +93,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-046 | Site polish: no-JS sign-in, copy-rule negation | P2 | DONE | reviewer PASS r1 (419 vitest). 45af3ae |
 | ROOK-048 | Remove the word "demo" from user-facing text | P1 | DONE | user request; reviewer PASS r2 (r1 FAIL: session.py log/summary strings). web 427, pytest 1545 (+3 known test_demo_apps failures). Server wording needs a redeploy. 4530044 |
 | ROOK-047 | Site uses the full desktop width | P1 | DONE | user feedback 11 Oct; reviewer PASS r1 (419 vitest; no overflow 360–2560 px). a3a89fb |
-| ROOK-049 | CI green + web checks + scheduled live smoke | P0 | IN PROGRESS | CI fails on the gitignored fixture tests/fixtures/github_action/rook-report.md |
+| ROOK-049 | CI green + web checks + scheduled live smoke | P0 | DONE | reviewer PASS r1; CI-simulated pytest 1551 passed (test_demo_apps skip on runners); web job + live smoke (6 h); actions SHA-pinned. 86ca683 |
 | ROOK-050 | Hosted GitHub runs off; no Docker socket on the server | P0 | IN PROGRESS | user decision 12 Oct |
 | ROOK-051 | Data deletion and retention (server) | P0 | TODO | deps 050 |
 | ROOK-053 | Site identity, positioning, new pages, SEO | P1 | DONE | reviewer PASS r3 (r1+r2 FAIL: middleware matcher skipped CSP on look-alike/encoded paths → only /_next/static/ skipped now). 468 vitest. bfbb071 |
