@@ -11,9 +11,13 @@
 **User decisions (12 Oct):** operator **Aayush Kumar, individual, India**; public email **c40534394@gmail.com**; CTA stays **"Try Rook"** (no visible "demo"); **hosted GitHub runs OFF**, no Docker socket on the server (ROOK-050). Contact = `mailto:` + GitHub Issues (no form backend, no new service).
 
 **M12 order:** CI 049 · server 050 → 051 · web strictly in order 053 → 054 → 055 → 056 → 052 → 057. **053 DONE** (bfbb071), **049 DONE** (86ca683; CI goes green only after a push), **050 DONE** (9e411b2; live server changes only after `deploy/aws/deploy.sh`). **051 DONE** (ad3e6c4). Server stream done; the live server needs `deploy/aws/deploy.sh` (U10) for 048/050/051. 054 coder started. Started 12 Oct: 049, 050, 053 coders in parallel (separate dirs: `.github`+`.gitignore` / `src`+`deploy`+docs 02/03 / `web`).
-**Live state (12 Oct, account 2):** DONE + committed: 053 (bfbb071), 049 (86ca683), 050 (9e411b2), 051 (ad3e6c4), 054 (b91e274). Working tree clean except the user's `docs/submission/**`, `docs/demo-apps/**`. In progress: **055 docs guides** (coder). Then 056 legal/security → 052 app → 057 final check. Nothing is pushed since f0326bb+docs. Never build into `web/.next` while the user's preview runs on port 3000 (build in a scratch copy); after M12 rebuild it so localhost shows the new site.
+**STOPPED 12 Oct (user paused, moving to Windows). Working tree clean** except the user's `docs/submission/**`, `docs/demo-apps/**`. **NOTHING IS PUSHED** since origin/main 59fd8e1: 20+ local commits exist only on this Linux machine; a Windows clone won't have them until the user approves a push.
+- DONE + committed: 053 (bfbb071), 049 (86ca683), 050 (9e411b2), 051 (ad3e6c4), 054 (b91e274), **052 + 056 (56d4494, coder only, not reviewed)**.
+- **ROOK-055 docs guides: PARTIAL, in 56d4494.** The coder was stopped mid-ticket. Present: `/docs/*` guide pages, `content/docs*.ts`, `components/site/docs/`, README edits, `tests/unit/test_docs_cli_commands.py` (77 pass). Tree is green (tsc, lint, 718 vitest). To finish: give a coder the ROOK-055 ticket and say "continue: check every item of the ticket against the tree" (its own vitest tests, TOC anchors, footer Docs column, `cta.docs.href` → `/docs/getting-started`, `SITEMAP_PATHS`, smoke.mjs, README, the install check, a scratch-copy build).
+- **Next:** finish 055 (Opus) → 057 final verification (Sonnet 5.5) → rebuild `web/.next` so localhost:3000 shows the new site → ask the user to look at the 052 colour changes → ask to push (U11) and to redeploy the server (U10).
+- Never build into `web/.next` while a preview runs on port 3000 (build in a scratch copy).
 
-**User instruction (12 Oct, M12 only):** no REVIEWER for the remaining M12 tickets (055, 056, 052, 057): coder only, commit when the coder's tests pass. Mark these "coder only, not reviewed" in STATUS.
+**User instruction (12 Oct, M12 only):** no REVIEWER for the remaining M12 tickets (055, 056, 052, 057): coder only, commit when the coder's tests pass. Models: Sonnet 5.5 for light tickets (056, 057), Opus 5.5 for the rest (055, 052). Mark these "coder only, not reviewed" in STATUS.
 
 **Not doable by Claude (user tasks U10–U16 in doc 05/STATUS):** redeploy server, approve push, custom domain, trademark check (CNCF "Rook" at rook.io is a real name conflict), publish Google OAuth (Testing mode), live GitHub App PR test, lawyer review + launch feedback.
 
@@ -60,6 +64,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct | 2 | User paused. 052 + 056 (coder only) + 055 partial committed together; 057 not started; not pushed | 56d4494 |
 | 12 Oct | 2 | ROOK-054 home rework PASS r2 + committed | ROOK-054 b91e274 |
 | 12 Oct | 2 | Account switched at the limit; 054 coder resumed on round 2 (copy guards) | (docs) |
 | 12 Oct | – | ROOK-051 deletion + retention PASS r1 + committed (server redeploy needed: U10) | ROOK-051 ad3e6c4 |
