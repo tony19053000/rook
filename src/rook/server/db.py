@@ -1,4 +1,5 @@
-"""The server's own queries on the shared SQLite file (02 §10): guest quotas, today's coins, run headlines.
+"""The server's own queries on the shared SQLite file (02 §10): guest quotas, today's coins, run headlines,
+the users rows and their deletion.
 
 It opens its own connection (WAL lets it sit next to the `Store` the sessions write through).
 """
@@ -103,4 +104,18 @@ class ServerDb:
         with self._lock:
             cursor = self._conn.execute("UPDATE users SET github_installation_id = NULL"
                                         " WHERE github_installation_id = ?", (installation_id,))
+        return cursor.rowcount
+
+    # --- deletion and retention (ROOK-051) ---
+
+    def delete_user(self, user_id: str) -> bool:
+        """Forget the user's row (email, GitHub installation link). False when there was none."""
+        with self._lock:
+            cursor = self._conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+        return cursor.rowcount > 0
+
+    def delete_quota_before(self, day: str) -> int:
+        """Delete the quota counters (guest, IP, user GitHub runs) of days before `day` (YYYY-MM-DD)."""
+        with self._lock:
+            cursor = self._conn.execute("DELETE FROM guest_quota WHERE day < ?", (day,))
         return cursor.rowcount

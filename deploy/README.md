@@ -80,6 +80,9 @@ turns them off (the rook container is recreated without the socket; the unused `
 - **Secrets** live only in `/etc/rook/rook.env` on the host (root, 600). `set-secret.sh` sends the value over ssh
   stdin; it never appears in argv, shell history or logs. Non-secret settings are in `rook/deploy/.env` on the host,
   written by `deploy.sh`.
+- **Retention** (ROOK-051): the server deletes runs older than `ROOK_RETENTION_DAYS` (default 30; set it in
+  `rook/deploy/.env` on the host to change it) with their events, counterexamples and workspaces, and guest quota
+  rows older than 2 days, at startup and hourly. Users can delete a run or all their data from the app.
 - **No keep-alive**: EC2 does not sleep. For monitoring, point any uptime checker at `/api/v1/health` (it is exempt
   from the rate limit).
 - **Local test** of the same stack over plain HTTP:

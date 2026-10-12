@@ -1,14 +1,16 @@
-"""`/health`, `/me`, `/repos` (02 §11)."""
+"""`/health`, `/me`, `DELETE /me/data`, `/repos` (02 §11)."""
 
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, Request
 
-from rook.server.deps import AnyCaller, State, UserCaller
+from rook.server.deps import AnyCaller, SameSite, State, UserCaller
 from rook.server.github_link import AppGitHub
 from rook.server.github_runs import not_configured
 from rook.server.limits import proxy_verified
-from rook.server.schemas import Health, Me, RepoOption
+from rook.server.schemas import DataDeleted, Health, Me, RepoOption
 
 router = APIRouter()
 
@@ -28,6 +30,14 @@ def me(caller: UserCaller, state: State) -> Me:
     can_run = connected and not not_configured(state.settings, isinstance(state.github, AppGitHub),
                                                state.docker_ready)
     return Me(id=caller.id, email=caller.email, github_connected=connected, can_run_github=can_run)
+
+
+@router.delete("/me/data", response_model=DataDeleted, dependencies=[SameSite])
+async def delete_my_data(caller: UserCaller, state: State) -> DataDeleted:
+    """Every run of the caller and their `users` row (ROOK-051). The Supabase account is deleted on request by
+    email: this server holds no Supabase service key."""
+    runs_deleted = await asyncio.shield(state.deleter.delete_user(caller.id))
+    return DataDeleted(ok=True, runs_deleted=runs_deleted)
 
 
 @router.get("/repos", response_model=list[RepoOption])

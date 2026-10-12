@@ -83,6 +83,7 @@ class ServerSettings(BaseModel):
     max_concurrent_runs: int = Field(default=3, gt=0)
     max_queued_runs: int = Field(default=6, ge=0)
     daily_coin_cap: float | None = Field(default=None, ge=0)
+    retention_days: int = Field(default=30, ge=1)  # runs older than this are deleted (ROOK-051, 03 §10)
     # Supabase auth (03 §6). SUPABASE_URL alone turns on JWT verification (JWKS; plus HS256 with the secret);
     # the CLI sign-in also needs the public API key and this server's public URL (for the OAuth callback).
     supabase_url: str | None = None
@@ -169,7 +170,7 @@ class ServerSettings(BaseModel):
     def from_env(cls, env: dict[str, str] | None = None) -> ServerSettings:
         """ROOK_WEB_ORIGINS (comma list), ROOK_DB_PATH, ROOK_WORKSPACES, ROOK_BOB_MODE, ROOK_DEMO_REPOS (a YAML
         file), ROOK_ALLOWLIST, ROOK_GUEST_SECRET (else a random key per process), ROOK_PROXY_SECRET, ROOK_TRUSTED_PROXY_HOPS,
-        ROOK_DAILY_COIN_CAP, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY, ROOK_PUBLIC_URL, GITHUB_APP_ID,
+        ROOK_DAILY_COIN_CAP, ROOK_RETENTION_DAYS, SUPABASE_URL, SUPABASE_JWT_SECRET, SUPABASE_ANON_KEY, ROOK_PUBLIC_URL, GITHUB_APP_ID,
         GITHUB_APP_SLUG, GITHUB_APP_PRIVATE_KEY, GITHUB_WEBHOOK_SECRET, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET,
         ROOK_GITHUB_RUNS_MAX, ROOK_USER_RUNS_PER_DAY, ROOK_USER_RUN_BUDGET, ROOK_SANDBOX_NETWORK, ROOK_SANDBOX_MEMORY,
         ROOK_SANDBOX_CPUS, and whether BOB_API_KEY is set (never its value)."""
@@ -218,7 +219,8 @@ class ServerSettings(BaseModel):
         values["bob_key_set"] = bool(env.get("BOB_API_KEY", "").strip())
         numbers: dict[str, tuple[str, type[int | float]]] = {
             "ROOK_GITHUB_RUNS_MAX": ("github_runs_max", int), "ROOK_USER_RUNS_PER_DAY": ("user_runs_per_day", int),
-            "ROOK_USER_RUN_BUDGET": ("user_run_budget", float), "ROOK_SANDBOX_CPUS": ("sandbox_cpus", float)}
+            "ROOK_USER_RUN_BUDGET": ("user_run_budget", float), "ROOK_SANDBOX_CPUS": ("sandbox_cpus", float),
+            "ROOK_RETENTION_DAYS": ("retention_days", int)}
         for name, (field, kind) in numbers.items():
             if raw := env.get(name, "").strip():
                 values[field] = kind(raw)

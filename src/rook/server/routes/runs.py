@@ -1,4 +1,4 @@
-"""The run routes of 02 §11: create, list, read, stream, answer, chat, cancel, replay a counterexample."""
+"""The run routes of 02 §11: create, list, read, stream, answer, chat, cancel, delete, replay a counterexample."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from rook.core.workspace import RepoSpec
 from rook.github.app import GitHubError
 from rook.sandbox.allowlist import REFUSED_MESSAGE
 from rook.server.auth import Caller
-from rook.server.deps import NOT_FOUND, AnyCaller, OwnedRun, ServerState, State, existing_caller
+from rook.server.deps import NOT_FOUND, AnyCaller, OwnedRun, SameSite, ServerState, State, existing_caller
 from rook.server.github_link import AppGitHub, SetupError
 from rook.server.github_runs import (
     BUSY,
@@ -272,6 +272,14 @@ async def chat(run_id: OwnedRun, body: ChatBody, state: State) -> Ok:
 @router.post("/runs/{run_id}/cancel", response_model=Ok)
 async def cancel(run_id: OwnedRun, state: State) -> Ok:
     return Ok(ok=state.runs.cancel(run_id))
+
+
+@router.delete("/runs/{run_id}", response_model=Ok, dependencies=[SameSite])
+async def delete_run(run_id: OwnedRun, state: State) -> Ok:
+    """The run, its events, counterexamples and workspace (ROOK-051). Shielded: a client that hangs up does not
+    leave it half-deleted."""
+    await asyncio.shield(state.deleter.delete_run(run_id))
+    return Ok(ok=True)
 
 
 @router.post("/counterexamples/{cx_id}/replay", response_model=RunCreatedResponse)

@@ -440,6 +440,12 @@ class EventBus:
             for queue in channel.subscribers:
                 queue.put_nowait(None)
 
+    async def forget(self, run_id: str) -> None:
+        """Close the run's stream and drop its channel (a deleted run). A later publish starts a new channel."""
+        if run_id in self._runs:
+            await self.close(run_id)
+            self._runs.pop(run_id, None)
+
     async def subscribe(self, run_id: str, after: int = 0) -> AsyncIterator[Event]:
         """Yield every event with seq > `after`: the stored replay first, then the live tail."""
         channel = self._channel(run_id)

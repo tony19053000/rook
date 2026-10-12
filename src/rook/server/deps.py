@@ -15,6 +15,7 @@ from rook.server.config import ServerSettings
 from rook.server.db import ServerDb
 from rook.server.github_link import GitHubLink
 from rook.server.logins import LoginFlows
+from rook.server.retention import DataDeleter
 from rook.server.runs import ReplayFactory, RunManager
 from rook.server.supabase import SupabaseOAuth
 from rook.store.repo import Store
@@ -36,6 +37,7 @@ class ServerState:
     replay_factory: ReplayFactory | None
     logins: LoginFlows
     oauth: SupabaseOAuth | None  # None: the CLI sign-in routes answer 501
+    deleter: DataDeleter
     docker_ready: Callable[[], bool] = lambda: False  # user GitHub runs need Docker (server/github_runs.py)
 
 
@@ -73,3 +75,15 @@ def owned_run(run_id: str, state: State, caller: Annotated[Caller, Depends(exist
 
 
 OwnedRun = Annotated[str, Depends(owned_run)]
+
+
+def not_cross_site(request: Request, state: State) -> None:
+    """Refuse a browser request sent by another site (03 §10): defence in depth for the state-changing DELETE
+    routes, on top of the SameSite=Lax guest cookie and CORS. The web's same-origin proxy sends `same-origin`;
+    the CLI and curl send no `Sec-Fetch-Site`; local dev (another port) is allowed by its listed `Origin`."""
+    site = request.headers.get("sec-fetch-site")
+    if site in ("cross-site", "same-site") and request.headers.get("origin") not in state.settings.web_origins:
+        raise HTTPException(403, "Cross-site requests are not allowed")
+
+
+SameSite = Depends(not_cross_site)

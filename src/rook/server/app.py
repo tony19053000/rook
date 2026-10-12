@@ -6,6 +6,8 @@ so importing this module never opens a database.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
@@ -29,6 +31,7 @@ from rook.server.github_link import AppGitHub, GitHubLink, NoGitHub
 from rook.server.github_runs import DockerProbe
 from rook.server.limits import BodySizeLimit, RateLimit
 from rook.server.logins import LoginFlows
+from rook.server.retention import Clock, DataDeleter, sweep_forever, utc_now
 from rook.server.routes import auth, meta, runs
 from rook.server.routes import github as github_routes
 from rook.server.runs import ReplayFactory, RunManager, SessionFactory, default_session_factory
@@ -76,7 +79,9 @@ def create_app(
     oauth: SupabaseOAuth | None = None,
     github_transport: httpx.AsyncBaseTransport | None = None,
     docker_ready: Callable[[], bool] | None = None,
+    clock: Clock = utc_now,
 ) -> FastAPI:
+    """`clock` is the retention sweep's (tests pass a fake one)."""
     settings = settings or ServerSettings.from_env()
     if allowlist is None:
         allowlist = Allowlist.from_yaml(settings.allowlist_path) if settings.allowlist_path else DEFAULT_ALLOWLIST
@@ -97,6 +102,7 @@ def create_app(
         settings=settings, store=store, db=db, bus=bus, runs=manager,
         verifier=verifier or RejectAllTokens(), cookies=GuestCookies(guest_secret, secure=settings.cookie_secure),
         github=github, replay_factory=replay_factory, logins=LoginFlows(guest_secret), oauth=oauth,
+        deleter=DataDeleter(store, db, bus, manager, settings.workspaces_root),
         docker_ready=docker_ready or DockerProbe(settings.workspaces_root, settings.sandbox_network))
 
     @asynccontextmanager
@@ -104,9 +110,14 @@ def create_app(
         interrupted = mark_interrupted(store, manager.live_ids())
         if interrupted:
             log.warning("marked %d interrupted run(s) as failed", len(interrupted))
+        sweeper = asyncio.create_task(sweep_forever(state.deleter, settings.retention_days, clock),
+                                      name="retention sweep")
         try:
             yield
         finally:
+            sweeper.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await sweeper
             await manager.shutdown()
             state.db.close()
             store.close()
@@ -132,7 +143,7 @@ def create_app(
                        proxy_secret=settings.proxy_secret_value(),
                        exempt=frozenset({f"{API_PREFIX}/health"}))
     app.add_middleware(CORSMiddleware, allow_origins=settings.web_origins, allow_credentials=True,
-                       allow_methods=["GET", "POST"], allow_headers=["Authorization", "Content-Type", "Accept"],
+                       allow_methods=["GET", "POST", "DELETE"], allow_headers=["Authorization", "Content-Type", "Accept"],
                        max_age=600)
     return app
 

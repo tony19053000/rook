@@ -180,6 +180,19 @@ class RunManager:
         live.session.cancel()
         return True
 
+    async def stop(self, run_id: str, timeout: float) -> asyncio.Task[None] | None:
+        """Cancel a live run, wait up to `timeout` s for its task to end, and drop it from the live set (a deleted
+        run). Returns the task when it is still stopping, else None."""
+        live = self._live.get(run_id)
+        if live is None:
+            return None
+        self.cancel(run_id)
+        task = live.task
+        if task is not None and not task.done():
+            await asyncio.wait({task}, timeout=timeout)
+        self._live.pop(run_id, None)
+        return task if task is not None and not task.done() else None
+
     async def _drive(self, run_id: str, live: LiveRun) -> None:
         slot = await self._wait_for_slot(live)
         try:

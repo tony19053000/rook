@@ -1,4 +1,8 @@
-"""Queries over the SQLite store. One `Store` wraps one connection behind a lock, so it is thread-safe."""
+"""Queries over the SQLite store. One `Store` wraps one connection behind a lock, so it is thread-safe.
+
+A deleted run's id is remembered (in memory, for this process): every later write for it (an event, a
+counterexample, its status) is dropped, so a run thread that is still stopping can't bring it back.
+"""
 
 from __future__ import annotations
 
@@ -38,6 +42,7 @@ class Store:
     def __init__(self, path: str | Path) -> None:
         self._conn = connect(path)
         self._lock = threading.Lock()
+        self._deleted: set[str] = set()
 
     def close(self) -> None:
         with self._lock:
@@ -47,6 +52,8 @@ class Store:
 
     def insert_run(self, run: RunRecord) -> None:
         with self._lock:
+            if run.id in self._deleted:
+                return
             self._conn.execute(
                 "INSERT INTO runs(id, user_id, repo_kind, repo_ref, status, created_at, finished_at, coins)"
                 " VALUES (:id, :user_id, :repo_kind, :repo_ref, :status, :created_at, :finished_at, :coins)",
@@ -69,6 +76,8 @@ class Store:
             return
         assignments = ", ".join(f"{k} = :{k}" for k in changes)  # keys are fixed names, never input
         with self._lock:
+            if run_id in self._deleted:
+                return
             self._conn.execute(f"UPDATE runs SET {assignments} WHERE id = :id", {**changes, "id": run_id})
 
     def list_runs(self, user_id: str | None = None, limit: int = 50) -> list[RunRecord]:
@@ -83,10 +92,39 @@ class Store:
             rows = self._conn.execute(query, (*params, limit)).fetchall()
         return [RunRecord(**dict(r)) for r in rows]
 
+    def run_ids_of(self, user_id: str) -> list[str]:
+        """Every run id the user owns (no limit)."""
+        with self._lock:
+            rows = self._conn.execute("SELECT id FROM runs WHERE user_id = ?", (user_id,)).fetchall()
+        return [r["id"] for r in rows]
+
+    def runs_created_before(self, cutoff: str) -> list[RunRecord]:
+        """Runs with `created_at` < `cutoff` (both ISO 8601 UTC, so they compare as text)."""
+        with self._lock:
+            rows = self._conn.execute("SELECT * FROM runs WHERE created_at < ? ORDER BY created_at",
+                                      (cutoff,)).fetchall()
+        return [RunRecord(**dict(r)) for r in rows]
+
+    def delete_run(self, run_id: str) -> None:
+        """Delete the run, its events and its counterexamples (one transaction); later writes for it are dropped."""
+        with self._lock:
+            self._deleted.add(run_id)
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                self._conn.execute("DELETE FROM events WHERE run_id = ?", (run_id,))
+                self._conn.execute("DELETE FROM counterexamples WHERE run_id = ?", (run_id,))
+                self._conn.execute("DELETE FROM runs WHERE id = ?", (run_id,))
+                self._conn.execute("COMMIT")
+            except BaseException:
+                self._conn.execute("ROLLBACK")
+                raise
+
     # events ---------------------------------------------------------------
 
     def append_event(self, event: Event) -> None:
         with self._lock:
+            if event.run_id in self._deleted:
+                return
             self._conn.execute(
                 "INSERT INTO events(run_id, seq, ts, type, data) VALUES (?, ?, ?, ?, ?)",
                 (event.run_id, event.seq, event.ts, event.type, json.dumps(redact(event.data))),
@@ -115,6 +153,8 @@ class Store:
     ) -> None:
         """Insert or replace (e.g. to move status open -> fixed -> verified)."""
         with self._lock:
+            if run_id in self._deleted:
+                return
             self._conn.execute(
                 "INSERT OR REPLACE INTO counterexamples(id, run_id, rule_id, json, status) VALUES (?, ?, ?, ?, ?)",
                 (cx_id, run_id, rule_id, json.dumps(redact(data)), status),

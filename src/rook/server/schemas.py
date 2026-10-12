@@ -92,6 +92,13 @@ class Ok(BaseModel):
     ok: bool
 
 
+class DataDeleted(BaseModel):
+    """`DELETE /me/data` (ROOK-051)."""
+
+    ok: bool
+    runs_deleted: int
+
+
 class DeviceStart(BaseModel):
     """`POST /auth/device/start`: the CLI shows `user_code` and `verification_url`, then polls every `interval` s."""
 
