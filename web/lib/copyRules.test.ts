@@ -2,6 +2,7 @@ import { readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { collectStrings, copyViolations, NO_HACKATHON, NO_PLACEHOLDER } from "./copyRules";
+import { RECORDED_STRINGS } from "./recordedData";
 import * as pricing from "@/content/pricing";
 
 // Every module in web/content/, so a new content file is scanned without touching this test.
@@ -79,6 +80,30 @@ describe("copy rules (06 §4, §9)", () => {
     }
   });
 
+  it("stay strict about customers and counts with a plus: no pattern exempts run data (ROOK-054)", () => {
+    for (const bad of [
+      "happy customer: refund(amount=1) feedback",
+      "our customer: love(it)",
+      "Built for every customer",
+      "customer: refund(amount=1)",
+      "500\n+ runs",
+      "1,000\n+ bugs found",
+      "1,000\n+ teams",
+      "else 0\n+        already = order.refunded_total",
+    ]) {
+      expect(copyViolations(bad), bad).not.toEqual([]);
+    }
+  });
+
+  it("exempt recorded run data by identity only: the fixture's exact step lines, diff and actor names", () => {
+    for (const ok of ["customer: refund(amount=1)", "admin: create_product(price=1, stock=1)", "+        already = order.refunded_total", "customer"]) {
+      expect(RECORDED_STRINGS.has(ok), ok).toBe(true);
+    }
+    for (const bad of ["happy customer: refund(amount=1) feedback", "our customer: love(it)", "Built for every customer", "customers", "customer: refund(amount=2)", "500\n+ runs"]) {
+      expect(RECORDED_STRINGS.has(bad), bad).toBe(false);
+    }
+  });
+
   it("catch the word demo (ROOK-048), but not words that only start with it", () => {
     for (const bad of ["Try the demo", "DEMO repos", "Two demos", "the demo's rule"]) {
       expect(copyViolations(bad), bad).toContain("the word demo");
@@ -119,6 +144,7 @@ describe("copy rules (06 §4, §9)", () => {
       const mod: unknown = await import(`../content/${file}`);
       const isPricing = file === "pricing.ts";
       for (const text of collectStrings(mod)) {
+        if (RECORDED_STRINGS.has(text)) continue; // verbatim data of the recorded run, by identity (lib/recordedData.ts)
         expect(copyViolations(text, { pricing: isPricing }), `${file}: ${text}`).toEqual([]);
       }
     }

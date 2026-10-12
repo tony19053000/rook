@@ -5,14 +5,17 @@ import { Card } from "@/components/site/Card";
 import { CodeBlock } from "@/components/site/CodeBlock";
 import { Grid } from "@/components/site/Container";
 import { Section } from "@/components/site/Section";
-import { HeroFigure } from "@/components/site/home/HeroFigure";
+import { FlowDiagram } from "@/components/site/home/FlowDiagram";
 import { HeroParallax } from "@/components/site/home/HeroParallax";
+import { RefundStory } from "@/components/site/home/RefundStory";
+import { RunScreenshot } from "@/components/site/home/RunScreenshot";
 import { Walkthrough } from "@/components/site/home/Walkthrough";
 import { measure, type } from "@/components/site/tokens";
 import {
   closingCta,
   faqSection,
   features,
+  flowDiagram,
   featuresSection,
   homeFaq,
   homeHero,
@@ -23,6 +26,7 @@ import {
 } from "@/content/home";
 import { plans, pricingStatus } from "@/content/pricing";
 import { cta } from "@/content/site";
+import { storyCopy } from "@/content/story";
 import { walkthroughCopy } from "@/content/walkthrough";
 
 // The title, description and cards are the site defaults (app/layout.tsx).
@@ -30,8 +34,10 @@ export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 const HERO_TITLE_ID = "hero-title";
 
-// The marketing home (06 §5.1). A server component: only the hero's parallax and the walkthrough are client
-// islands (the only places `motion` and timers are used). Everything is in the server render.
+// The marketing home (06 §5.1, ROOK-054): the problem-first hero with a real product screenshot, the refund
+// bug end to end, the 6-step diagram, the walkthrough, then benefits, guarantees, scope, FAQ and the closing CTA.
+// A server component: only the hero's parallax and the walkthrough are client islands (the only places
+// `motion` and timers are used). Everything is in the server render.
 export default function HomePage() {
   const faq = homeFaq(pricingStatus(plans));
   return (
@@ -52,11 +58,23 @@ export default function HomePage() {
               <ButtonLink href={cta.docs.href} variant="secondary" size="lg">
                 {cta.docs.label}
               </ButtonLink>
+              <ButtonLink href={homeHero.github.href} variant="ghost" size="lg" external>
+                {homeHero.github.label}
+                <span aria-hidden>↗</span>
+              </ButtonLink>
             </div>
           </>
         }
-        figure={<HeroFigure />}
+        figure={<RunScreenshot />}
       />
+
+      <Section id={storyCopy.id} eyebrow={storyCopy.eyebrow} title={storyCopy.title} intro={storyCopy.intro}>
+        <RefundStory />
+      </Section>
+
+      <Section id={flowDiagram.id} eyebrow={flowDiagram.eyebrow} title={flowDiagram.title} intro={flowDiagram.intro}>
+        <FlowDiagram />
+      </Section>
 
       <Section id={walkthroughCopy.id} eyebrow={walkthroughCopy.eyebrow} title={walkthroughCopy.title} intro={walkthroughCopy.intro}>
         <Walkthrough />

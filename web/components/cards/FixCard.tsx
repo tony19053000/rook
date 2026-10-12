@@ -23,7 +23,7 @@ export function Diff({ diff }: { diff: string }) {
   return (
     <pre className="overflow-x-auto rounded-lg border border-line bg-sunk px-3 py-2.5 font-mono text-[12.5px] leading-relaxed" aria-label="Diff">
       {lines.map((line, i) => (
-        <span key={i} data-diff={line.kind} className={`block ${DIFF_CLASS[line.kind]}`}>
+        <span key={i} data-diff={line.kind} data-run-data className={`block ${DIFF_CLASS[line.kind]}`}>
           {line.text === "" ? " " : line.text}
         </span>
       ))}

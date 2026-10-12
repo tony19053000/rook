@@ -15,12 +15,15 @@ import {
   costAnswer,
   faqSection,
   featuresSection,
+  flowDiagram,
   homeFaq,
   homeHero,
   refusalsSection,
   scopeSection,
 } from "@/content/home";
 import { PRICING_PENDING_NOTICE, plans, pricingStatus, type Plan } from "@/content/pricing";
+import { cta, REPO_URL } from "@/content/site";
+import { refundCounterexample, refundRule, storyCopy } from "@/content/story";
 import { WALKTHROUGH_LABEL, walkthroughCopy, walkthroughFrames } from "@/content/walkthrough";
 
 const REDUCE = "(prefers-reduced-motion: reduce)";
@@ -43,6 +46,8 @@ function mockReducedMotion(reduced: boolean) {
 }
 
 const SECTION_TITLES = [
+  storyCopy.title,
+  flowDiagram.title,
   walkthroughCopy.title,
   featuresSection.title,
   refusalsSection.title,
@@ -78,6 +83,10 @@ describe("home: server render (06 §3: complete and still without JS)", () => {
     const summaries = [...doc.querySelectorAll("details > summary")].map((s) => s.textContent ?? "");
     for (const item of homeFaq(pricingStatus(plans))) expect(summaries.some((s) => s.includes(item.question))).toBe(true);
     const text = doc.body.textContent ?? "";
+    expect(text).toContain(refundRule.check);
+    expect(text).toContain(refundCounterexample.reproduced);
+    expect(doc.querySelectorAll("ol[data-flow-diagram] > li")).toHaveLength(flowSteps.length);
+    expect(doc.querySelectorAll("[data-screenshot] img[alt]")).toHaveLength(2);
     for (const step of flowSteps) {
       expect(text).toContain(step.title);
       expect(text).toContain(step.summary);
@@ -110,10 +119,52 @@ describe("home: hero (06 §5.1)", () => {
     expect(within(hero as HTMLElement).getByText(homeHero.lead).closest("[data-layer]")).toBeNull();
   });
 
-  it("moves the layers when motion is allowed, and labels the figure as an illustration", () => {
+  it("moves the layers when motion is allowed, and labels the screenshot a recorded example run", () => {
     const { container } = inSite(<HomePage />);
     for (const layer of container.querySelectorAll("[data-layer]")) expect(layer.getAttribute("style") ?? "").toMatch(/transform/);
-    expect(screen.getByText("Illustration of a Rook result")).toBeTruthy();
+    const figure = container.querySelector('[data-layer="figure"]') as HTMLElement;
+    expect(within(figure).getByText("Recorded example run")).toBeTruthy();
+  });
+
+  it("names the problem and the outcome in plain words", () => {
+    expect(homeHero.heading).toMatch(/sequence of API calls/);
+    expect(homeHero.heading).toMatch(/business rules/);
+    expect(homeHero.lead).toMatch(/smallest sequence/);
+    expect(homeHero.lead).toMatch(/verifies the fix/);
+  });
+
+  it("has the CTAs: Try Rook (/app), Read the docs and the GitHub repo", () => {
+    const { container } = inSite(<HomePage />);
+    const hero = container.querySelector("[data-hero]") as HTMLElement;
+    const links = within(hero).getAllByRole("link");
+    expect(links.map((a) => [a.textContent, a.getAttribute("href")])).toEqual([
+      [cta.demo.label, "/app"],
+      [cta.docs.label, cta.docs.href],
+      [`${homeHero.github.label}↗`, REPO_URL],
+    ]);
+    expect(cta.demo.label).toBe("Try Rook");
+    expect(cta.docs.label).toBe("Read the docs");
+    expect(links[2]!.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+});
+
+describe("home: landmarks and headings", () => {
+  it("has banner, navigation, main and contentinfo, one h1, and no skipped heading level", () => {
+    const { container } = inSite(<HomePage />);
+    for (const role of ["banner", "main", "contentinfo"] as const) expect(screen.getAllByRole(role)).toHaveLength(1);
+    expect(screen.getAllByRole("navigation").length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const levels = [...container.querySelectorAll("main h1, main h2, main h3, main h4, main h5, main h6")].map((h) => Number(h.tagName[1]));
+    expect(levels[0]).toBe(1);
+    levels.forEach((level, i) => {
+      if (i > 0) expect(level - levels[i - 1]!, `heading ${i}`).toBeLessThanOrEqual(1);
+    });
+  });
+
+  it("puts the story right after the hero, then the diagram and the walkthrough", () => {
+    const { container } = inSite(<HomePage />);
+    const ids = [...container.querySelectorAll("main > section, main > * > section")].map((s) => s.id || (s.hasAttribute("data-hero") ? "hero" : ""));
+    expect(ids.slice(0, 4)).toEqual(["hero", storyCopy.id, flowDiagram.id, walkthroughCopy.id]);
   });
 });
 

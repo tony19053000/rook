@@ -24,6 +24,7 @@ import { flowSteps } from "@/content/flow";
 import { notYetTrue } from "@/content/security";
 import { footerColumns, INSTALL_COMMAND, notFoundCopy } from "@/content/site";
 import { copyViolations, NO_HACKATHON, NO_PLACEHOLDER } from "@/lib/copyRules";
+import { scannableText } from "@/lib/recordedData";
 
 // /login's sign-in island uses the App Router; these tests render pages outside Next.
 const router = { replace: vi.fn(), push: vi.fn() };
@@ -54,18 +55,11 @@ const PENDING_ROOK_056 = new Set(["/privacy", "/terms"]);
 const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
 
 /**
- * The visible text plus the text in attributes people and screen readers get (not class or style values).
- * Text nodes are joined with spaces: textContent glues neighbours ("found1customer") and hides words from \b.
+ * The visible text plus the text in attributes people and screen readers get (not class or style values), one
+ * text node per line: textContent glues neighbours ("found1customer") and hides words from \b. Verbatim lines
+ * of the recorded run (a step, a diff line) in elements marked as run data are left out (lib/recordedData.ts).
  */
-function pageText(root: HTMLElement): string {
-  const attrs = [...root.querySelectorAll("[aria-label], [alt], [title]")].flatMap((el) =>
-    ["aria-label", "alt", "title"].map((name) => el.getAttribute(name) ?? ""),
-  );
-  const walker = root.ownerDocument.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  const texts: string[] = [];
-  for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) texts.push(node.textContent ?? "");
-  return [...texts, ...attrs].join("\n");
-}
+const pageText = (root: HTMLElement): string => scannableText(root);
 
 function headingLevels(root: HTMLElement): number[] {
   return [...root.querySelectorAll("h1, h2, h3, h4, h5, h6")].map((h) => Number(h.tagName[1]));

@@ -57,7 +57,9 @@ export function CounterexampleCard({ item }: { item: CounterexampleItem }) {
           {steps.slice(0, MAX_STEPS).map((step, i) => (
             <li key={i} className="flex gap-2.5 rounded-lg border border-line px-3 py-1.5 font-mono text-[13px]">
               <b className="w-5 flex-none font-medium text-faint">{i + 1}</b>
-              <span className="min-w-0 break-words">{stepText(step)}</span>
+              <span data-run-data className="min-w-0 break-words">
+                {stepText(step)}
+              </span>
             </li>
           ))}
           {steps.length > MAX_STEPS && <li className="text-xs text-faint">… {steps.length - MAX_STEPS} more steps</li>}

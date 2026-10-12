@@ -1,23 +1,24 @@
 // Sample data for the home walkthrough (06 §6): one frame per step of `flowSteps`, drawn with the app's real
-// run components. It is an illustration modelled on the recorded minishop run (lib/fixtures/minishop-run.json)
-// and the shop-app demo bug (buy 100, refund 60, refund 50: paid 100, refunded 110). Not a live run, and it
-// never touches the API.
+// run components. The case (rule, steps, values, diagnosis, fix and the verify checks) is the recorded minishop
+// run of ./story.ts (lib/fixtures/minishop-run.json); the agents' one-line summaries are short illustrations of
+// what each agent did. Not a live run, and it never touches the API.
 
 import type { AgentItem, CounterexampleItem, EngineItem, FixItem, RulesItem, SearchItem, VerifyItem } from "@/lib/runStore";
+import { refundChecks, refundCounterexample, refundDiagnosis, refundFix, refundFound, refundOutcome, refundRule } from "./story";
 
 export const WALKTHROUGH_LABEL = "Product illustration — not a live run";
 
 export const walkthroughCopy = {
   id: "walkthrough",
-  eyebrow: "How it works",
-  title: "From your repo to a verified fix, in six steps",
-  intro: "Bob agents do the reading, proposing and writing. The deterministic engine does the searching, replaying and verifying.",
+  eyebrow: "Inside a run",
+  title: "Watch the six steps in the product",
+  intro: "The refund case again, drawn with the web app's own components: Bob agents read, propose and write; the engine searches, replays and verifies.",
   tablistLabel: "Steps of a Rook run",
   pause: "Pause",
   play: "Play",
   /** Appended to the control's visible text in its accessible name. */
   controlSuffix: " the walkthrough",
-  repo: "shop-app",
+  repo: "minishop",
 } as const;
 
 export type WalkthroughItem = AgentItem | EngineItem | RulesItem | SearchItem | CounterexampleItem | FixItem | VerifyItem;
@@ -52,66 +53,53 @@ function engine(key: string, worker: EngineItem["worker"], ok: boolean, summary:
   return { kind: "engine", key, worker, status: ok ? "done" : "failed", label: "", pct: 100, count: null, summary };
 }
 
-const RULE_ID = "refunded_total_le_paid";
-const RULE_TEXT = "Total refunds on an order never exceed the amount paid";
-const CHECK = "order.refunded_total <= order.paid";
-const CX_ID = "cx_001";
-const TEST_PATH = "test/rook_cx_001.test.js";
-const OBSERVED = { paid: 100, refunded_total: 110, status: "paid" };
-
-const STEPS = [
-  { actor: "shopper", action: "buy", params: { price: 100, quantity: 1 } },
-  { actor: "admin", action: "refund", params: { amount: 60 } },
-  { actor: "admin", action: "refund", params: { amount: 50 } },
-];
-
-const DIFF = [
-  "--- a/src/services/refunds.js",
-  "+++ b/src/services/refunds.js",
-  "-  if (amount > order.total) {",
-  "+  if (amount > order.total - order.refundedTotal) {",
-  '     throw badRequest("refund exceeds amount paid");',
-  "   }",
-].join("\n");
+const RULE_ID = refundRule.id;
+const CX_ID = refundCounterexample.id;
+const TEST_PATH = refundCounterexample.testPath;
+const OBSERVED = refundCounterexample.observed;
+// counterexample.saved carries each step's refs too: the product and order it acts on (index 0, the first one).
+const REFS = [{}, { product_id: 0 }, { order_id: 0 }, { order_id: 0 }];
+const STEPS = refundCounterexample.steps.map((step, i) => ({ ...step, refs: REFS[i] ?? {} }));
 
 const rules: RulesItem = {
   kind: "rules",
   key: "rules",
   rules: [
-    { id: RULE_ID, text: RULE_TEXT, evidence: ["src/services/refunds.js: refund checks amount against order.total"] },
-    { id: "stock_non_negative", text: "Product stock never goes below zero", evidence: ["src/services/orders.js: stock is decremented on buy"] },
-    { id: "shipped_not_cancelled", text: "A shipped order is never cancelled", evidence: ["src/routes/orders.js: cancel allows unshipped orders only"] },
-    { id: "buy_status_ok", text: "Every buy answers with status paid", evidence: [] },
+    { id: RULE_ID, text: refundRule.text, evidence: ["app.py:214-216: refund guard checks already + body.amount > order.paid", "app.py:54-55: refunded_total is sum(refunds)"] },
+    { id: "order_paid_non_negative", text: "The amount paid for an order is never negative", evidence: ["app.py:196-202: paid = product.price * quantity"] },
+    { id: "shipped_order_not_cancelled", text: "A shipped order is never in cancelled status", evidence: ["app.py:222-224: cancel raises 409 if order.shipped is True"] },
+    { id: "buy_response_status_paid", text: "Every buy answers with status paid", evidence: [] },
   ],
   verdicts: {
-    buy_status_ok: [{ rule_id: "buy_status_ok", verdict: "reject", reason: "about one response, not the app's state", by: "critic" }],
+    buy_response_status_paid: [
+      {
+        rule_id: "buy_response_status_paid",
+        verdict: "reject",
+        reason: "its check does not parse with the safe evaluator: only direct calls to allowed functions are permitted (no method calls)",
+        by: "engine",
+      },
+    ],
   },
-  approvedIds: [RULE_ID, "stock_non_negative", "shipped_not_cancelled"],
+  approvedIds: [RULE_ID],
 };
 
-const search: SearchItem = {
-  kind: "search",
-  key: "search",
-  sequences: 1240,
-  perSec: 62,
-  rules: { [RULE_ID]: "broken", stock_non_negative: "holding", shipped_not_cancelled: "holding" },
-};
+const search: SearchItem = { kind: "search", key: "search", sequences: 1, perSec: 69.4, rules: { [RULE_ID]: "broken" } };
 
 const counterexample: CounterexampleItem = {
   kind: "counterexample",
   key: "cx",
-  violationId: "v_001",
+  violationId: "v_79d91d72",
   ruleId: RULE_ID,
-  stepCounts: [7, 5, 3],
+  stepCounts: [refundFound.steps],
   observed: OBSERVED,
   saved: {
     cx_id: CX_ID,
     rule_id: RULE_ID,
-    rule_text: RULE_TEXT,
+    rule_text: refundRule.text,
     steps: STEPS,
     observed: OBSERVED,
-    expected: CHECK,
-    reproduced: "10/10",
+    expected: refundRule.check,
+    reproduced: refundCounterexample.reproduced,
     flaky: false,
     test_path: TEST_PATH,
   },
@@ -121,30 +109,19 @@ const fix: FixItem = {
   kind: "fix",
   key: "fix",
   cxId: CX_ID,
-  diagnosis: {
-    cx_id: CX_ID,
-    file: "src/services/refunds.js",
-    line: 23,
-    explanation: "Each refund is compared with the order total on its own, ignoring the refunds already made, so two partial refunds can add up to more than was paid.",
-    reviewed: true,
-  },
-  fix: { cx_id: CX_ID, files: ["src/services/refunds.js"], diff: DIFF, reviewed: true },
+  diagnosis: { cx_id: CX_ID, file: refundDiagnosis.file, line: refundDiagnosis.line, explanation: refundDiagnosis.explanation, reviewed: true },
+  fix: { cx_id: CX_ID, files: [...refundFix.files], diff: refundFix.diff, reviewed: true },
 };
 
 const verify: VerifyItem = {
   kind: "verify",
   key: "verify",
   cxId: CX_ID,
-  checks: {
-    replay: { status: "passed", detail: "rule held in 10/10 replays" },
-    project_tests: { status: "passed", detail: "exit 0: all tests passed" },
-    regression_test: { status: "passed", detail: `${TEST_PATH}: exit 0` },
-    fresh_search: { status: "passed", detail: "no violation in 20,000 sequences (new seed)" },
-  },
+  checks: Object.fromEntries(refundChecks.map((check) => [check.id, { status: "passed", detail: check.detail }])),
   freshSearch: null,
-  done: { verified: true, summary: "4/4 checks passed" },
-  committed: null,
-  pr: { url: "github.com/you/shop-app/pull/1", number: 1, branch: "rook/fix-cx-001" },
+  done: { verified: true, summary: refundOutcome.summary },
+  committed: { cx_id: CX_ID, branch: refundOutcome.branch, commit: "5bf3ec34f90a36409e4bc847691ef6d610746507", files: ["app.py", "rook/counterexamples/cx_001.json", "rook/rook.yaml", TEST_PATH] },
+  pr: null,
 };
 
 export const walkthroughFrames: WalkthroughFrame[] = [
@@ -152,45 +129,41 @@ export const walkthroughFrames: WalkthroughFrame[] = [
     stepId: "understand",
     phase: "MAP",
     items: [
-      agent("scout", "scout", "Node.js + Express shop: products, orders and refunds"),
-      agent("mechanic", "mechanic", "App running in a Docker sandbox"),
-      agent("mapper", "mapper", null, "reading src/routes/orders.js"),
+      agent("scout", "scout", "Python + FastAPI shop in app.py: products, orders and refunds"),
+      agent("mechanic", "mechanic", "App running in a sandbox, no secrets needed"),
+      agent("mapper", "mapper", null, "reading app.py"),
       engine("dry", "runner", true, "6/6 actions dry-ran OK, 2/2 state readers OK"),
     ],
   },
   {
     stepId: "rules",
     phase: "APPROVE",
-    items: [
-      agent("lawmaker", "lawmaker", "Proposed 4 rules with evidence from the code"),
-      agent("critic", "rule_critic", "Checked 4 rules and rejected 1 as weak"),
-      rules,
-    ],
+    items: [agent("lawmaker", "lawmaker", "Proposed rules with evidence from the code"), agent("critic", "rule_critic", "Checked the rules against the code"), rules],
   },
   {
     stepId: "search",
     phase: "SEARCH",
-    items: [
-      engine("runner", "runner", true, "1,240 sequences (seed 1)"),
-      engine("judge", "judge", false, `rule ${RULE_ID} broken at step 7`),
-      search,
-    ],
+    items: [engine("runner", "runner", true, "1 sequences in 0.0s (69/s)"), engine("judge", "judge", false, `rule ${RULE_ID} broken at step 4`), search],
   },
   {
     stepId: "shrink",
     phase: "SAVE",
-    items: [engine("shrinker", "shrinker", true, "7 -> 3 steps"), engine("replayer", "replayer", true, "reproduced 10/10"), counterexample],
+    items: [
+      engine("shrinker", "shrinker", true, refundCounterexample.shrinkSummary),
+      engine("replayer", "replayer", true, `reproduced ${refundCounterexample.reproduced}`),
+      counterexample,
+    ],
   },
   {
     stepId: "fix",
     phase: "FIX",
-    items: [agent("detective", "detective", `Root cause in src/services/refunds.js : 23`), agent("surgeon", "surgeon", "Wrote the fix in the workspace copy"), fix],
+    items: [
+      agent("detective", "detective", `Root cause in ${refundDiagnosis.file} : ${refundDiagnosis.line}`),
+      agent("surgeon", "surgeon", "Wrote the fix in the workspace copy"),
+      fix,
+    ],
   },
-  {
-    stepId: "verify",
-    phase: "VERIFY",
-    items: [verify],
-  },
+  { stepId: "verify", phase: "VERIFY", items: [verify] },
 ];
 
 /** The "Before" box of the verify frame: the counterexample's observed values. */

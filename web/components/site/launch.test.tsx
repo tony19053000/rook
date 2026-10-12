@@ -25,11 +25,8 @@ import { ROBOTS_DISALLOW, SITEMAP_PATHS } from "@/lib/seo";
 
 const router = { replace: vi.fn(), push: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
-// app/layout.tsx loads its fonts through next/font, which only works inside the Next build.
-vi.mock("next/font/google", () => {
-  const font = () => ({ variable: "font" });
-  return { IBM_Plex_Sans: font, IBM_Plex_Mono: font, Newsreader: font };
-});
+// app/layout.tsx loads its fonts through next/font (app/fonts.ts), which only works inside the Next build.
+vi.mock("next/font/local", () => ({ default: () => ({ variable: "font" }) }));
 
 afterEach(cleanup);
 

@@ -1,13 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
 import type { ReactNode } from "react";
 import { metadataCopy, site, SITE_URL } from "@/content/site";
+import { newsreader, plexMono, plexSans } from "./fonts";
 import "./globals.css";
-
-// Self-hosted by next/font at build time, so the CSP needs no third-party font origin (03 §8).
-const plexSans = IBM_Plex_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700"], variable: "--font-plex-sans" });
-const plexMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-plex-mono" });
-const newsreader = Newsreader({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-newsreader" });
 
 // Every page renders per request so it can carry that request's CSP nonce (middleware.ts, 03 §8): a page
 // prerendered at build time would have scripts without a nonce, and the browser would block them.

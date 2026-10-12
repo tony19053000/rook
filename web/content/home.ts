@@ -1,28 +1,62 @@
-// The marketing home (06 §5.1): hero, the sections after the walkthrough, the FAQ and the closing call to
-// action. Every claim comes from 06 §4. The walkthrough's copy and sample data are in ./walkthrough.ts.
+// The marketing home (06 §5.1): hero, the 6-step diagram, the benefits and the sections after them, the FAQ and
+// the closing call to action. Every claim comes from 06 §4. The refund-bug story is in ./story.ts and the
+// walkthrough's copy and sample data in ./walkthrough.ts.
 
 import { pricingCopy, type PricingStatus } from "./pricing";
-import { INSTALL_COMMAND, operator, site } from "./site";
+import { INSTALL_COMMAND, operator, REPO_URL, site } from "./site";
 
 export const homeHero = {
   eyebrow: "Early access · Open source",
-  heading: "Find the smallest sequence that breaks your software, before your users do.",
-  lead: site.oneLiner,
+  heading: "Find the sequence of API calls that breaks your business rules",
+  lead:
+    "Each call is valid on its own. Together they refund more than was paid, sell stock you don't have, or let a normal user into an admin page. Rook finds the smallest sequence that does it, proves it on your running app, and verifies the fix.",
+  github: { label: "View on GitHub", href: REPO_URL },
 } as const;
 
-/** The hero's product figure: an illustration of a Rook result (the shop-app refund bug). */
-export const heroFigure = {
-  caption: "Illustration of a Rook result",
-  title: "Counterexample #1",
-  status: "Rule broken",
-  rule: "Total refunds on an order never exceed the amount paid",
-  steps: ["buy ₹100", "refund ₹60", "refund ₹50"],
-  observed: [
-    { label: "paid", value: "₹100" },
-    { label: "refunded", value: "₹110" },
-  ],
-  replayed: "Replayed 10/10 on the real app",
-  test: "Regression test saved",
+export interface Screenshot {
+  src: string;
+  /** Intrinsic size in pixels (the capture is at 1.5x or 2x). */
+  width: number;
+  height: number;
+  alt: string;
+}
+
+/**
+ * The hero's product screenshots: the finished run page of a guest minishop run, captured from the running web
+ * app by e2e/capture-run.mjs (06 §4 "Recorded vs live": labelled "Recorded example run").
+ */
+export const runScreenshot = {
+  label: "Recorded example run",
+  explanation: "Bob's answers are replayed from a saved real run; the engine still runs live against the real app.",
+  desktop: {
+    src: "/screenshots/run-desktop.webp",
+    width: 2160,
+    height: 1500,
+    alt: "Rook's run page for the minishop example: counterexample #001 breaks the rule \"Total refunds on an order never exceed the amount paid\" in 4 steps (create a product at price 1, buy 1, refund 1, refund 1), observed paid 1 and refunded total 2, reproduced 10/10, with the root cause at app.py line 214 reviewed by the Diagnosis Reviewer.",
+  },
+  mobile: {
+    src: "/screenshots/run-mobile.webp",
+    width: 780,
+    height: 1688,
+    alt: "The same run on a phone: verification by the engine, fix verified. Before: paid 1, refunded total 2, rule broken. After: the rule held in 10/10 replays. Replay, project tests, regression test and fresh search all passed.",
+  },
+} as const satisfies { label: string; explanation: string; desktop: Screenshot; mobile: Screenshot };
+
+/** The 6-step diagram (content/flow.ts): who does each step. */
+export const flowDiagram = {
+  id: "how-it-works",
+  eyebrow: "How it works",
+  title: "Six steps, from your repo to a verified fix",
+  intro: "Bob agents read, propose and write. The deterministic engine searches, replays and verifies. You approve the rules and the fix.",
+  listLabel: "The six steps of a Rook run",
+  actors: {
+    understand: ["Bob"],
+    rules: ["Bob", "You approve"],
+    search: ["Engine"],
+    shrink: ["Engine"],
+    fix: ["Bob", "You approve"],
+    verify: ["Engine"],
+  } as Record<string, string[]>,
 } as const;
 
 export interface HomeItem {
@@ -32,43 +66,43 @@ export interface HomeItem {
 
 export const featuresSection = {
   id: "features",
-  eyebrow: "Features",
-  title: "Proof, not predictions",
-  intro: "Every finding is an executed sequence on your running app, and every fix is checked the same way.",
+  eyebrow: "What you get",
+  title: "Proof you can keep, not a prediction",
+  intro: "Each finding is a sequence that ran on your app, and each fix is checked the same way.",
 } as const;
 
 export const features: HomeItem[] = [
   {
-    title: "Proof by execution",
-    body: "The engine runs seeded, reproducible sequences of valid actions against your real running app and checks every approved rule after every step.",
+    title: "Proof, not a guess",
+    body: "A bug counts only when the deterministic engine breaks an approved rule on your running app. No AI decides pass or fail.",
   },
   {
     title: "The smallest reproduction",
-    body: "A failing sequence is shrunk to a minimal one, then replayed on the real app, 10 times by default. Flaky results are reported as flaky.",
+    body: "A failing sequence is shrunk to a minimal one, steps first and then values, and replayed on the real app, 10 times by default. Flaky results are reported as flaky.",
   },
   {
-    title: "A regression test, saved",
-    body: "Each counterexample is saved as a JSON file plus a regression test in your repo.",
+    title: "A failing test you can keep",
+    body: "Each counterexample is saved as a JSON file plus a regression test in your repo. In the refund case, the test failed on the unfixed code and passed after the fix.",
   },
   {
-    title: "Verified fixes",
+    title: "A fix that is checked, not trusted",
     body: "A fix counts only if four engine checks pass: exact replay, your project's tests, the generated regression test, and a fresh search with a new seed.",
   },
   {
-    title: "Rules you approve",
+    title: "Rules you approve, in your repo",
     body: "Bob proposes business rules with evidence from your code and a critic rejects weak ones. Only the rules you approve are checked; they live in rook/rook.yaml.",
   },
   {
-    title: "CLI, web app and GitHub Action",
-    body: "An interactive rook terminal session, the web app, and a GitHub Action that runs on pull requests and fails the job if an approved rule breaks.",
+    title: "The fix lands on its own branch",
+    body: "Never on your default branch: a rook/fix-* branch, as a pull request for a GitHub repo or a local branch for a folder.",
+  },
+  {
+    title: "In your terminal and your pull requests",
+    body: "An interactive rook terminal session, the web app, and a GitHub Action that fails the job if an approved rule breaks.",
   },
   {
     title: "Any backend with an HTTP API",
     body: "In any language. The example apps are written in Node.js, Python (FastAPI) and Go.",
-  },
-  {
-    title: "13 Bob agents, one deciding engine",
-    body: "A Coordinator and 12 specialists, from Scout to Surgeon, run as IBM Bob custom modes. Only the deterministic engine marks a rule broken or a fix verified.",
   },
 ];
 
