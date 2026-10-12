@@ -14,7 +14,8 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test:e2e": "node e2e/smoke.mjs"
+    "test:e2e": "node e2e/smoke.mjs",
+    "audit": "node e2e/audit.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
