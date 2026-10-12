@@ -205,7 +205,7 @@ export function homeFaq(status: PricingStatus): FaqItem[] {
     },
     {
       question: "Who makes Roook?",
-      answer: `${operator.name}, an individual developer in ${operator.location}. Roook is an early-access, open-source project under the ${site.licence}, built on IBM Bob.`,
+      answer: `${operator.name}, the founder, based in ${operator.location}. Roook is an independent, early-stage startup: the product is in early access, open source under the ${site.licence}, and built on IBM Bob.`,
     },
     { question: "What does it cost?", answer: costAnswer(status) },
   ];

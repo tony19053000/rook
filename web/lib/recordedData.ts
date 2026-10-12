@@ -38,11 +38,18 @@ export function isRecordedData(el: Element): boolean {
   return el.hasAttribute(RUN_DATA_ATTR) && RECORDED_LINES.has(el.textContent ?? "");
 }
 
+/** Every string value in parsed JSON, at any depth. */
+function jsonStrings(value: unknown): string[] {
+  if (typeof value === "string") return [value];
+  if (typeof value !== "object" || value === null) return [];
+  return Object.values(value).flatMap(jsonStrings);
+}
+
 /**
  * The text a copy scan reads from a rendered page: every text node (and aria-label, alt and title), one per line,
  * except the text inside an element for which `isRecordedData` holds, or `isRepoFile` (lib/verbatim.ts: a whole
  * repo file shown unchanged). A marked element with any other text is read like the rest, so a mark cannot hide
- * prose.
+ * prose. A JSON-LD block (components/site/JsonLd.tsx) is read as its string values, not as its JSON syntax.
  */
 export function scannableText(root: Element): string {
   const attrs = [...root.querySelectorAll("[aria-label], [alt], [title]")].flatMap((el) =>
@@ -51,6 +58,10 @@ export function scannableText(root: Element): string {
   const walker = root.ownerDocument.createTreeWalker(root, 4 /* NodeFilter.SHOW_TEXT */);
   const texts: string[] = [];
   for (let node = walker.nextNode(); node !== null; node = walker.nextNode()) {
+    if (node.parentElement?.matches('script[type="application/ld+json"]')) {
+      texts.push(...jsonStrings(JSON.parse(node.textContent ?? "null")));
+      continue;
+    }
     const marked = node.parentElement?.closest(`[${RUN_DATA_ATTR}]`);
     if (marked && isRecordedData(marked)) continue;
     const file = node.parentElement?.closest(`[${REPO_FILE_ATTR}]`);

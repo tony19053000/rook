@@ -3,14 +3,17 @@
 export const REPO_URL = "https://github.com/tony19053000/rook";
 export const INSTALL_COMMAND = `uv tool install git+${REPO_URL}`;
 export const LICENSE_URL = `${REPO_URL}/blob/main/LICENSE`;
-/** The site's public origin (06 §4 "Site URL"): metadataBase, the sitemap, robots and OG URLs derive from it. */
-export const SITE_URL = "https://rook-weld-six.vercel.app";
+/**
+ * The site's canonical public origin (06 §4 "Site URL"): metadataBase, the sitemap, robots, the structured data and
+ * OG URLs derive from it. The Vercel address (rook-weld-six.vercel.app) still serves the same deployment.
+ */
+export const SITE_URL = "https://www.roook.dev";
 /** Contact, support and privacy requests (06 §4 "Operator and contact"). */
-export const CONTACT_EMAIL = "c40534394@gmail.com";
+export const CONTACT_EMAIL = "aayush@roook.dev";
 export const ISSUES_URL = `${REPO_URL}/issues`;
 
-/** Who runs Roook (06 §4): one individual developer, not a company. */
-export const operator = { name: "Aayush Kumar", location: "India" } as const;
+/** Who runs Roook (06 §4): its founder, as an individual. Roook is not incorporated as a company. */
+export const operator = { name: "Aayush Kumar", role: "Founder", location: "India" } as const;
 
 /** A mailto: link to CONTACT_EMAIL with a prefilled subject (the contact page has no form backend). */
 export function mailtoHref(subject: string): string {
@@ -27,6 +30,9 @@ export const site = {
   stage: "Early access, open source.",
   licence: "MIT licence",
 } as const;
+
+/** The founder's name and title as one line: "Aayush Kumar — Founder, Roook". */
+export const FOUNDER_LINE = `${operator.name} — ${operator.role}, ${site.name}`;
 
 export const metadataCopy = {
   defaultTitle: "Roook · find the smallest sequence that breaks your software",
@@ -112,6 +118,11 @@ export const footerColumns: FooterColumn[] = [
 ];
 
 export const footerCopy = {
+  /** Followed by the contact address as a mailto: link. */
+  operatedBy: `${site.name} is an independent, founder-led startup, operated by ${operator.name}.`,
+  contactLabel: "Contact:",
+  /** The subject of the footer's email link. */
+  contactSubject: site.name,
   note: `Early access. ${site.builtOn}`,
   /** Followed by the licence link. */
   openSource: "Open source under the",

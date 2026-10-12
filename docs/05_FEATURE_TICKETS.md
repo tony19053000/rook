@@ -318,6 +318,14 @@ Streams: **CI** 049 · **server** 050 → 051 · **web**, strictly in order (the
 - The same pass over the app (`/app`, `/runs`, `/runs/[id]`, `/rules`, `/counterexamples`, `/repositories`, `/github/setup`): sidebar, composer, repo picker, agent rows, cards (rules, search, counterexample, fix, verify), empty/loading/error states, dialogs, light and dark themes. Behaviour and text unchanged.
 - **AC:** before/after screenshots (dark + light, 360 and 1440 px); the app contrast test passes; typecheck, lint, test pass.
 
+## M14 · Launch identity (user request 12 Oct: "official startup launch")
+
+**ROOK-060 · Founder, contact, domain, legal and SEO identity** · P1 · deps: M13 (058)
+- Roook is presented as an independent, founder-led, early-stage startup: "Aayush Kumar — Founder, Roook" on `/about` (a founder card) and `/contact`; the contact address is `aayush@roook.dev` everywhere (`mailto:` links on the contact page, the footer, the legal pages, the docs and the app's account menu); no other mailbox, phone or address. No invented company, cofounder, employee, investor, client or credential (06 §4 "Operator and contact").
+- `SITE_URL` = `https://www.roook.dev` (canonical links, Open Graph, sitemap, robots); JSON-LD structured data on the home page; README, live smoke and docs point at the new domain. The Vercel address keeps working.
+- Legal pages name the operator as "Aayush Kumar, operating Roook" (an individual, India; not incorporated). Not changed: the CLI/server text, the GitHub App's name, any external service setting.
+- **AC:** typecheck, lint, test and build pass; `e2e/audit.mjs` passes on a scratch build; no secret in the diff. Not deployed, committed or pushed without the user's approval.
+
 ---
 
 ## U · User tasks (Aayush, in parallel)

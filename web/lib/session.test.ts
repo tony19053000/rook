@@ -48,6 +48,8 @@ describe("session helpers", () => {
     expect(oauthReturn("?error=access_denied&error_description=User+cancelled")).toEqual({ error: "User cancelled" });
     expect(oauthReturn("")).toBeNull();
     expect(oauthReturn("?code=<script>")).toBeNull();
+    // The return address follows the origin the visitor is on: both must be in the Supabase redirect allowlist.
+    expect(signInRedirect("https://www.roook.dev")).toBe("https://www.roook.dev/login");
     expect(signInRedirect("https://rook-weld-six.vercel.app/")).toBe("https://rook-weld-six.vercel.app/login");
   });
 });

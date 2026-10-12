@@ -26,18 +26,28 @@ function ChannelLink({ id, link }: { id: string; link: ContactLink }) {
   );
 }
 
-// /contact (06 §5.9): mailto: links with prefilled subjects and GitHub Issues. Plain links, no form, so it
+// /contact (06 §5.9): the email, founder and website, mailto: links with prefilled subjects and GitHub Issues. Plain links, no form, so it
 // works without JS and needs no backend. A server component.
 export default function ContactPage() {
   return (
     <>
       <PageHeader eyebrow={contactCopy.eyebrow} heading={contactCopy.heading} lead={contactCopy.lead}>
-        <p className="mt-8 inline-flex max-w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-site-strong bg-white/[0.03] px-4 py-3 text-base text-site-muted">
-          <span className={type.label}>{contactCopy.emailLabel}:</span>{" "}
-          <a href={mailtoHref(contactCopy.emailSubject)} className={`${LINK} font-mono text-[0.9375rem]`}>
-            {contactCopy.email}
-          </a>
-        </p>
+        <dl className="mt-8 inline-grid max-w-full grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-5 gap-y-2.5 rounded-xl border border-site-strong bg-white/[0.03] px-4 py-3.5 text-base text-site-muted">
+          <dt className={type.label}>{contactCopy.emailLabel}</dt>
+          <dd>
+            <a href={mailtoHref(contactCopy.emailSubject)} className={`${LINK} font-mono text-[0.9375rem]`} data-contact="email">
+              {contactCopy.email}
+            </a>
+          </dd>
+          <dt className={type.label}>{contactCopy.founderLabel}</dt>
+          <dd>{contactCopy.founder}</dd>
+          <dt className={type.label}>{contactCopy.websiteLabel}</dt>
+          <dd>
+            <a href={contactCopy.website} className={`${LINK} font-mono text-[0.9375rem]`} data-contact="website">
+              {contactCopy.website}
+            </a>
+          </dd>
+        </dl>
       </PageHeader>
 
       <Section id="channels" title={contactCopy.channelsTitle} width="narrow">

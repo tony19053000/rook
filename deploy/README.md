@@ -30,8 +30,8 @@ deploy/aws/create.sh
 
 # 3. copy the repo, build, start, wait for https://<ip-dashes>.sslip.io/api/v1/health
 deploy/aws/deploy.sh
-#    later, once the Vercel URL is known (CORS for direct calls):
-#    ROOK_WEB_ORIGINS=https://<project>.vercel.app deploy/aws/deploy.sh
+#    later, once the web origins are known (CORS for direct calls; a comma list: the custom domain and the Vercel URL):
+#    ROOK_WEB_ORIGINS=https://www.roook.dev,https://<project>.vercel.app deploy/aws/deploy.sh
 
 # 4. secrets (each one prompts with hidden input and restarts rook). The name allowlist is checked on the
 #    host too, so after pulling a version that adds a secret name, run deploy.sh BEFORE set-secret.sh.

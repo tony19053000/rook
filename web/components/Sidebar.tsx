@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { DeleteConfirm } from "./DeleteConfirm";
 import { Icon, RookMark, type IconName } from "./icons";
-import { CONTACT_EMAIL } from "@/content/site";
+import { CONTACT_EMAIL, mailtoHref } from "@/content/site";
 import { startGithubConnect } from "@/lib/github";
 import { runDelete, runHref } from "@/lib/pages";
 import { clean } from "@/lib/safeText";
@@ -325,7 +325,11 @@ function AccountRow({ name, email, coins, githubConnected, onSignOut, onConnectG
             explain={
               <>
                 This deletes all your runs (their events, counterexamples and workspace files) and your GitHub link from Roook&apos;s server, then signs
-                you out. It can&apos;t be undone. Your sign-in account itself is removed on request: email {CONTACT_EMAIL}.
+                you out. It can&apos;t be undone. Your sign-in account itself is removed on request: email{" "}
+                <a href={mailtoHref("Roook: privacy request")} className="underline underline-offset-2">
+                  {CONTACT_EMAIL}
+                </a>
+                .
               </>
             }
             run={() => runDelete(onDeleteData ?? (() => api.deleteMyData()), "data")}

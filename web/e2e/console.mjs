@@ -2,8 +2,8 @@
 // exception, CSP violation or failed request. Plain Node 22 (built-in WebSocket + the Chrome DevTools
 // Protocol), no extra deps.
 //
-//   node e2e/console.mjs https://rook-weld-six.vercel.app          # the pages only (no run, no quota)
-//   node e2e/console.mjs https://rook-weld-six.vercel.app --run    # also a guest demo run in the browser
+//   node e2e/console.mjs https://www.roook.dev          # the pages only (no run, no quota)
+//   node e2e/console.mjs https://www.roook.dev --run    # also a guest demo run in the browser
 //
 // With --run it starts a demo run from the page (same-origin fetch, so the browser gets the first-party
 // `rook_guest` cookie), opens /runs/<id> and waits until the run's summary is rendered, i.e. the event stream

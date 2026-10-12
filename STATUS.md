@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** ROOK-058 done, 059 part done, display name changed to Roook; PUSHED to main (user approved); localhost:3000 still serves the OLD build
+**Last updated:** 2026-10-12 IST (evening) · **By:** ROOK-060 launch identity DONE (main session, not reviewed) and a professional README; committed and PUSHED to main (user said push; Vercel deploys); localhost:3000 still serves the OLD build
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [████████████████████████████░░]  96%  57 / 59 tickets
+OVERALL   [█████████████████████████████░]  96%  58 / 60 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -26,7 +26,8 @@ M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037�
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
 M12 Launch readiness  [██████████] 100%   9 / 9    ROOK-049…057
 M13 UI polish         [█████░░░░░]  50%   1 / 2    ROOK-058…059
-USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
+M14 Launch identity   [██████████] 100%   1 / 1    ROOK-060
+USER tasks            [███░░░░░░░]  37%   6 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
 
@@ -36,7 +37,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 |---|---|
 | Product | Roook (display name since 12 Oct; CLI command `rook`), IBM Bob-powered invariant breaker |
 | Repo | https://github.com/tony19053000/rook (public) |
-| Hosted web | https://rook-weld-six.vercel.app |
+| Hosted web | https://www.roook.dev (canonical; `roook.dev` redirects to it) · also https://rook-weld-six.vercel.app |
 | Hosted API | https://44-239-185-88.sslip.io (AWS EC2 t3.small + Caddy, replay mode) |
 | Bob | Shell 2.0.5 works; key in `~/.bob-key.env`; about 0.023 coins per call. Coins used so far: about 2.01 |
 | Demo apps | not built yet (U5, the prompt is given on request) |
@@ -105,6 +106,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-057 | Final verification | P1 | DONE | coder only (Sonnet), NOT reviewed. e2e/audit.mjs passes on local next start (18 routes x 4 widths, links, axe, text). Live headers check to re-run after deploy. cf98db6 |
 | ROOK-058 | Public site visual redesign | P1 | DONE | main session, no sub-agents, NOT reviewed (user instruction). Warm dark palette, serif headings, new header/footer/cards/code, home, docs + guides (rails), all inner pages, Claude-style `/login`. 719 vitest, tsc, lint, `e2e/audit.mjs` PASS on a scratch build. Judged on desktop (1440/1920); mobile works (no sideways scroll) but was not polished: user said mobile is a separate topic |
 | ROOK-059 | Web app visual redesign | P1 | IN PROGRESS | Part done (user request): the signed-out `/app` has no sign-in block in the chat column; a guest gets the greeting and a ready composer (first example picked). The full visual pass of the app (sidebar, cards, light theme) is NOT started: the user narrowed M13 to the public web page for now |
+| ROOK-060 | Founder, contact, domain, legal and SEO identity | P1 | DONE | user request (startup launch). Main session, no sub-agents, NOT reviewed (the user approved the commit and push). Founder card + contact `aayush@roook.dev` (the private Gmail is gone from the tree, not from git history), `SITE_URL` = https://www.roook.dev, JSON-LD, footer operator line, legal pages name "Aayush Kumar, operating Roook". 731 vitest, tsc, lint, build, `e2e/audit.mjs` PASS on a scratch build (first runs hit the known stuck `/_next/image` flake; passed after a server restart). Left for the user: Supabase/Google/GitHub App URLs, lawyer review, CLI/server/GitHub App name |
 
 Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 
@@ -123,7 +125,7 @@ Statuses: `TODO` · `IN PROGRESS` · `IN REVIEW` · `DONE` · `BLOCKED (reason)`
 | U9 | Submit | TODO |
 | U10 | Redeploy the server after 050 + 051 | TODO |
 | U11 | Approve the push to main | TODO |
-| U12 | Custom domain → Vercel, then SITE_URL | TODO (free domain not redeemed yet) |
+| U12 | Custom domain → Vercel, then SITE_URL | DONE (www.roook.dev live on Vercel, `roook.dev` → 308 to www; `SITE_URL` changed in ROOK-060). Still to do by the user: add `https://www.roook.dev/login` to the Supabase redirect allowlist, update the GitHub App and Google OAuth URLs |
 | U13 | Trademark/name check for "Rook" | TODO (conflict risk: CNCF project Rook, rook.io) |
 | U14 | Publish the Google OAuth consent screen | TODO (Testing mode) |
 | U15 | Live GitHub App PR test (CLI, own test repo) | TODO |

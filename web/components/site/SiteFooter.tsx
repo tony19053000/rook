@@ -3,9 +3,10 @@ import { Container } from "./Container";
 import { Logo } from "./Logo";
 import { NavLinkItem } from "./NavLinkItem";
 import { link as linkClass, type } from "./tokens";
-import { footerColumns, footerCopy, headerCopy, site } from "@/content/site";
+import { CONTACT_EMAIL, footerColumns, footerCopy, headerCopy, mailtoHref, site } from "@/content/site";
 
-// The full site footer (06 §3): the brand, then Product, Docs, Company and Legal, and the licence line.
+// The full site footer (06 §3): the brand, then Product, Docs, Company and Legal, the operator with the contact
+// address, and the licence line.
 export function SiteFooter() {
   return (
     <footer className="border-t border-site-line bg-site-raised">
@@ -32,9 +33,17 @@ export function SiteFooter() {
             ))}
           </nav>
         </div>
-        <p className="mt-16 border-t border-site-line pt-6 text-sm leading-relaxed text-site-faint">
-          {footerCopy.note} {footerCopy.openSource} <NavLinkItem link={footerCopy.licenceLink} className={linkClass} />.
-        </p>
+        <div className="mt-16 flex flex-col gap-2 border-t border-site-line pt-6 text-sm leading-relaxed text-site-faint">
+          <p>
+            {footerCopy.operatedBy} {footerCopy.contactLabel}{" "}
+            <a href={mailtoHref(footerCopy.contactSubject)} className={linkClass} data-footer="email">
+              {CONTACT_EMAIL}
+            </a>
+          </p>
+          <p>
+            {footerCopy.note} {footerCopy.openSource} <NavLinkItem link={footerCopy.licenceLink} className={linkClass} />.
+          </p>
+        </div>
       </Container>
     </footer>
   );

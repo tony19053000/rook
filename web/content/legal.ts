@@ -1,7 +1,8 @@
 // The legal pages (06 §5.5), in effect. Privacy describes only what the app actually processes (06 §4 "Data the
-// app actually processes"); Terms states only true facts. No compliance, certification or audit is claimed.
+// app actually processes"); Terms states only true facts. No compliance, certification or audit is claimed, and no
+// registered company, postal address or registration number is named: Roook has none (06 §4 "Operator and contact").
 
-import { CONTACT_EMAIL, LICENSE_URL, REPO_URL, operator, site } from "./site";
+import { CONTACT_EMAIL, LICENSE_URL, REPO_URL, SITE_URL, operator, site } from "./site";
 
 /** The date both pages took effect. */
 export const LEGAL_LAST_UPDATED = "12 October 2026";
@@ -22,7 +23,10 @@ export interface LegalDoc {
   sections: LegalSection[];
 }
 
-const operatorLine = `${operator.name}, an individual developer based in ${operator.location}`;
+/** The operator as the legal pages name them: a person, not a company. */
+const operatorLine = `${operator.name}, operating ${site.name}`;
+/** Who "Roook" and "the operator" are on these pages, stated once in each introduction. */
+const operatorNote = `${operator.name} is an individual based in ${operator.location}. ${site.name} is not incorporated as a company, so "${site.name}" and "the operator" on this page mean ${operator.name}.`;
 
 export const privacyPolicy: LegalDoc = {
   title: "Privacy policy",
@@ -30,9 +34,17 @@ export const privacyPolicy: LegalDoc = {
   heading: "Privacy policy",
   lastUpdated: LEGAL_LAST_UPDATED,
   intro: [
-    `This policy explains what data ${site.name} processes when you use this website and the ${site.name} web app. ${site.name} is run by ${operatorLine}. It describes only what the app does today.`,
+    `This policy explains what data ${site.name} processes when you use the ${site.name} website (${SITE_URL}) and the ${site.name} web app. The service is run by ${operatorLine}. It describes only what the app does today.`,
+    operatorNote,
   ],
   sections: [
+    {
+      id: "operator",
+      heading: "Who is responsible",
+      paragraphs: [
+        `${operatorLine}, decides how the data described here is used and answers every request about it. Contact: ${CONTACT_EMAIL}.`,
+      ],
+    },
     {
       id: "collected",
       heading: "What is collected",
@@ -44,6 +56,7 @@ export const privacyPolicy: LegalDoc = {
         "If you connect GitHub: a user record with your Supabase user id, email address, GitHub installation id and the time it was created.",
         "Guest quota records, per day, keyed by the guest cookie id and by your IP address.",
         "Rate-limit counters per IP address, kept in memory only.",
+        `If you email ${CONTACT_EMAIL}: your email address and what you write. It stays in the ${site.name} mailbox and is not copied to the ${site.name} server.`,
       ],
     },
     {
@@ -73,6 +86,7 @@ export const privacyPolicy: LegalDoc = {
         "Supabase, for sign-in.",
         "Vercel and AWS, which host the website and the server.",
         "GitHub, only if you connect it: Roook reads your installation's repository list from GitHub.",
+        "Zoho Mail, which hosts the Roook mailbox, only if you email Roook.",
         "IBM Bob, for live runs only: repository content and run data are sent to IBM Bob as prompts. Recorded example runs send nothing to IBM Bob.",
       ],
       paragraphs: ["Roook does not sell your data."],
@@ -108,7 +122,7 @@ export const privacyPolicy: LegalDoc = {
     {
       id: "contact",
       heading: "Contact",
-      paragraphs: [`Privacy questions and requests: ${CONTACT_EMAIL}. This policy is governed by the laws of ${operator.location}.`],
+      paragraphs: [`Privacy questions and requests go to ${operatorLine}, at ${CONTACT_EMAIL}. This policy is governed by the laws of ${operator.location}.`],
     },
   ],
 };
@@ -119,7 +133,8 @@ export const termsOfService: LegalDoc = {
   heading: "Terms of service",
   lastUpdated: LEGAL_LAST_UPDATED,
   intro: [
-    `These terms cover your use of the hosted ${site.name} website and web app, run by ${operatorLine}.`,
+    `These terms cover your use of the hosted ${site.name} website (${SITE_URL}) and web app, run by ${operatorLine}.`,
+    operatorNote,
   ],
   sections: [
     {
@@ -159,7 +174,7 @@ export const termsOfService: LegalDoc = {
     {
       id: "law",
       heading: "Governing law and contact",
-      paragraphs: [`These terms are governed by the laws of ${operator.location}. Contact: ${CONTACT_EMAIL}.`],
+      paragraphs: [`These terms are governed by the laws of ${operator.location}. Contact: ${operatorLine}, at ${CONTACT_EMAIL}.`],
     },
   ],
 };

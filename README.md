@@ -4,9 +4,9 @@
 
 | | |
 |---|---|
-| Site and docs | <https://rook-weld-six.vercel.app> |
-| Try it in the browser (no install, no account) | <https://rook-weld-six.vercel.app/app> |
-| Getting started | <https://rook-weld-six.vercel.app/docs/getting-started> |
+| Site and docs | <https://www.roook.dev> |
+| Try it in the browser (no install, no account) | <https://www.roook.dev/app> |
+| Getting started | <https://www.roook.dev/docs/getting-started> |
 
 ```
 ✗ RULE BROKEN   Total refunds on an order never exceed the amount paid
@@ -39,7 +39,7 @@ Bob proposes and explains; the engine decides. No Bob output is ever executed as
 
 ## Try it
 
-- **In the browser:** open <https://rook-weld-six.vercel.app/app> and pick an example repo. These are recorded example runs: Bob's answers are replayed from a saved real run, and the engine runs live against the real app. Guests get 3 runs a day.
+- **In the browser:** open <https://www.roook.dev/app> and pick an example repo. These are recorded example runs: Bob's answers are replayed from a saved real run, and the engine runs live against the real app. Guests get 3 runs a day.
 - **On your own repo:** use the CLI on your machine, below. The hosted site does not run your own repos: hosted runs of your own repos are turned off.
 
 ## Install
@@ -65,12 +65,12 @@ Roook never writes to the folder you point it at. For a local folder, `rook/rook
 
 Guides:
 
-- [Getting started](https://rook-weld-six.vercel.app/docs/getting-started)
-- [Install](https://rook-weld-six.vercel.app/docs/install): supported environments, IBM Bob setup, limitations, troubleshooting
-- [Rules](https://rook-weld-six.vercel.app/docs/rules): the approval workflow and `rook/rook.yaml`
-- [Counterexamples](https://rook-weld-six.vercel.app/docs/counterexamples): shrinking, replays and verified fixes
-- [GitHub Action](https://rook-weld-six.vercel.app/docs/github-action)
-- [Data and IBM Bob](https://rook-weld-six.vercel.app/docs/data): what is sent to IBM Bob, and when
+- [Getting started](https://www.roook.dev/docs/getting-started)
+- [Install](https://www.roook.dev/docs/install): supported environments, IBM Bob setup, limitations, troubleshooting
+- [Rules](https://www.roook.dev/docs/rules): the approval workflow and `rook/rook.yaml`
+- [Counterexamples](https://www.roook.dev/docs/counterexamples): shrinking, replays and verified fixes
+- [GitHub Action](https://www.roook.dev/docs/github-action)
+- [Data and IBM Bob](https://www.roook.dev/docs/data): what is sent to IBM Bob, and when
 
 ## GitHub Action
 
@@ -99,19 +99,19 @@ jobs:
 
 Use `pull_request` and **never** `pull_request_target`: with `pull_request_target`, a fork's code would run with your secrets.
 
-Limitations, plainly: the action has not yet been run on a GitHub-hosted runner; live mode needs a Bob Shell package you provide (`bob-package`; Roook does not host one); replay mode only fits code that has not changed since it was recorded. Details and all inputs: the [GitHub Action guide](https://rook-weld-six.vercel.app/docs/github-action).
+Limitations, plainly: the action has not yet been run on a GitHub-hosted runner; live mode needs a Bob Shell package you provide (`bob-package`; Roook does not host one); replay mode only fits code that has not changed since it was recorded. Details and all inputs: the [GitHub Action guide](https://www.roook.dev/docs/github-action).
 
 ## How IBM Bob is used
 
 - **13 Bob agents, each a Bob Shell custom mode:** a Coordinator and 12 specialists (Scout, Mechanic, Mapper, Lawmaker, Rule Critic, Test Designer, Strategist, Detective, Diagnosis Reviewer, Surgeon, Fix Reviewer, Guide). Every agent is read-only except the Mechanic (its own sandbox folder) and the Surgeon (only the approved files).
-- Bob is the only AI in Roook. In a live run, repo content goes to IBM Bob as prompts; a recorded run sends nothing. See [Data and IBM Bob](https://rook-weld-six.vercel.app/docs/data).
+- Bob is the only AI in Roook. In a live run, repo content goes to IBM Bob as prompts; a recorded run sends nothing. See [Data and IBM Bob](https://www.roook.dev/docs/data).
 
 ## Where Roook is today
 
 - Early access. No paid plans, no team accounts.
 - HTTP APIs only: no libraries, pure frontends, mobile apps or ML notebooks.
 - The hosted site offers recorded example runs of two example repos; it does not run your own repos.
-- No third-party security audit. See [Security](https://rook-weld-six.vercel.app/security) for how code and data are handled and what is not yet true.
+- No third-party security audit. See [Security](https://www.roook.dev/security) for how code and data are handled and what is not yet true.
 
 Roook started at the IBM Bob 2.0 Hackathon in September 2026.
 
@@ -153,6 +153,10 @@ cd web && npm install && npm run test && npx tsc --noEmit
 ```
 
 The contracts (event schema, `rook.yaml` schema and API routes) are in [`docs/02_ARCHITECTURE.md`](docs/02_ARCHITECTURE.md).
+
+## Contact
+
+Roook is an independent, founder-led startup, built and run by Aayush Kumar (Founder). Email <aayush@roook.dev>, or open an [issue](https://github.com/tony19053000/rook/issues) for bugs and feature requests. Website: <https://www.roook.dev>.
 
 ## License
 

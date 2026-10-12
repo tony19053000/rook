@@ -20,6 +20,8 @@ export const metadata: Metadata = {
     siteName: site.name,
     title: metadataCopy.defaultTitle,
     description: metadataCopy.description,
+    // The home page's address (a site page with its own card sets its own, lib/seo.ts).
+    url: "/",
   },
   twitter: { card: "summary_large_image", title: metadataCopy.defaultTitle, description: metadataCopy.description },
 };

@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      ROOK_SITE_URL: https://rook-weld-six.vercel.app
+      ROOK_SITE_URL: https://www.roook.dev
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - run: bash .github/scripts/live-smoke.sh "$ROOK_SITE_URL"

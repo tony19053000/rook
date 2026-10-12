@@ -171,6 +171,21 @@ describe("copy rules (06 §4, §9)", () => {
     expect(aboutMentions, "the About story names the hackathon once").toBe(1);
   });
 
+  it("no content string names the old Vercel address or a mailbox other than the official one", async () => {
+    const { CONTACT_EMAIL } = await import("../content/site");
+    expect(CONTACT_EMAIL).toBe("aayush@roook.dev");
+    for (const file of CONTENT_FILES) {
+      const mod: unknown = await import(`../content/${file}`);
+      for (const text of collectStrings(mod)) {
+        expect(text, `${file}: ${text}`).not.toMatch(/vercel\.app|gmail\.com/i);
+        for (const address of text.match(/[\w.+-]+@[\w-]+\.[a-z]{2,}/gi) ?? []) {
+          // Addresses in docs examples (the fixture shop's admin@demo.local-style logins) are not mailboxes.
+          if (/@roook\.dev$/i.test(address)) expect(address, `${file}: ${text}`).toBe(CONTACT_EMAIL);
+        }
+      }
+    }
+  });
+
   it("the pricing content states no price while plans is empty", () => {
     expect(pricing.plans).toEqual([]);
     for (const text of collectStrings(pricing)) expect(copyViolations(text, { pricing: true }), text).toEqual([]);

@@ -6,6 +6,13 @@
 
 ## ▶ Next session starts here
 
+**Updated:** 12 Oct 2026 (evening). **ROOK-060 launch identity is DONE, committed and PUSHED to main** (user brief: "official startup launch"; the user said push; Vercel deploys both domains), followed by a professional README rewrite (docs commit). Main session, no sub-agents, not reviewed.
+
+- **What changed (060):** `content/site.ts` (`SITE_URL` = https://www.roook.dev, `CONTACT_EMAIL` = aayush@roook.dev replacing a private Gmail, `operator.role`, `FOUNDER_LINE`, footer operator copy); `/about` (what Roook does, founder card, where it stands); `/contact` (email, founder, website); legal pages (operator "Aayush Kumar, operating Roook", not incorporated, site URL, Zoho mailbox, every address a `mailto:`); footer operator + mailto line; JSON-LD on the home (`lib/structuredData.ts`, `components/site/JsonLd.tsx`); root `og:url`; the account menu's address is a link; README + live smoke + `e2e/console.mjs` on the new domain; docs 02/03/05/06 and the deploy comments.
+- **Checks:** tsc, lint, 731 vitest, `next build` and `e2e/audit.mjs --allow-api-down` PASS on a scratch build (port 3300, stopped). The first two audit runs failed on the known stuck `/_next/image` request (w=750) in that server process; a restart fixed it, same as before. 159 pytest (deploy, docs commands, action, copy) pass. Live smoke passes on https://www.roook.dev (the OLD deployment: the new copy is not live until a push).
+- **Never build in `web/` while localhost:3000 runs from it** (it serves `web/.next`): build in a scratch copy.
+- **Waiting on the user (060):** Supabase: add `https://www.roook.dev/login` to the redirect allowlist and set the Site URL (keep the Vercel entry); GitHub App: homepage and Setup URL to www.roook.dev; Google OAuth consent screen: home/privacy/terms links, authorised domain `roook.dev`, support email; next server deploy: `ROOK_WEB_ORIGINS=https://www.roook.dev,https://rook-weld-six.vercel.app`; lawyer review of the legal pages (governing law India, "not incorporated", mailbox retention not stated); decide on the CLI/server text and the GitHub App name (still "Rook").
+
 **Updated:** 12 Oct 2026 (later). **M13 UI polish: ROOK-058 DONE** (public site redesign), **ROOK-059 part done** (signed-out `/app`), and the **display name is now Roook** (user request). **PUSHED to main 12 Oct (user said push): Vercel deploys M12 + M13 + the rename.**
 
 - **Rename (user, 12 Oct):** "Rook" → "Roook" as a whole word in `web/` (not `lib/fixtures`) and `README.md`. NOT renamed: the `rook` command, package, repo, paths, cookies, `ROOK_*`, `action.yml`, and everything under `src/` (the CLI and server still print "Rook"; agent prompt text is part of the recorded-answer keys, so rename there only with a re-record plan). The GitHub App is still named "Rook" on GitHub (the user can rename it there). Done in the main session, no sub-agents, not reviewed (user instruction).
@@ -42,7 +49,7 @@
 - **Don't push without asking the user**: Vercel redeploys on push to main, and this changes what `/` shows on the live URL (judging may still be open).
 - Untracked/modified user files (`docs/submission/**`, `docs/demo-apps/**`) are the user's video/deck work: never commit or edit them.
 
-**LIVE (do not recreate):** web https://rook-weld-six.vercel.app (Vercel, push to main = redeploy) · API https://44-239-185-88.sslip.io (AWS EC2, Caddy) · Supabase https://nfegrmjlbwfgvcyhwddh.supabase.co (Google provider, Testing mode; redirect allowlist has `/login`, keep that route). `deploy.sh` ships the working tree: never with unreviewed code in it.
+**LIVE (do not recreate):** web https://www.roook.dev (canonical custom domain) and https://rook-weld-six.vercel.app (same Vercel project, push to main = redeploy) · API https://44-239-185-88.sslip.io (AWS EC2, Caddy) · Supabase https://nfegrmjlbwfgvcyhwddh.supabase.co (Google provider, Testing mode; redirect allowlist has `/login`, keep that route). `deploy.sh` ships the working tree: never with unreviewed code in it.
 
 **Lessons (still true):** never `git commit -a` (always `git add <explicit paths>`); always give the reviewer attack ideas; one orchestrator session at a time.
 
@@ -70,6 +77,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct (evening) | – | ROOK-060 launch identity (founder, aayush@roook.dev, www.roook.dev canonical, legal operator, JSON-LD), main session, checks pass; then a professional README; pushed to main (user said push) | ROOK-060 + docs |
 | 12 Oct | – | Display name changed to Roook (web + README), pushed to main with M12 + M13 (user said push) | (rename) |
 | 12 Oct | – | ROOK-058 public site redesign (desktop) + Claude-style /login; ROOK-059 part: signed-out /app without the sign-in block. Main session, no sub-agents; audit PASS on a scratch build; not pushed | ROOK-058, ROOK-059 (part) |
 | 12 Oct | 2 | ROOK-055 finished, ROOK-057 audit script; M12 complete; audit passes locally; not pushed | cf98db6 |

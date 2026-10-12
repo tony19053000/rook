@@ -1,7 +1,7 @@
 // The /contact page copy (06 §5.9): the email as mailto: links with prefilled subjects, GitHub Issues for bugs,
 // and what to expect. There is no form (and no form backend): the CSP keeps form-action 'self'.
 
-import { CONTACT_EMAIL, ISSUES_URL, operator, site } from "./site";
+import { CONTACT_EMAIL, FOUNDER_LINE, ISSUES_URL, operator, site, SITE_URL } from "./site";
 
 /** An email link (the page builds the mailto: href with mailtoHref) or a web link. */
 export type ContactLink = { kind: "email"; label: string; subject: string } | { kind: "web"; label: string; href: string };
@@ -18,9 +18,13 @@ export const contactCopy = {
   description: `Email ${site.name} about questions, early access or privacy, or open a GitHub issue for bugs and feature requests.`,
   eyebrow: "Contact",
   heading: `Contact ${site.name}`,
-  lead: `${site.name} is run by one person, ${operator.name}. Email for questions, early access and privacy requests; use GitHub Issues for bugs and feature requests.`,
+  lead: `${site.name} is founder-led: ${operator.name}, the founder, reads the inbox. Email for questions, early access and privacy requests; use GitHub Issues for bugs and feature requests.`,
   email: CONTACT_EMAIL,
   emailLabel: "Email",
+  founderLabel: "Founder",
+  founder: FOUNDER_LINE,
+  websiteLabel: "Website",
+  website: SITE_URL,
   /** The subject of the plain address link at the top. */
   emailSubject: "Roook",
   channelsTitle: "How to reach Roook",

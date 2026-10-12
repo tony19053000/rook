@@ -6,16 +6,17 @@ import SiteLayout from "@/app/(site)/layout";
 import PrivacyPage from "@/app/(site)/privacy/page";
 import SecurityPage from "@/app/(site)/security/page";
 import TermsPage from "@/app/(site)/terms/page";
-import { CONTACT_EMAIL, operator } from "@/content/site";
+import { CONTACT_EMAIL, operator, SITE_URL } from "@/content/site";
 import { collectStrings, copyViolations, NO_PLACEHOLDER } from "@/lib/copyRules";
 import * as legal from "@/content/legal";
 
 afterEach(cleanup);
 
-const main = (page: ReactElement): string => {
+const mainElement = (page: ReactElement): HTMLElement => {
   const { container } = render(<SiteLayout>{page}</SiteLayout>);
-  return container.querySelector("main")?.textContent ?? "";
+  return container.querySelector("main")!;
 };
+const main = (page: ReactElement): string => mainElement(page).textContent ?? "";
 
 describe.each([
   ["/privacy", <PrivacyPage key="p" />],
@@ -28,13 +29,32 @@ describe.each([
     expect(text).toContain("Last updated: 12 October 2026");
   });
 
-  it("names the operator, the contact email and India", () => {
+  it("names the operator as a person operating Roook, the site, the contact email and India", () => {
     const text = main(page);
-    expect(text).toContain(operator.name);
-    expect(text).toContain("individual developer");
+    expect(text).toContain(`${operator.name}, operating Roook`);
+    expect(text).toContain(`${operator.name} is an individual based in India. Roook is not incorporated as a company`);
+    expect(text).toContain(SITE_URL);
     expect(text).toContain(CONTACT_EMAIL);
-    expect(text).toContain("India");
     expect(text).toMatch(/laws of India/);
+  });
+
+  it("names no company form, registration, postal address or other mailbox", () => {
+    const text = main(page);
+    expect(text).not.toMatch(/\b(Pvt|Private Limited|Ltd|LLP|LLC|Inc|GmbH|registered office|registration number|CIN|GSTIN)\b/);
+    expect(text).not.toMatch(/gmail\.com|vercel\.app/i);
+    expect(text.split(CONTACT_EMAIL).join(""), "an address other than the contact one").not.toContain("@");
+  });
+
+  it("links every mention of the contact address as mailto:", () => {
+    const el = mainElement(page);
+    const mentions = (el.textContent ?? "").split(CONTACT_EMAIL).length - 1;
+    const links = [...el.querySelectorAll('a[href^="mailto:"]')];
+    expect(mentions).toBeGreaterThanOrEqual(1);
+    expect(links).toHaveLength(mentions);
+    for (const a of links) {
+      expect(new URL(a.getAttribute("href")!).pathname).toBe(CONTACT_EMAIL);
+      expect(a.textContent).toBe(CONTACT_EMAIL);
+    }
   });
 
   it("claims no certification, audit or compliance", () => {

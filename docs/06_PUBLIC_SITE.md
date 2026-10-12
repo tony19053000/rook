@@ -19,9 +19,9 @@ The public marketing site that sits in front of the existing web app, in the sam
 | `/security` | Trust: how data is handled + "What is not yet true" | |
 | `/pricing` | Early access and open source (M12) | Free ways to use Rook today; hosted plans not priced; never a number |
 | `/roadmap` | Shipped, limited and planned (M12) | From §4 facts only |
-| `/about` | The operator and the project story (M12) | §4 "Operator and contact" |
-| `/contact` | Contact and early-access interest (M12) | `mailto:` links with a prefilled subject + GitHub Issues; no form backend |
-| `/privacy`, `/terms` | Privacy policy and terms, in effect (M12) | Name the operator, the contact email and India; no placeholders, no draft banner |
+| `/about` | What Roook does, the founder and the project story (M12, ROOK-060) | §4 "Operator and contact" |
+| `/contact` | Contact and early-access interest (M12) | The email, founder and website; `mailto:` links with a prefilled subject + GitHub Issues; no form backend |
+| `/privacy`, `/terms` | Privacy policy and terms, in effect (M12) | Name the operator ("Aayush Kumar, operating Roook"), the site URL, the contact email and India; no placeholders, no draft banner, no company form or postal address |
 | `/sitemap.xml`, `/robots.txt` | `app/sitemap.ts`, `app/robots.ts` (M12) | Site pages only; app routes (`/app`, `/runs`, …) and `/dev/*` disallowed |
 | `/login` | Sign-in page (restyled to the site look) | Keeps the Supabase PKCE return (`/login?code=…`): this URL is in the Supabase redirect allowlist, never move it |
 | any unknown path | Branded 404 (`app/not-found.tsx`) | |
@@ -91,9 +91,9 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 
 **Positioning (M12).** Rook is an **early-access, open-source** developer tool. The site never presents it as a hackathon entry: the hackathon appears only in the About page's project story ("Rook started at the IBM Bob 2.0 Hackathon in September 2026"). IBM Bob is acknowledged ("Built on IBM Bob", in the footer, About, docs and the FAQ), but headlines and leads talk about Rook's own value: finding, proving and fixing business-rule bugs. The primary CTA stays **"Try Rook"** (no visible "demo", ROOK-048); the secondary CTA is **"Read the docs"** (→ `/docs/getting-started`) plus a GitHub link.
 
-**Operator and contact (M12).** Rook is run by **Aayush Kumar**, an individual developer based in **India** (not a company: no incorporation, no employees, no clients, no revenue, no funding; never imply any). Contact, support and privacy requests: **c40534394@gmail.com** (one constant, `CONTACT_EMAIL` in `content/site.ts`). Bugs and feature requests: GitHub Issues on the repo. Legal pages: operator "Aayush Kumar (individual), India"; governing law: the laws of India.
+**Operator and contact (M12, updated ROOK-060).** Roook is an **independent, founder-led, early-stage startup**, founded and run by **Aayush Kumar — Founder, Roook**, an individual based in **India**. It is **not incorporated as a company**: no registration, no postal address, no cofounders, no employees, no clients, no revenue, no investors or funding; never imply any, and never invent the founder's credentials or work history. Contact, support and privacy requests: **aayush@roook.dev** (one constant, `CONTACT_EMAIL` in `content/site.ts`; the mailbox is hosted by Zoho Mail). No other mailbox, phone number or address appears on the site. Bugs and feature requests: GitHub Issues on the repo. Legal pages: operator "Aayush Kumar, operating Roook" (an individual, India); governing law: the laws of India.
 
-**Site URL.** `SITE_URL` in `content/site.ts` = `https://rook-weld-six.vercel.app` until a custom domain is connected (then change that one constant). `metadataBase`, the sitemap, robots and OG URLs all derive from it.
+**Site URL (ROOK-060).** `SITE_URL` in `content/site.ts` = `https://www.roook.dev`, the canonical production origin (`roook.dev` redirects to it). `metadataBase`, canonical links, the sitemap, robots, the structured data and OG URLs all derive from it. The Vercel address `https://rook-weld-six.vercel.app` still serves the same deployment and stays in the sign-in redirect allowlist; it is not shown in the copy.
 
 **Recorded vs live.** A run with recorded Bob answers is always labelled **"Recorded example run"** with a one-line explanation (Bob's answers are replayed from a saved real run; the engine still runs live against the real app). A run with live Bob calls is labelled **"Live run"**. Never blur the two.
 
@@ -129,9 +129,9 @@ Copy lives only in `web/content/*.ts`. Every claim must be true of the current c
 4. **Pricing** (`/pricing`, M12): "Early access and open source". Three ways to use Rook, each with what it costs **today** in words, never a number: (1) **Try Rook on this site**: free, no account, recorded example runs of the example repos, 3 a day; (2) **The CLI on your machine**: free and open source (MIT), your own Docker and IBM Bob key (any IBM Bob usage cost is between you and IBM); (3) **Hosted runs of your own repos**: not offered yet, planned, no price set. Then a short "Interested in hosted Rook?" → `/contact`. `content/pricing.ts` keeps the `plans` export (empty) so a future price list has one source.
 5. **Privacy** and **Terms** (M12): in effect from their "Last updated" date, operator, email and India named, no placeholders and no draft banner. Privacy describes only §4 "Data the app actually processes": what is collected, where it is stored, who receives it (Supabase, Vercel, AWS, GitHub, IBM Bob), how long it is kept, and how to delete it. Terms: open-source licence for the code, the hosted site as-is during early access, acceptable use (only repos you may test), no warranty, liability limited as far as Indian law allows.
 6. **Sign-in** (`/login`) and a branded **404**.
-7. **About** (`/about`): who runs Rook (§4 "Operator and contact"), why it exists, the project story (started at the IBM Bob 2.0 Hackathon, Sep 2026; now an early-access open-source project), what it is not (no company, team or funding).
+7. **About** (`/about`): what Roook does (finds, reproduces, verifies; only the engine decides), a founder card ("Aayush Kumar — Founder, Roook", a short introduction, the email and the website; §4 "Operator and contact"), why it exists, the project story (started at the IBM Bob 2.0 Hackathon, Sep 2026; an independent product since), and where it stands (founder-led, not incorporated, no employees or funding, free in early access).
 8. **Roadmap** (`/roadmap`): three lists, **Shipped**, **Limited** and **Planned**, from §4 only. Planned items carry no dates.
-9. **Contact** (`/contact`): the email (general, early access, privacy) as `mailto:` links with prefilled subjects, GitHub Issues for bugs, and what to expect (one person reads it; no response-time promise).
+9. **Contact** (`/contact`): the email, the founder and the website at the top; the email (general, early access, privacy) as `mailto:` links with prefilled subjects, GitHub Issues for bugs, and what to expect (one person reads it; no response-time promise).
 10. **Docs guides** (`/docs/*`, §1): each a long-form page with a table of contents; commands copied from the real CLI (`uv run rook --help`) and files from the repo; known limitations stated plainly.
 
 CTAs: "Try Rook" → `/app` (primary). "Read the docs" → `/docs/getting-started` (secondary). "Sign in" → `/login`. Signed-in visitors see **"Open workspace"** → `/app` instead (a client-side hint read from `localStorage` `rook-auth` without loading the auth library; the server render shows the signed-out CTAs).
@@ -153,7 +153,8 @@ CTAs: "Try Rook" → `/app` (primary). "Read the docs" → `/docs/getting-starte
 ## 8. Metadata and performance
 
 - Per-page title (template `%s · Rook`), description, Open Graph and Twitter cards (`summary_large_image` with an OG image), theme colour. `metadataBase` = `SITE_URL`; the favicon, logo, OG image, page titles and the header wordmark use the same mark and name.
-- Footer (M12): Product (Overview, Try Rook, Pricing, Roadmap, Sign in), Docs (Getting started, Install, Rules, GitHub Action, Data and IBM Bob), Company (About, Contact, GitHub), Legal (Privacy, Terms, Security).
+- Footer (M12): Product (Overview, Try Rook, Pricing, Roadmap, Sign in), Docs (Getting started, Install, Rules, GitHub Action, Data and IBM Bob), Company (About, Contact, GitHub), Legal (Privacy, Terms, Security). Under the columns (ROOK-060): who operates Roook with the contact address as a `mailto:` link, then the licence line.
+- Structured data (ROOK-060): one schema.org JSON-LD block on the home page (`lib/structuredData.ts`, `components/site/JsonLd.tsx`): Organization (name, URL, logo, email, founder, GitHub), Person (the founder), WebSite and SoftwareApplication. Built from `content/site.ts` only; no address, registration, rating, review, price or staff. It is a data block, so the nonce CSP does not apply to it.
 - `motion` is imported only by the home page's client islands. Header, footer and the inner pages are server components (the header's signed-in hint is the only client island they need).
 
 ## 9. Tests (Vitest + React Testing Library, jsdom per file)

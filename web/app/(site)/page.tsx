@@ -4,6 +4,7 @@ import { ButtonLink } from "@/components/site/Button";
 import { CodeBlock } from "@/components/site/CodeBlock";
 import { Container } from "@/components/site/Container";
 import { Section } from "@/components/site/Section";
+import { JsonLd } from "@/components/site/JsonLd";
 import { FeatureIcon } from "@/components/site/home/FeatureIcon";
 import { FlowDiagram } from "@/components/site/home/FlowDiagram";
 import { HeroParallax } from "@/components/site/home/HeroParallax";
@@ -28,6 +29,7 @@ import { plans, pricingStatus } from "@/content/pricing";
 import { cta } from "@/content/site";
 import { storyCopy } from "@/content/story";
 import { walkthroughCopy } from "@/content/walkthrough";
+import { siteStructuredData } from "@/lib/structuredData";
 
 // The title, description and cards are the site defaults (app/layout.tsx).
 export const metadata: Metadata = { alternates: { canonical: "/" } };
@@ -45,6 +47,7 @@ export default function HomePage() {
   const closingTitleId = `${closingCta.id}-title`;
   return (
     <>
+      <JsonLd data={siteStructuredData()} />
       <HeroParallax
         labelledBy={HERO_TITLE_ID}
         text={

@@ -17,14 +17,15 @@ import { metadata as rootMetadata } from "@/app/layout";
 import robots from "@/app/robots";
 import sitemap from "@/app/sitemap";
 import { DOCS_OVERVIEW, GUIDE_PAGES } from "./docs/testPages";
-import { aboutCopy, aboutLinks } from "@/content/about";
+import { aboutCopy, aboutLinks, founderCopy } from "@/content/about";
 import { contactChannels } from "@/content/contact";
 import { docsNav, guides } from "@/content/docsGuides";
 import { PRICING_PENDING_NOTICE, pricingCopy, useWays } from "@/content/pricing";
 import { roadmapLists } from "@/content/roadmap";
 import { loginCopy } from "@/content/login";
-import { CONTACT_EMAIL, cta, footerColumns, headerNav, ISSUES_URL, notFoundCopy, operator, REPO_URL, SITE_URL } from "@/content/site";
+import { CONTACT_EMAIL, cta, footerColumns, FOUNDER_LINE, headerNav, ISSUES_URL, notFoundCopy, operator, REPO_URL, site, SITE_URL } from "@/content/site";
 import { ROBOTS_DISALLOW, SITEMAP_PATHS } from "@/lib/seo";
+import { siteStructuredData } from "@/lib/structuredData";
 
 const router = { replace: vi.fn(), push: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
@@ -193,10 +194,57 @@ describe("sitemap, robots and metadataBase (06 §1, §8)", () => {
     }
   });
 
-  it("metadataBase is SITE_URL", () => {
-    expect(SITE_URL).toBe("https://rook-weld-six.vercel.app");
+  it("metadataBase is SITE_URL, the canonical www.roook.dev origin", () => {
+    expect(SITE_URL).toBe("https://www.roook.dev");
     expect(rootMetadata.metadataBase?.toString()).toBe(`${SITE_URL}/`);
     expect(String(rootMetadata.description)).not.toMatch(/hackathon/i);
+    expect((rootMetadata.openGraph as { url?: string } | undefined)?.url).toBe("/");
+  });
+});
+
+describe("structured data on the home page (06 §8)", () => {
+  type Node = Record<string, unknown>;
+  const graph = (data: unknown): Node[] => (data as { "@graph": Node[] })["@graph"];
+  const ofType = (nodes: Node[], type: string): Node => nodes.find((n) => n["@type"] === type)!;
+
+  it("is one JSON-LD block that names Roook, its founder, the site and the contact address", () => {
+    const { container } = inSite(<HomePage />);
+    const blocks = container.querySelectorAll('script[type="application/ld+json"]');
+    expect(blocks).toHaveLength(1);
+    const data: unknown = JSON.parse(blocks[0]!.textContent ?? "");
+    expect(data).toEqual(siteStructuredData());
+    const nodes = graph(data);
+    expect(nodes.map((n) => n["@type"])).toEqual(["Organization", "Person", "WebSite", "SoftwareApplication"]);
+    const organization = ofType(nodes, "Organization");
+    expect(organization).toMatchObject({ name: "Roook", url: SITE_URL, email: CONTACT_EMAIL, sameAs: [REPO_URL], logo: `${SITE_URL}/icon.svg` });
+    expect(ofType(nodes, "Person")).toMatchObject({ name: "Aayush Kumar", jobTitle: "Founder" });
+    expect(ofType(nodes, "WebSite")).toMatchObject({ name: "Roook", url: SITE_URL });
+    expect(ofType(nodes, "SoftwareApplication")).toMatchObject({ name: "Roook", applicationCategory: "DeveloperApplication" });
+  });
+
+  it("claims no address, registration, rating, review, price or staff, and every URL is on SITE_URL, GitHub or schema.org", () => {
+    const text = JSON.stringify(siteStructuredData());
+    expect(text).not.toMatch(/address|legalName|taxID|vatID|aggregateRating|review|offers|price|numberOfEmployees|employee|funder|award/i);
+    const urls = text.match(/https?:\/\/[^"]+/g) ?? [];
+    expect(urls.length).toBeGreaterThan(5);
+    for (const url of urls) expect(url.startsWith(SITE_URL) || url.startsWith(REPO_URL) || url === "https://schema.org", url).toBe(true);
+  });
+
+  it("escapes < so a value cannot close the block", () => {
+    const { container } = inSite(<HomePage />);
+    expect(container.querySelector('script[type="application/ld+json"]')!.innerHTML).not.toContain("<");
+  });
+});
+
+describe("the footer (06 §8)", () => {
+  it("names the operator and links the contact address, on a site page", () => {
+    inSite(<ContactPage />);
+    const footer = screen.getByRole("contentinfo");
+    expect(footer.textContent).toContain(`${site.name} is an independent, founder-led startup, operated by ${operator.name}.`);
+    const mail = new URL(footer.querySelector('a[data-footer="email"]')!.getAttribute("href")!);
+    expect(mail.protocol).toBe("mailto:");
+    expect(mail.pathname).toBe(CONTACT_EMAIL);
+    expect(footer.querySelector('a[data-footer="email"]')!.textContent).toBe(CONTACT_EMAIL);
   });
 });
 
@@ -220,20 +268,50 @@ describe("/contact (06 §5.9)", () => {
     expect(contactChannels).toHaveLength(4);
     expect(main.textContent).toMatch(/no promised response time/i);
   });
+
+  it("shows the official address, the founder and the website", () => {
+    inSite(<ContactPage />);
+    const main = screen.getByRole("main");
+    expect(CONTACT_EMAIL).toBe("aayush@roook.dev");
+    const mail = new URL(main.querySelector('a[data-contact="email"]')!.getAttribute("href")!);
+    expect(mail.protocol).toBe("mailto:");
+    expect(mail.pathname).toBe(CONTACT_EMAIL);
+    expect(main.textContent).toContain(FOUNDER_LINE);
+    expect(main.querySelector('a[data-contact="website"]')!.getAttribute("href")).toBe(SITE_URL);
+  });
 });
 
 describe("/about (06 §5.7)", () => {
-  it("names the operator, India, the hackathon story and what Roook is not", () => {
+  it("names the founder, India, the hackathon story and where Roook stands", () => {
     inSite(<AboutPage />);
     const main = screen.getByRole("main");
     const text = main.textContent ?? "";
-    expect(operator).toEqual({ name: "Aayush Kumar", location: "India" });
-    expect(text).toContain("Aayush Kumar");
+    expect(operator).toEqual({ name: "Aayush Kumar", role: "Founder", location: "India" });
+    expect(FOUNDER_LINE).toBe("Aayush Kumar — Founder, Roook");
+    expect(screen.getByRole("heading", { level: 3, name: FOUNDER_LINE })).toBeTruthy();
     expect(text).toContain("India");
     expect(text).toContain("Roook started at the IBM Bob 2.0 Hackathon in September 2026.");
-    expect(text).toMatch(/early-access, open-source/);
-    expect(text).toMatch(/Not a company: there is no incorporation, no employees and no outside funding\./);
+    expect(text).toMatch(/independent, early-stage startup/);
+    expect(text).toMatch(/is not incorporated as a company\. There are no employees and no outside funding\./);
     expect(screen.getByRole("heading", { level: 1, name: aboutCopy.heading })).toBeTruthy();
+  });
+
+  it("the founder card links the contact address and the website, and invents no history", () => {
+    inSite(<AboutPage />);
+    const main = screen.getByRole("main");
+    const mail = new URL(main.querySelector('a[data-founder="email"]')!.getAttribute("href")!);
+    expect(mail.protocol).toBe("mailto:");
+    expect(mail.pathname).toBe(CONTACT_EMAIL);
+    expect(main.querySelector('a[data-founder="website"]')!.getAttribute("href")).toBe(SITE_URL);
+    const bio = founderCopy.paragraphs.join(" ");
+    expect(bio).not.toMatch(/\b(years?|experience|previously|formerly|ex-|degree|university|graduat|co-?founder|team of|investors?|backed|raised|award)/i);
+  });
+
+  it("says what Roook does: finds, reproduces and verifies, with the engine deciding", () => {
+    inSite(<AboutPage />);
+    const what = document.querySelector("#what") as HTMLElement;
+    for (const start of ["Finds:", "Reproduces:", "Verifies:", "Keeps AI out of the verdict:"]) expect(what.textContent).toContain(start);
+    expect(what.textContent).not.toMatch(/guarantee|every bug|all bugs|autonomous|production-proven/i);
   });
 });
 

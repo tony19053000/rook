@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copy the repo to the rook host and (re)start the server:  deploy/aws/deploy.sh
 # Optional settings (non-secret, written to deploy/.env on the host):
-#   ROOK_WEB_ORIGINS=https://rook-xyz.vercel.app  (CORS; the Vercel origin once you have it)
+#   ROOK_WEB_ORIGINS=https://www.roook.dev,https://rook-xyz.vercel.app  (CORS; the web origins, a comma list)
 #   ROOK_BOB_MODE=replay|live|record              (default replay; live needs the vendored Bob + BOB_API_KEY)
 #   ROOK_DAILY_COIN_CAP=2                         (Bobcoins per day for the whole server)
 #   ROOK_GITHUB_RUNS=1                            (OPT-IN, default off: hosted runs of users' own GitHub repos.
