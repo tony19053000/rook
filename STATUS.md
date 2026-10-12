@@ -2,14 +2,14 @@
 
 > Update this file after **every** ticket (CLAUDE.md, section 2). The ticket scope and acceptance criteria are in `docs/05_FEATURE_TICKETS.md`.
 
-**Last updated:** 2026-10-12 IST · **By:** ROOK-050 committed; 051 + 054 coding
+**Last updated:** 2026-10-12 IST · **By:** ROOK-051 committed ad3e6c4; server stream done; 054 coding
 **Deadline:** 27 Sep 20:30 IST · **Freeze:** 27 Sep 15:30 IST
 **Current block:** B3 (M6 CLI finish → M9 web)
 
 ## Progress
 
 ```
-OVERALL   [█████████████████████████░░░░░]  87%  50 / 57 tickets
+OVERALL   [██████████████████████████░░░░]  89%  51 / 57 tickets
 TIME      [██████████████████████████████] 100%   hackathon deadline passed (27 Sep); post-hackathon work
 
 M0  Docs & setup      [██████████]  100%   done
@@ -24,7 +24,7 @@ M8  Auth & GitHub     [██████████] 100%   3 / 3    ROOK-030�
 M9  Web               [██████████] 100%   4 / 4    ROOK-033…036
 M10 Deploy & demo     [███████░░░]  75%   3 / 4    ROOK-037…040
 M11 Public website    [██████████] 100%   6 / 6    ROOK-043…048
-M12 Launch readiness  [███░░░░░░░]  33%   3 / 9    ROOK-049…057
+M12 Launch readiness  [████░░░░░░]  44%   4 / 9    ROOK-049…057
 USER tasks            [██░░░░░░░░]  31%   5 / 16   U1…U16
 ```
 Bars are 10 cells for milestones and 30 for overall and time; round down. Update them with every ticket status change.
@@ -95,7 +95,7 @@ Bars are 10 cells for milestones and 30 for overall and time; round down. Update
 | ROOK-047 | Site uses the full desktop width | P1 | DONE | user feedback 11 Oct; reviewer PASS r1 (419 vitest; no overflow 360–2560 px). a3a89fb |
 | ROOK-049 | CI green + web checks + scheduled live smoke | P0 | DONE | reviewer PASS r1; CI-simulated pytest 1551 passed (test_demo_apps skip on runners); web job + live smoke (6 h); actions SHA-pinned. 86ca683 |
 | ROOK-050 | Hosted GitHub runs off; no Docker socket on the server | P0 | DONE | reviewer PASS r1; socket only in the opt-in override docker-compose.github-runs.yml; 503 + CLI hint; guest replay test proves no Docker. Needs server redeploy (U10) |
-| ROOK-051 | Data deletion and retention (server) | P0 | IN PROGRESS | deps 050 |
+| ROOK-051 | Data deletion and retention (server) | P0 | DONE | reviewer PASS r1; 20 deletion tests; cross-site DELETE 403. Follow-ups: in-memory tombstone set grows per process; 30 s stop wait inside the request (Vercel rewrite timeout unverified); GitHubLink repo cache not cleared on /me/data. ad3e6c4 |
 | ROOK-053 | Site identity, positioning, new pages, SEO | P1 | DONE | reviewer PASS r3 (r1+r2 FAIL: middleware matcher skipped CSP on look-alike/encoded paths → only /_next/static/ skipped now). 468 vitest. bfbb071 |
 | ROOK-054 | Home: problem-first hero, refund-bug story, diagram, screenshot | P1 | IN PROGRESS | deps 053 |
 | ROOK-055 | Docs guides | P1 | TODO | deps 054 |
