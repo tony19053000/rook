@@ -6,7 +6,14 @@
 
 ## ▶ Next session starts here
 
-**Updated:** 11 Oct 2026 (post-hackathon). **Goal done: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
+**Updated:** 12 Oct 2026. **Goal: M12 launch readiness** (user pasted an 8-part launch checklist and said "fix all of this"). Plan + tickets: doc 05 "M12" (ROOK-049–057), facts in doc 06 §4 (M12 blocks). Planning commit 8d92788.
+
+**User decisions (12 Oct):** operator **Aayush Kumar, individual, India**; public email **c40534394@gmail.com**; CTA stays **"Try Rook"** (no visible "demo"); **hosted GitHub runs OFF**, no Docker socket on the server (ROOK-050). Contact = `mailto:` + GitHub Issues (no form backend, no new service).
+
+**M12 order:** CI 049 · server 050 → 051 · web strictly in order 053 → 054 → 055 → 056 → 052 → 057. Started 12 Oct: 049, 050, 053 coders in parallel (separate dirs: `.github`+`.gitignore` / `src`+`deploy`+docs 02/03 / `web`).
+**Not doable by Claude (user tasks U10–U16 in doc 05/STATUS):** redeploy server, approve push, custom domain, trademark check (CNCF "Rook" at rook.io is a real name conflict), publish Google OAuth (Testing mode), live GitHub App PR test, lawyer review + launch feedback.
+
+**Before M12:**  **Goal done: the public marketing website** (user request 9 Oct), spec `docs/06_PUBLIC_SITE.md`, tickets ROOK-043 → 044 → 045 (doc 05, M11), run strictly in order (they share `web/` and `next build`).
 
 **State:** HEAD 4530044 (+ docs). ROOK-001–039, 041, 042 DONE. ROOK-040 (release polish) still open (PyPI name rook-cli taken). Web baseline before M11: 271 vitest passed, tsc clean (`npm ci` was needed: node_modules was missing).
 - **ROOK-043 DONE** (reviewer PASS, committed 8976686): app home `/` → `/app`, site design system `web/components/site/`, copy `web/content/*.ts`, `/pricing` `/privacy` `/terms` 404, minimal `/`, ESLint (`npm run lint`), RTL + jsdom, `motion` dep (unused until 044). Web suite: 314 passed.
@@ -49,6 +56,7 @@ Start now.
 
 | When (IST) | Account | Did | Commit |
 |---|---|---|---|
+| 12 Oct | – | M12 launch readiness planned (049–057), user decisions recorded; 049/050/053 coders started | (docs) 8d92788 |
 | 12 Oct | – | Pushed to main (user approved); Vercel live with the new site | (docs) |
 | 12 Oct | – | ROOK-048 no visible "demo" PASS r2 + committed; localhost:3000 rebuilt | ROOK-048 |
 | 11 Oct | – | ROOK-047 full-width layout PASS + committed (user feedback); localhost:3000 rebuilt | ROOK-047 |
